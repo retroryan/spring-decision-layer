@@ -1,0 +1,29 @@
+spring:
+  main:
+    banner-mode: off
+  neo4j:
+    uri: ${NEO4J_URI}
+    authentication:
+      username: ${NEO4J_USERNAME:neo4j}
+      password: ${NEO4J_PASSWORD}
+  ai:
+    anthropic:
+      api-key: ${ANTHROPIC_API_KEY}
+      chat:
+        # Pinned rather than left to the starter default, which is claude-haiku-4-5. The
+        # model only turns a decision that was already computed into two sentences, so this
+        # is about the README transcripts staying reproducible, not about capability.
+        model: claude-sonnet-5
+
+# This module's own setting, not Spring's. spring.neo4j.* configures the Driver bean above but
+# has no database property, and spring.data.neo4j.database belongs to Spring Data Neo4j, which
+# is not on this classpath. Empty or unset means use the connection's home database, so an
+# existing .env with no NEO4J_DATABASE keeps working exactly as before.
+loan:
+  neo4j:
+    database: ${NEO4J_DATABASE:}
+  # Seeding is idempotent and runs before every decision, so a relationship you delete by hand is
+  # restored before the next run can read it. Turning this off for one run is what makes such a
+  # change observable: ./run.sh --no-seed. The next ordinary run MERGEs everything back.
+  seed:
+    enabled: true

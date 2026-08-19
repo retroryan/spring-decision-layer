@@ -1,0 +1,33 @@
+{
+  "timeoutSec": 300,
+  "successRegex": [
+    "Started Application in",
+    "\\nDecision traces for C-1042, the precedent this run reads\\n",
+    "\\n  \\d{4}-\\d{2}-\\d{2} +(APPROVED|DENIED) +\\$[\\d,]+ +\\S",
+    "\\nPolicies\\n",
+    "Minimum Credit Score: +(PASS|FAIL) +\\(",
+    "Debt to Income Limit: +(PASS|FAIL) +\\(",
+    "Repeat Denial Escalation: +(PASS|FAIL) +\\(",
+    "\\n(APPROVED|DENIED)\\. \\S",
+    "\\nPrecedent trail, now that this decision is on file\\n",
+    "\\n    decided by   \\S",
+    "\\n    has decided  \\S",
+    "\\nTranscript for this run, from Spring AI chat memory\\n",
+    "\\n  ASSISTANT +\\S"
+  ],
+  "requiredEnv": [
+    "ANTHROPIC_API_KEY",
+    "NEO4J_URI",
+    "NEO4J_PASSWORD"
+  ],
+  "aiValidation": {
+    "enabled": true,
+    "validationMode": "hybrid",
+    "readmeFile": "README.md",
+    "expectedBehavior": "A Spring AI CallAdvisor decides one loan application for company C-1042 by reading the company and its prior decisions out of Neo4j, checking three named policies (Minimum Credit Score, Debt to Income Limit, Repeat Denial Escalation) in plain Java, writing the decision back to the graph, and only then handing the finished verdict to the model to explain. Validate that: (1) the 'Decision traces for C-1042' section lists at least one prior decision with a date, outcome and amount, showing the precedent for this run was read out of the graph rather than supplied in the prompt; (2) the 'Policies' checklist reports all three policies, each with a PASS or FAIL and a numeric detail naming the observed value and the threshold, evidence that the decision was computed by policy code before the model was called; (3) the verdict line agrees with that checklist - if any policy FAILed the outcome is DENIED and the reason cites a policy that actually FAILed, and if all three PASSed the outcome is APPROVED; (4) the two-or-three-sentence paragraph that follows explains the same verdict the checklist computed, and does not invent a different outcome, a different deciding policy, or figures that appear nowhere in the checklist; (5) the 'Precedent trail' block walks each denial on file out to the policy that decided it, the exception that set it aside if there is one, and the later decisions it has since decided, with 'none' and 'nothing yet' being correct answers rather than failures; (6) the 'Transcript for this run, from Spring AI chat memory' section shows a USER question about C-1042 and a non-empty ASSISTANT turn carrying that same explanation, showing the exchange was persisted to Spring AI chat memory. Which policy decides is NOT fixed and must not be treated as a failure either way: a fresh graph fails Debt to Income Limit, while a graph that already holds two or more denials for C-1042 inside the rolling window fails Repeat Denial Escalation, because each run's own decision becomes precedent for the next. The seeded history date is relative to the run, and the model's exact wording is unpredictable, so neither should be matched literally.",
+    "promptTemplate": "workflow_validation",
+    "successCriteria": {
+      "requiresUserInteraction": false
+    }
+  }
+}

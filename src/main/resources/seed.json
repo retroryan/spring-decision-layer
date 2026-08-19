@@ -1,0 +1,116 @@
+{
+  "companies": [
+    {
+      "companyId": "C-1042",
+      "name": "Ridgeline Builders",
+      "creditRiskScore": 72,
+      "currentDebt": 710000,
+      "annualIncome": 2000000
+    },
+    {
+      "companyId": "C-1077",
+      "name": "Cornerstone Concrete",
+      "creditRiskScore": 81,
+      "currentDebt": 300000,
+      "annualIncome": 4000000
+    },
+    {
+      "companyId": "C-1096",
+      "name": "Northgate Framing",
+      "creditRiskScore": 47,
+      "currentDebt": 400000,
+      "annualIncome": 2200000
+    },
+    {
+      "companyId": "C-1123",
+      "name": "Summit Ironworks",
+      "creditRiskScore": 78,
+      "currentDebt": 250000,
+      "annualIncome": 3000000
+    }
+  ],
+  "policies": [
+    {
+      "key": "minimumCreditScore",
+      "name": "Minimum Credit Score",
+      "threshold": 60,
+      "windowMonths": 0,
+      "description": "The company's creditRiskScore must be 60 or higher."
+    },
+    {
+      "key": "debtToIncomeLimit",
+      "name": "Debt to Income Limit",
+      "threshold": 0.4,
+      "windowMonths": 0,
+      "description": "(currentDebt + requestedAmount) / annualIncome must be under 40 percent."
+    },
+    {
+      "key": "repeatDenialEscalation",
+      "name": "Repeat Denial Escalation",
+      "threshold": 2,
+      "windowMonths": 12,
+      "description": "Two or more denied decisions inside this policy's windowMonths window deny the next request automatically."
+    }
+  ],
+  "applications": [
+    {
+      "applicationId": "A-1042-SEED",
+      "companyId": "C-1042",
+      "requestedAmount": 400000,
+      "monthsAgo": 3
+    },
+    {
+      "applicationId": "A-1123-SEED-1",
+      "companyId": "C-1123",
+      "requestedAmount": 1400000,
+      "monthsAgo": 9
+    },
+    {
+      "applicationId": "A-1123-SEED-2",
+      "companyId": "C-1123",
+      "requestedAmount": 1000000,
+      "monthsAgo": 6
+    }
+  ],
+  "decisions": [
+    {
+      "decisionId": "D-1042-SEED",
+      "applicationId": "A-1042-SEED",
+      "outcome": "DENIED",
+      "reason": "Failed Debt to Income Limit policy.",
+      "monthsAgo": 3,
+      "policyKey": "debtToIncomeLimit",
+      "observed": 0.555,
+      "threshold": 0.4
+    },
+    {
+      "decisionId": "D-1123-SEED-1",
+      "applicationId": "A-1123-SEED-1",
+      "outcome": "DENIED",
+      "reason": "Failed Debt to Income Limit policy.",
+      "monthsAgo": 9,
+      "policyKey": "debtToIncomeLimit",
+      "observed": 0.55,
+      "threshold": 0.4
+    },
+    {
+      "decisionId": "D-1123-SEED-2",
+      "applicationId": "A-1123-SEED-2",
+      "outcome": "DENIED",
+      "reason": "Failed Debt to Income Limit policy.",
+      "monthsAgo": 6,
+      "policyKey": "debtToIncomeLimit",
+      "observed": 0.417,
+      "threshold": 0.4
+    }
+  ],
+  "exceptions": [
+    {
+      "exceptionId": "X-1123-SEED",
+      "decisionId": "D-1123-SEED-2",
+      "grantedBy": "M. Alvarez, Senior Underwriter",
+      "justification": "The debt was short-term bridge financing against a signed municipal contract, since repaid.",
+      "monthsAgo": 5
+    }
+  ]
+}
