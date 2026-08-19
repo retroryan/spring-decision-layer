@@ -413,8 +413,9 @@ would not change the shape of anything already here.
 | `LoanGraph.java` | The Cypher: traverse the history, walk the trail, write the decision, attach the explanation |
 | `GraphSeeder.java` | `MERGE`s seed.json into the graph at startup, idempotently |
 | `PolicyEngine.java` | The three rules, as arithmetic, with no storage in sight |
-| `LoanPolicyAdvisor.java` | Decides, commits, then hands the model the verdict |
-| `LoanOfficer.java` | The `ChatClient`, its system prompt, and the chat memory |
+| `PrecedentAdvisor.java` | Reads the graph and hands the model the file: facts, measurements, standing denials, who is on duty |
+| `DecisionTraceAdvisor.java` | Declares the shape of the answer, then writes what came back to the graph as precedent |
+| `LoanOfficer.java` | The `ChatClient`, its system prompt, the advisor chain, and the chat memory |
 | The record types | The vocabulary: the seed, companies, policies, decisions, the trail, and the model's answer |
 
 ```shell

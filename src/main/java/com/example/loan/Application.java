@@ -50,10 +50,11 @@ public class Application {
 			}
 
 			printHistory(graph, companyId);
-			print(officer.answer(companyId, requestedAmount));
+			LoanAnswer answer = officer.answer(companyId, requestedAmount);
+			print(answer);
 			printPrecedentTrail(graph, companyId);
 			printApprovalsPastPolicies(graph);
-			printTranscript(officer.transcript());
+			printTranscript(officer.transcript(answer.conversationId()));
 		};
 	}
 

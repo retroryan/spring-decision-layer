@@ -1,8 +1,9 @@
 # True Exception: Let the Model Decide
 
-**Status**: Phase 1 is implemented and `./mvnw test` is green. Phases 2 and 3 are not started.
-"Status and Progress" below records what is checked, what is still taken on trust, and what
-Phase 1 knowingly broke for a later phase to repair.
+**Status**: Phases 1 and 2 are implemented, `./mvnw test` is green, and the demo has been run
+against the live Anthropic API and a live Neo4j. Phase 3 is not started. "Status and Progress"
+below records what is checked, what is still taken on trust, what the live runs found that no test
+could have, and what Phase 1 knowingly broke for a later phase to repair.
 
 ## High Level Proposal
 
@@ -421,10 +422,17 @@ branches in them.
 
 ## Status and Progress
 
-Phase 1 is implemented. `./mvnw test` is green: 33 tests, 22 of them against a real Neo4j 5.26 in
-Testcontainers. Phases 2 and 3 have not been started. What follows is what the tree does now,
-what is checked, and what is still taken on trust, so the next phase starts from the code rather
-than from this document.
+Phases 1 and 2 are implemented and `./mvnw test` is green, against a real Neo4j 5.26 in
+Testcontainers. The demo has since been run live, with a real key and a real database, which found
+three defects the tests could not have: two of them in how Spring AI hands back a response from a
+model that thinks, one of them a history read that lied on the console. All three are fixed. Phase
+3 has not been started. What follows is what the tree does now, what is checked, and what is still
+taken on trust, so the next phase starts from the code rather than from this document.
+
+The advisor Phase 1 called `LoanPolicyAdvisor` has since been split in two: `PrecedentAdvisor`
+reads the graph and builds a `LoanFile`, `DecisionTraceAdvisor` declares the schema, reads the
+verdict, and writes the trace. Where this document says `LoanPolicyAdvisor`, read whichever of the
+two owns that half.
 
 ### What Phase 1 shipped
 
@@ -449,14 +457,69 @@ than from this document.
   empty list rather than as a row of nulls.
 - Every measurement, against the numbers in `seed.json`, with no test asserting an outcome.
 
-### What is not verified
+### What the live runs confirmed
 
-- **No live model call has been made.** `ANTHROPIC_API_KEY` was unset in the environment the work
-  was done in, so the "Verifiably true" checks under Phase 1 are outstanding. Nothing has confirmed
-  that Anthropic accepts the generated schema on the wire, or that the model returns a
-  `decidingPolicyKey` that resolves against the measurements.
-- **The prompt is unexercised.** The facts block, the stated tolerance, and the field guide have
-  been written and read, never answered.
+- **Anthropic accepts the generated schema on the wire.** `output_config.format` with
+  `type: json_schema`, built by `BeanOutputConverter` off the record, taken by the native path
+  rather than appended to the prompt as text.
+- **The model returns a `decidingPolicyKey` that resolves.** Every run named a key from the left
+  column of the facts block, and every named key had measured below the line, so the edge was
+  written against the engine's own number.
+- **The prompt is answered rather than merely written.** The facts block, the stated tolerance, and
+  the field guide have all been exercised, including the case the whole design exists for: the same
+  file, the same numbers, the same underwriter, decided both ways on different runs.
+
+### What is still not verified
+
+- **The letter is not checked against the verdict by anything but a reader.** Nothing asserts that
+  the explanation names the outcome the structured fields carry, and nothing could without asking
+  a model to grade a model.
+- **`integration-tests/ExampleInfo.json` has been rewritten but not run.** Its regexes were checked
+  against captured console output rather than by executing the harness.
+
+### Found by running it live, and fixed
+
+Four defects, none of which a test would have found, because three of them are in what the provider
+actually sends back and the fourth only appears on a graph that has been written to.
+
+- **`ChatResponse.getResult()` is the thinking block, not the answer.** `AnthropicChatModel` gives
+  every thinking content block a `Generation` of its own and appends the accumulated text
+  generation last; `getResult()` is `generations.get(0)`. So the first generation is the thinking
+  block, empty text and a signature, and the converter was handed an empty string on every live
+  run while the model's answer sat in the generation behind it. Taken off the wire in 9 of 9
+  responses. `verdictGeneration` takes the last non-blank text out of `getResults()`, which is what
+  the provider contract actually guarantees, and six tests pin it against the block shapes the API
+  really sent, including a redacted thinking block.
+
+- **Adaptive thinking corrupted the stored `reason`.** Reading the right generation was only half
+  of it. `buildGenerations` accumulates every text block into one `StringBuilder`, so when thinking
+  interleaves and the model restarts its answer, the abandoned attempt and the real one arrive
+  concatenated. The merged document still parses, because the junk lands inside a string value. Two
+  of eight decisions were written to the graph with garbage in `reason`: one at 996 characters
+  carrying fragments of a discarded draft, one at 83 characters ending in `.dummy`. Confirmed in the
+  database with `cypher-shell` rather than on the console, so the console formatting was ruled out
+  as the cause. No generation selection can fix this, since the damage is inside a single
+  generation. `withoutThinking` disables thinking on the options. Four runs afterwards stored
+  reasons of 50 to 128 characters, every one a single clean line.
+
+  This is the defect worth being uneasy about. A field that quietly absorbs an abandoned draft is
+  worse than a run that fails outright, because it is stored, cited as precedent by the next run,
+  and read back as though somebody meant it. A ratchet that makes a judgement call permanent makes
+  a corrupted judgement call permanent too.
+
+- **The history read said "no policy named" about decisions that had named one.** `FIND_DECISIONS`
+  resolved only `APPLIED_POLICY`, so every approval that recorded a `WEIGHED_PAST` edge printed as
+  though it had been decided on the file as a whole. Phase 1's own headline fact, lost in the one
+  place a reader looks for it. Fixed with `coalesce(applied.name, weighed.name)` plus a `weighedPast`
+  flag, and `PastDecision.line()` now words the three cases: the line that stopped a denial,
+  "approved past" the line an approval crossed, and the file as a whole when there is genuinely no
+  policy.
+
+- **A failed run left a `Session` holding half an exchange.** `MessageChatMemoryAdvisor` stores the
+  question on the way in and the answer on the way back out, and never reaches the second if
+  anything between them throws. A run that decided nothing was leaving a conversation behind with a
+  question and no answer. `DecisionTraceAdvisor` now deletes the conversation on the way out of a
+  failure, in the advisor whose writes it is undoing rather than one layer out.
 
 ### Learned while implementing, and worth keeping
 
@@ -482,16 +545,18 @@ than from this document.
 Recorded here rather than fixed early, because both belong to phases that rewrite the same files
 for their own reasons. Neither affects `./mvnw test`.
 
-- **`integration-tests/ExampleInfo.json` no longer matches the console.** Three `successRegex`
-  entries look for `PASS` or `FAIL`, one looks for `\nPolicies\n` where the heading is now
-  `Policies, as measured`, and one looks for `has decided` where the trail now says `has driven`.
-  `expectedBehavior` still describes a run whose outcome Java computed before the model was
-  called. Phase 3 owns the rewrite, and until it lands the integration test fails on a working
-  demo.
-- **`application.yaml` and `README.md` still describe the old design.** The model pin comment
-  gives reproducible transcripts as its reason, and the README still has the four-step flow, the
-  run-it-twice transcripts, and a "what it leaves out" section that says exceptions are only ever
-  seeded. Phase 2 owns the first and Phase 3 owns the second.
+- **`integration-tests/ExampleInfo.json`**: repaired ahead of Phase 3, because it was asserting
+  `PASS` and `FAIL` on a console that no longer prints either, and an integration test that fails
+  on a working demo teaches the next person to ignore it. The regexes now cover the underwriter
+  block and both policy edges, and `expectedBehavior` says plainly that the model is the
+  underwriter: a denial where everything measured above the line, and an approval that went past a
+  line, are both correct outcomes. What would be wrong is a `line crossed` naming a policy that
+  measured above the line. The drawn underwriter, the outcome on a borderline file, and the
+  model's wording are called out as varying between runs so nothing matches them literally.
+- **`application.yaml`**: repaired in Phase 2. The model pin comment no longer claims reproducible
+  transcripts.
+- **`README.md` still describes the old design.** The four-step flow, the run-it-twice transcripts,
+  and a "what it leaves out" section that says exceptions are only ever seeded. Phase 3 owns it.
 
 ## Phased Implementation Plan
 
@@ -580,9 +645,10 @@ tail of each phase rather than a phase of its own.
 
 ### Phase 2: The Underwriter Roster
 
-- **Status**: not started. One carried-over item from Phase 1: the model pin comment in
-  `application.yaml` still gives reproducible transcripts as the reason, which stopped being true
-  the moment the model started deciding.
+- **Status**: implemented, green, and live-verified. The carried-over `application.yaml` comment
+  is rewritten. Two items below were answered by running it rather than by reading it, and both
+  answers are recorded in place: the borderline fixture does not survive being run twice, and
+  adaptive thinking is not merely a default to confirm but a defect to turn off.
 - **Goal**: a named person decides, which person changes per run, and borderline cases go both
   ways because of it.
 - **Files**: `seed.json`, `Seed`, `GraphSeeder`, `LoanGraph`, `LoanPolicyAdvisor`, `LoanOfficer`,
@@ -606,12 +672,25 @@ tail of each phase rather than a phase of its own.
 - **No sampling settings**: they are removed on `claude-sonnet-5` and return a 400, so leave them
   out of `application.yaml` and rewrite the model pin comment, since reproducible transcripts stop
   being the reason it is pinned.
-- **Check the thinking default**: Sonnet 5 runs adaptive thinking when `thinking` is omitted, which
-  Sonnet 4.6 did not. Confirm what Spring AI sends before blaming the prompt for the answers.
-- **Verifiably true**: run `C-1123` at `500000` several times. Different names decide it and the
-  close call lands both ways, with the reason tracking the person rather than the arithmetic. Run a
-  company that clears every number by a distance and the answer holds steady whoever draws it, so
-  the spread is in the judgement and not in the plumbing.
+- **Check the thinking default**: answered, and it was worse than a default to note. Sonnet 5 runs
+  adaptive thinking when `thinking` is omitted, Spring AI omits it, and it broke the run twice over
+  in two different places. Both are fixed in `DecisionTraceAdvisor`, and the reasoning is in the
+  javadoc there rather than only here.
+
+  It cannot be turned off in `application.yaml`. `spring.ai.anthropic.chat.thinking` fails the
+  whole startup with a complaint about a property named `-json`, because `ThinkingConfigParam` is
+  an SDK union type the Boot binder cannot construct. `withoutThinking` does it in Java, on
+  `AnthropicChatOptions.mutate()` so the model pin survives.
+- **Verifiably true**, and this is where the ratchet bites the person testing it: an escalation
+  count cannot be a repeatable borderline fixture. `C-1123` at `500000` sits at the threshold on a
+  fresh graph, but each run's own denial becomes a standing denial for the next, so three
+  consecutive runs saw two, then three, then four. The file being judged changes underneath the
+  test, which is the design working and the fixture failing. A margin holds still where a count
+  does not: `C-1077` at `1350000` measures 41.3% against a 40% limit with a clean history, and
+  that stays 41.3% however many times it is run. Confirmed there, with the same underwriter both
+  approving and denying identical input across runs, which is the whole point of the phase. Then
+  run a company that clears every number by a distance and watch the answer hold steady whoever
+  draws it, so the spread is in the judgement and not in the plumbing.
 - **The traversal payoff**: one query joining the new edge to the one Phase 1 added.
 
   ```cypher

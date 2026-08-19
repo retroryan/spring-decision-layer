@@ -18,7 +18,7 @@ import org.springframework.stereotype.Component;
  * as the context graph, on the library's own {@code (:Session)-[:HAS_MESSAGE]->(:Message)}
  * schema.
  *
- * The conversation id is a fresh UUID per run, deliberately. Keying it to the company would
+ * The conversation id is a fresh UUID per call, deliberately. Keying it to the company would
  * replay the previous run's prose into this run's prompt; what survives across runs is the
  * context graph, not generated English.
  */
@@ -28,7 +28,7 @@ class LoanOfficer {
 	/**
 	 * The role, which is the same whoever is on duty. Who is on duty is not here: it changes on
 	 * every run, and a system prompt that changes on every run is a prompt cache that misses on
-	 * every run. {@link LoanPolicyAdvisor} appends that to the user message beside the facts.
+	 * every run. {@link PrecedentAdvisor} appends that to the user message beside the facts.
 	 */
 	private static final String SYSTEM = """
 			You underwrite construction loans at a bank.
@@ -67,9 +67,14 @@ class LoanOfficer {
 
 	private final ChatMemory chatMemory;
 
-	private final String conversationId = UUID.randomUUID().toString();
-
-	LoanOfficer(ChatClient.Builder builder, LoanPolicyAdvisor loanPolicyAdvisor,
+	/**
+	 * Three advisors and the order between them is the architecture: chat memory outermost, then
+	 * the context graph reading in, then the decision layer recording what came back. Each is a
+	 * bean, and an agent that wants the context without the recording registers the first of the
+	 * two and stops there.
+	 */
+	LoanOfficer(ChatClient.Builder builder, PrecedentAdvisor precedentAdvisor,
+			DecisionTraceAdvisor decisionTraceAdvisor,
 			Neo4jChatMemoryRepository chatMemoryRepository) {
 
 		this.chatMemory = MessageWindowChatMemory.builder()
@@ -78,36 +83,37 @@ class LoanOfficer {
 
 		this.chatClient = builder.defaultSystem(SYSTEM)
 			.defaultAdvisors(MessageChatMemoryAdvisor.builder(this.chatMemory).build(),
-					loanPolicyAdvisor)
-			.defaultAdvisors(advisor -> advisor.param(ChatMemory.CONVERSATION_ID,
-					this.conversationId))
+					precedentAdvisor, decisionTraceAdvisor)
 			.build();
 	}
 
+	/**
+	 * The conversation id is minted per call rather than held on this bean. One per run is what the
+	 * demo wants, and a field would make that an accident of there being one run: every caller
+	 * would share one conversation the moment anything called this twice.
+	 */
 	LoanAnswer answer(String companyId, long requestedAmount) {
 		String question = "Can %s get a construction loan of $%,d?".formatted(companyId,
 				requestedAmount);
 
 		ChatClientResponse response = this.chatClient.prompt()
 			.user(question)
-			.advisors(advisor -> advisor.param(LoanPolicyAdvisor.COMPANY_ID, companyId)
-				.param(LoanPolicyAdvisor.REQUESTED_AMOUNT, requestedAmount))
+			.advisors(advisor -> advisor
+				.param(ChatMemory.CONVERSATION_ID, UUID.randomUUID().toString())
+				.param(PrecedentAdvisor.COMPANY_ID, companyId)
+				.param(PrecedentAdvisor.REQUESTED_AMOUNT, requestedAmount))
 			.call()
 			.chatClientResponse();
 
-		LoanAnswer answer = (LoanAnswer) response.context().get(LoanPolicyAdvisor.ANSWER);
-		if (answer == null) {
-			throw new IllegalStateException(
-					"LoanPolicyAdvisor did not run, so the file was never put in front of anyone "
-							+ "and no verdict came back. Check that it is still registered as a "
-							+ "default advisor on this ChatClient.");
-		}
-		return answer;
+		return DecisionTraceAdvisor.answerIn(response);
 	}
 
-	/** Read back out of Neo4j, so what is printed is what chat memory actually stored. */
-	List<Message> transcript() {
-		return this.chatMemory.get(this.conversationId);
+	/**
+	 * Read back out of Neo4j, so what is printed is what chat memory actually stored. The id comes
+	 * from the answer, which carries the one the run was decided under.
+	 */
+	List<Message> transcript(String conversationId) {
+		return this.chatMemory.get(conversationId);
 	}
 
 }
