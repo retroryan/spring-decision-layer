@@ -21,48 +21,44 @@ RETURN d.decisionId AS decisionId
 ORDER BY d.decidedAt
 ```
 
-`APPLIED_POLICY` and `WEIGHED_PAST` carry the same two properties and point at the same node, and
-the type is the whole difference. One says a line stopped the loan. The other says the loan was
-approved past it, which is the fact a table of outcomes has nowhere to put: an underwriter went
-over a number and the record says which number. Only one of the two is ever written, and both are
-skipped when the verdict named no policy, so every read treats that hop as optional.
+Each relationship type carries one claim:
 
-`ESCALATED_FROM` joins a decision to the earlier denials the underwriter actually leaned on. The
-ids come from the verdict rather than from an `if`, so "the past changed this one" is a pattern you
-can match rather than a count you have to trust, and the chain is read at variable length because a
-decision that cited a denial can itself be cited.
-
-`DECIDED_BY` names the person. The disposition rides on the relationship rather than being read
-back off the node, for the same reason the two numbers ride on the policy edge: retuning how an
-underwriter reads a file must not rewrite why an old decision went the way it did.
-
-`EXCEPTION_TO` is an underwriter's judgement that a denial should not be held against the company
-later. It leaves the decision on file exactly as it was: the denial keeps its policy and its
-numbers, and only stops counting as precedent. That distinction is only expressible because the
-decision and its standing are different things in the graph.
-
-`GRANTED_BY` names who granted it, which is what makes an exception something a person did rather
-than a flag on a row. The underwriter reading today's file can grant one: the verdict carries an
-optional exception naming a denial it was shown, and that write is its own statement, because
-setting an older denial aside does not depend on the outcome reached today. Denying this application
-while setting aside a denial from a year ago is ordinary underwriting. A `source` property on the
-node says which exceptions came from the seed and which an underwriter granted.
+- **`SUBMITTED`, `ABOUT`**: which company a file belongs to, and which file a decision answers.
+- **`APPLIED_POLICY`**: this line stopped the loan. Carries the observed value and the threshold.
+- **`WEIGHED_PAST`**: the loan was approved past this line. Same two properties, same target node, and
+  the type is the whole difference. It is the fact a table of outcomes has nowhere to put: an
+  underwriter went over a number, and the record says which number. Only one of the two is ever
+  written, and both are skipped when the verdict named no policy, so every read treats the hop as
+  optional.
+- **`ESCALATED_FROM`**: the earlier denials this decision leaned on. The ids come from the verdict
+  rather than from an `if`, so "the past changed this one" is a pattern you can match instead of a
+  count you have to trust. Read at variable length, because a decision that cited a denial can
+  itself be cited.
+- **`DECIDED_BY`**: who decided. The disposition rides on the relationship rather than the node, for
+  the same reason the two numbers ride on the policy edge: retuning how an underwriter reads a file
+  must not rewrite why an old decision went the way it did.
+- **`EXCEPTION_TO`**: an underwriter's judgement that a denial should not be held against the company
+  later. The denial keeps its policy and its numbers and only stops counting as precedent, a
+  distinction that is expressible because the decision and its standing are different things here.
+- **`GRANTED_BY`**: who granted the exception, which is what makes it something a person did rather
+  than a flag on a row.
 
 ```cypher
 // an exception marks a denial; it never deletes it
 WHERE NOT EXISTS { (:Exception)-[:EXCEPTION_TO]->(d) }
 ```
 
-Times are Neo4j `datetime` values, so a policy's window is a temporal comparison the database
-evaluates, and precedent ages out on its own instead of piling up forever. `$windowMonths` is read
-off the `Policy` node, so the months a run reports and the months the Cypher counts over are the
-same number, and moving the window means editing `seed.json`.
+Two things hold the model together:
 
-Cypher goes straight to the `Driver` bean Spring Boot auto-configures from `spring.neo4j.*`, and
-`GraphSeeder` `MERGE`s `src/main/resources/seed.json` at startup on stable ids, so starting the app
-ten times leaves the graph exactly as it was.
+- **Time is data**: dates are Neo4j `datetime` values, so a policy's window is a comparison the
+  database evaluates and precedent ages out on its own. `$windowMonths` is read off the `Policy`
+  node, so the months a run reports and the months the Cypher counts over are the same number, and
+  moving the window means editing `seed.json`.
+- **Seeding is idempotent**: `GraphSeeder` `MERGE`s `src/main/resources/seed.json` at startup on
+  stable ids, so starting the app ten times leaves the graph exactly as it was. Cypher goes straight
+  to the `Driver` bean Spring Boot auto-configures from `spring.neo4j.*`.
 
-## Three Hops From One Decision
+## Walking Outward From One Decision
 
 A listing is what a system of record gives you. What the relationships add is that any one decision
 can be walked outward: to the policy that decided it, to the exception that set it aside, and to
@@ -100,7 +96,7 @@ RETURN c.name, a.requestedAmount, applied.observed, applied.threshold, d.decided
 ORDER BY d.decidedAt DESC
 ```
 
-## Who Decided, as a Traversal
+## Querying Underwriters
 
 Both ends are nodes, so the claim the demo makes out loud is a query rather than a sentence on a
 slide. Every run prints it, and it is why `Underwriter` is a node this example reads from as often
@@ -129,28 +125,34 @@ sentence it makes is a walk rather than a property read twice. The same names al
 `Exception` node itself, as a `grantedBy` string property for the console to print directly, since
 a property value cannot be joined the way a relationship can.
 
-## The Exception, and What Happens Without It
+## How an Exception Works
 
-An exception is an underwriter's judgement that a standing denial should stop counting against the
-company, and it leaves the decision itself untouched. `C-1123` is the shape this is built for: it
-clears every measurement and has three denials on file from older, larger requests, one of which a
-second underwriter has already excepted. Two still count, which is exactly the line Repeat Denial
-Escalation draws, so the numbers say yes and the record says wait, and both an approval and a
-denial are correct outcomes from there. An approval records the line it went past, via
-`WEIGHED_PAST`, which is the only place a person and a policy meet in the graph as a traversal
-rather than a tally kept in Java.
+- **What it is**: an underwriter's judgement that a standing denial should stop counting against the
+  company. The decision itself is left untouched.
+- **What it changes**: only what the next run reads. Today's denial goes on the pile and an older one
+  comes off it, so the count a future run sees holds steady instead of climbing, on a company nobody
+  re-measured.
+- **Who grants it**: the underwriter reading today's file. A verdict can carry an `exception` naming
+  one of the denials it was shown, and the run writes it as its own statement.
+- **Why it is a separate write**: deciding today's file and reweighing the record are different
+  judgements, so a run can deny today's application while setting a year-old denial aside in the
+  same breath. The file was measured before anybody read it, so granting an exception leaves today's
+  answer exactly as it was.
+- **Seeded or granted**: both land in the same listing, and a `source` property on the `Exception`
+  node tells them apart. A verdict that names a denial it was never shown gets that exception
+  dropped instead of written.
 
-Granting an exception is the same judgement made in front of you, on the write side rather than the
-read side: a verdict can carry an `exception` naming one of the denials it was shown, and the run
-writes it as its own statement. Deciding today's file and reweighing the record are separate calls,
-so a run can deny today's application while setting an older denial aside in the same breath. The
-file was assembled and measured before anybody read it, so granting the exception leaves today's
-answer exactly as it was. What it changes is what the next run reads: today's denial goes on the
-pile and an older one comes off it, so the count a future run sees holds steady instead of
-climbing, on a company nobody re-measured. Both seeded and granted exceptions land in the same
-listing, and a `source` property on the `Exception` node tells them apart. Whether a run grants one
-at all is the underwriter's call; a verdict that names a denial it was never shown gets that
-exception dropped instead of written.
+### C-1123, the file this is built for
+
+- **Measurements**: clears every line.
+- **History**: three denials from older, larger requests, one of which a second underwriter has
+  already excepted. Two still count.
+- **Why it sits on the line**: two standing denials is exactly where Repeat Denial Escalation draws.
+  The numbers say yes and the record says wait, so both an approval and a denial are correct
+  outcomes from there. An approval records the line it went past, via `WEIGHED_PAST`, which is the
+  only place a person and a policy meet in the graph as a traversal rather than a tally kept in Java.
+
+### Removing the exception
 
 Take the exception away and every other fact about the company stays put:
 
@@ -172,7 +174,7 @@ One relationship is the difference between a file that sits at the line and a fi
 and no rule changed to do it. That is what a decision trace holds that a rule cannot: the rule says
 what generally happens, and the trace says what was allowed to happen in one case, and why.
 
-## Inspecting the Graph
+## Querying the Graph Directly
 
 `CALL db.schema.visualization()` is the wrong first query. It draws one node per label with its
 constraints and indexes, not the actual `Decision` nodes you have written, so clicking one in Neo4j
@@ -213,6 +215,6 @@ RETURN e.exceptionId, e.source, coalesce(u.name, e.grantedBy) AS grantedBy,
 ORDER BY e.grantedAt
 ```
 
-The company-scoped trace query under "Three Hops From One Decision" above and the two read-back
-queries under "Who Decided, as a Traversal" are the same kind of query, just already introduced
-where the console output they mirror is explained.
+The company-scoped trace query under "Walking Outward From One Decision" above and the two read-back
+queries under "Querying Underwriters" are the same kind of query, just already introduced where the
+console output they mirror is explained.

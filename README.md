@@ -139,7 +139,25 @@ recording what came back, both of the latter outside the tool-calling loop so th
 re-enters either of them per tool round trip. An agent that wants only the context registers
 `PrecedentAdvisor` and stops there.
 
-## The Graph
+## Why a Graph: Precedent Is a Traversal
+
+Nothing the underwriter needs to know is a field on the company. Every read that matters is several
+hops out, and each hop is what the graph is here to buy:
+
+- **Standing precedent: derived at read time.** How many denials still count against a company is
+  two hops from the company, filtered by the exceptions hanging off each denial. The count is
+  computed on every read, so a new decision changes the answer on its own.
+- **Lineage: variable length, in one query.** `ESCALATED_FROM` read backwards returns everything a
+  denial has driven since, at any depth, because a decision that cited a denial can itself be cited.
+  The traversal answers what this decision has driven, which is a question about the decisions that
+  came after it.
+- **Cross-entity joins: facts that span several nodes.** Which underwriter approves past which line
+  joins a person to a policy through decisions that belong to neither of them, and who set aside
+  whose denial spans three nodes at once. Each is a sentence the graph assembles from the record.
+- **Time: a comparison the database makes.** A policy's window is a `datetime` bound inside the
+  same traversal, so precedent ages out on its own as the window slides.
+
+This is the schema those walks run over:
 
 ```
 (Company)-[:SUBMITTED]->(LoanApplication)<-[:ABOUT]-(Decision)-[:APPLIED_POLICY]->(Policy)

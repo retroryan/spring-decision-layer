@@ -8,16 +8,16 @@
 | Debt to Income Limit | `(currentDebt + requestedAmount) / annualIncome` against 40% |
 | Repeat Denial Escalation | standing denials in the last 12 months against 2 |
 
-These are guidance the underwriter weighs, and the underwriter, not the policy, is the one who
-answers for the outcome. Each measurement comes back as above the line or below the line, and what
-that number ought to persuade is a matter of judgement. A number below the line only gives the
-underwriter a reason to deny; it never forces the decision, and a file that clears every line can
-still be denied on the pattern in its history. Thresholds are properties on `Policy` nodes,
-queryable next to the decisions checked against them. The comparisons are Java.
-
-The requested amount counts against the company, so the number you type does real work. Repeat
-Denial Escalation is the one policy that exists only because of memory, and the only one carrying a
-`windowMonths` property.
+- **Guidance, not gates**: the underwriter weighs these, and the underwriter, not the policy, answers
+  for the outcome. Each measurement comes back as above the line or below the line, and what that
+  number ought to persuade is a matter of judgement.
+- **Below the line is a reason, never a verdict**: it gives the underwriter grounds to deny, and a
+  file that clears every line can still be denied on the pattern in its history.
+- **Thresholds live on `Policy` nodes**: queryable next to the decisions checked against them. The
+  comparisons are Java.
+- **The amount you type does real work**: the requested amount counts against the company. Repeat
+  Denial Escalation is the one policy that exists only because of memory, and the only one carrying a
+  `windowMonths` property.
 
 ## The Underwriters
 
@@ -30,21 +30,19 @@ the console is the same node the decision is joined to.
 | U-WHITFIELD | Dana Whitfield | Commercial Underwriter | 6 | growth-minded, backs a clean record |
 | U-RAMAN | Priya Raman | Senior Underwriter | 11 | splits the difference, weighs the record |
 
-The disposition is a paragraph in `seed.json` written as a person rather than as a temperature
-setting, and it is what goes in the prompt. It replaces a sampling knob that Sonnet 5 no longer
-exposes: `temperature`, `top_p`, and `top_k` are removed on `claude-sonnet-5`, and sending one
-returns a 400.
-
-Who is on duty is drawn from the company id and the requested amount rather than at random, so
-running the same application again puts it in front of the same person. That is deliberate: the
-only thing that changes between two runs of the same application is the precedent that arrived in
-between, and swapping underwriters between runs would blur which of the two, the person or the
-precedent, actually moved the outcome. Different applications still reach different people, which
-is where the spread between companies comes from.
-
-The persona is appended to the user message beside the facts; the system prompt stays fixed,
-holding only the role and how the fields are to be filled in. A system prompt that changes per run
-is a prompt cache that misses per run.
+- **Disposition instead of temperature**: the disposition is a paragraph in `seed.json` written as a
+  person rather than as a sampling setting, and it is what goes in the prompt. It replaces a knob
+  Sonnet 5 no longer exposes: `temperature`, `top_p`, and `top_k` are removed on `claude-sonnet-5`,
+  and sending one returns a 400.
+- **Assignment is deterministic**: who is on duty is drawn from the company id and the requested
+  amount rather than at random, so running the same application again puts it in front of the same
+  person. The only thing that changes between two runs of the same application is the precedent that
+  arrived in between, and swapping underwriters between runs would blur which of the two, the person
+  or the precedent, actually moved the outcome. Different applications still reach different people,
+  which is where the spread between companies comes from.
+- **The persona rides on the user message**: appended beside the facts, while the system prompt stays
+  fixed, holding only the role and how the fields are to be filled in. A system prompt that changes
+  per run is a prompt cache that misses per run.
 
 ## The Companies
 
@@ -57,26 +55,24 @@ Invented, and picked so that each one puts a different kind of pressure on the u
 | C-1096 | Northgate Framing | 47 | 400,000 | 2,200,000 | credit score below the line |
 | C-1123 | Summit Ironworks | 78 | 250,000 | 3,000,000 | every number clear, sitting on the escalation line |
 
-`C-1042` owes 35.5% of its income on its own, which is above the line; the $250,000 being asked for
-puts it at 48%. `C-1096` is denied on every run in practice, so after a few runs the credit score
-stops being the only thing below the line: repeat denials add a second reason. That extra weight
-lifts on its own once those denials fall outside the twelve-month window, or after the reset query
-below.
+- **`C-1042`**: owes 35.5% of its income on its own, which is above the line. The $250,000 being asked
+  for puts it at 48%.
+- **`C-1096`**: denied on every run in practice, so after a few runs the credit score stops being the
+  only thing below the line and repeat denials add a second reason. That extra weight lifts on its own
+  once those denials fall outside the twelve-month window, or after the reset query below.
+- **`C-1123`**: the interesting one. Its numbers clear comfortably and it has three denials on file
+  from older, larger requests, one of which was excepted five months ago. Two still count, which is
+  exactly where Repeat Denial Escalation says to stop, so the only thing below the line is the
+  history. Approving means going past a line and saying so on the record. Denying a file whose every
+  number clears is defensible too, and which one happens is the underwriter's call. See
+  [`docs/graph.md`](graph.md#how-an-exception-works) for how an exception changes that count.
 
-`C-1123` is the interesting one. Its numbers clear comfortably and it has three denials on file
-from older, larger requests, one of which was excepted five months ago. Two still count, which is
-exactly where Repeat Denial Escalation says to stop, so the only thing below the line is the
-history. Approving means going past a line and saying so on the record. Denying a file whose every
-number clears is defensible too, and which one happens is the underwriter's call. See
-[`docs/graph.md`](graph.md#the-exception-and-what-happens-without-it) for how an exception changes
-that count.
-
-## What Comes Back
+## The Verdict Record
 
 The answer is a Java record, and Anthropic's `output_config.format` is what makes it valid by
-construction. Spring AI generates the schema from `LoanVerdict`, and because
-`AnthropicChatOptions` implements `StructuredOutputChatOptions`, the schema goes on the wire as
-`output_config.format` rather than being asked for in the prompt.
+construction. Spring AI generates the schema from `LoanVerdict`, and because `AnthropicChatOptions`
+implements `StructuredOutputChatOptions`, the schema goes on the wire as `output_config.format`
+rather than being asked for in the prompt.
 
 | Field | What it carries |
 | --- | --- |
@@ -88,25 +84,25 @@ construction. Spring AI generates the schema from `LoanVerdict`, and because
 | `confidence` | `CLEAR` or `BORDERLINE`, so the console can show that a close call was close |
 | `exception` | null on most runs; when present, a standing denial this underwriter is setting aside, with the reasoning for it |
 
-`decidingPolicyKey` is nullable on purpose. A denial reached on the pattern in a file rather than on
-a number has no line to point at, and the console says so instead of naming a policy the
-underwriter did not choose.
+Three of those fields carry more than the table can hold:
 
-`exception` is the other nullable one, and it is the only field that reaches back before today's
-application. It names a denial from before that should stop counting, which is why it sits beside
-the outcome rather than inside it: a run can deny and set an older denial aside in the same breath,
-and the two claims are written by two separate statements.
-
-`confidence` earns its place on a file that misses a line by a little, where judgement settles the
-answer, not arithmetic. `C-1077`, a company with nothing on file, asking for enough to put its
-debt-to-income at 41.3% against a 40% limit with an otherwise clean record, has come back both
-`APPROVED (borderline)` and `DENIED (borderline)` on different runs, with the same person reading
-the same numbers. That is what an underwriter does that a decision table cannot. `BORDERLINE` is
-the model saying so out loud, so a viewer who gets two different answers to the same command sees
-judgement at work rather than suspecting a bug. A margin like that 41.3% holds still across runs
-where a count keeps moving: it reads the same on the tenth run, while an escalation count climbs
-under you, because each run's own denial becomes precedent for the next one. That ratchet is what
-makes a file sitting exactly at a line a poor fixture to run repeatedly.
+- **`decidingPolicyKey` is nullable on purpose**: a denial reached on the pattern in a file rather
+  than on a number has no line to point at, and the console says so instead of naming a policy the
+  underwriter did not choose.
+- **`exception` is the only field that reaches back before today's application**: it names a denial
+  from before that should stop counting, which is why it sits beside the outcome rather than inside
+  it. A run can deny and set an older denial aside in the same breath, and the two claims are written
+  by two separate statements.
+- **`confidence` earns its place on a file that misses a line by a little**, where judgement settles
+  the answer and not arithmetic. `C-1077`, a company with nothing on file, asking for enough to put
+  its debt-to-income at 41.3% against a 40% limit with an otherwise clean record, has come back both
+  `APPROVED (borderline)` and `DENIED (borderline)` on different runs, with the same person reading
+  the same numbers. That is what an underwriter does that a decision table cannot. `BORDERLINE` is the
+  model saying so out loud, so a viewer who gets two different answers to the same command sees
+  judgement at work rather than suspecting a bug. A margin like that 41.3% holds still across runs
+  where a count keeps moving: it reads the same on the tenth run, while an escalation count climbs
+  under you, because each run's own denial becomes precedent for the next one. That ratchet is what
+  makes a file sitting exactly at a line a poor fixture to run repeatedly.
 
 Thinking is turned off in `DecisionTraceAdvisor` rather than in `application.yaml`. Sonnet 5 thinks
 adaptively unless told otherwise, thinking interleaves with the answer rather than finishing before
