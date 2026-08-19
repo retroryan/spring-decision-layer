@@ -33,6 +33,7 @@ build/
 .vscode/
 
 shell.log
+test-results/
 
 ### Env ###
 .env

@@ -96,6 +96,12 @@ who has set aside whose denial. Both are walks between nodes, rather than counts
 
 ## The Advisor Chain: Reading Precedent, Recording Decisions
 
+Precedent, in this demo, is not a rule. It is the record of what was actually decided before: the
+denials still standing against this specific company, each one carrying the number it was measured
+against and whether it was later set aside. A rule says what should happen in general; precedent is
+what the bank has already done to this company in particular, and it is what the underwriter reads
+before deciding again.
+
 Spring AI models a chat interaction as a chain of `CallAdvisor` beans wrapped around the actual
 model call: each advisor sees the request on its way in, can rewrite it, and sees the response on
 its way out, before it reaches whatever called the chain. Chat memory is usually one of these
@@ -138,6 +144,33 @@ architecture as well: chat memory outermost, then the graph reading in, then the
 recording what came back, both of the latter outside the tool-calling loop so the loop never
 re-enters either of them per tool round trip. An agent that wants only the context registers
 `PrecedentAdvisor` and stops there.
+
+## Configuring the Advisors
+
+Nothing about `PrecedentAdvisor` and `DecisionTraceAdvisor` is wired up by hand at the call site.
+Both are ordinary Spring beans, and what governs where each one sits in the chain and what it sees
+on a given call is a small set of mechanisms, not a line-by-line assembly in `LoanOfficer`:
+
+- **Registration: a bean, not a builder call.** Both advisors are `@Component`-annotated classes.
+  Spring constructs them once, with `LoanGraph` and `PolicyEngine` injected in, and `LoanOfficer`
+  takes them as constructor parameters and passes them straight to `.defaultAdvisors(...)` alongside
+  `MessageChatMemoryAdvisor`.
+- **Order: a method, not a position in the list.** Each advisor overrides `getOrder()` rather than
+  relying on where it appears in `.defaultAdvisors(...)`. `PrecedentAdvisor` returns
+  `ToolCallingAdvisor.DEFAULT_ORDER - 2` and `DecisionTraceAdvisor` returns `DEFAULT_ORDER - 1`, which
+  is what actually keeps both outside the tool-calling loop: an advisor placed inside it would read
+  the graph, or write to it, once per tool round trip instead of once per call.
+- **Per-call parameters: passed in, not held on the bean.** `PrecedentAdvisor.COMPANY_ID` and
+  `REQUESTED_AMOUNT` are not fields; `LoanOfficer` supplies them per call with
+  `.advisors(a -> a.param(...))`, so the one bean instance serves every application without being
+  rebuilt or holding state between them.
+- **The model: pinned in configuration, not left to the starter default.** `application.yaml` sets
+  `spring.ai.anthropic.chat.model` to `claude-sonnet-5` explicitly, since this is the model reading
+  what `PrecedentAdvisor` assembled and deciding the loan that gets written back.
+- **The lookback window: a graph property, not a constant.** How far back `PrecedentAdvisor` looks
+  for standing denials is read off each `Policy` node's own window property through
+  `PolicyEngine.denialWindowMonths(...)`, so widening or narrowing it is an edit to the graph, not a
+  redeploy.
 
 ## Why a Graph: Precedent Is a Traversal
 
@@ -185,3 +218,24 @@ was decided on, on file.
   similarity search, how the layer generalizes to more agents, what the demo deliberately leaves
   out, how the transcript and the decision trace differ though both live in Neo4j, and a
   file-by-file map of the code.
+
+## Running the Full Test Matrix
+
+`./run.sh` answers one application at a time. `test-all-companies.sh` answers many, in an order
+chosen so that a denial written by one case is standing precedent for the next:
+
+```shell
+./test-all-companies.sh
+```
+
+By default it resets the graph to the seeded baseline (asking first), then runs fifteen loan cases
+across all four companies, an amount that clears every policy and one that breaks debt to income
+for each, plus immediate repeats on `C-1042` and `C-1123` so a denial just written becomes
+precedent for the very next run instead of for some later one. Three more cases check the error
+paths: an unknown company id, an unparseable amount, and no arguments at all.
+
+`--tier boundary` drops the repeats, twelve cases with no dependence on run order. `--tier quick`
+drops the boundary cases too, one documented run per company. `--no-reset` leaves the graph as it
+is instead of asking to wipe it, `--skip-errors` drops the three non-loan cases, and `--yes` skips
+the reset prompt for an unattended run. Every case's console output and a `summary.tsv` land under
+`test-results/<timestamp>/`, gitignored, since each run costs a real Anthropic call.
