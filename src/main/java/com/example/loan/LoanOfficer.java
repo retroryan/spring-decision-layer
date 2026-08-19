@@ -10,6 +10,7 @@ import org.springframework.ai.chat.memory.ChatMemory;
 import org.springframework.ai.chat.memory.MessageWindowChatMemory;
 import org.springframework.ai.chat.memory.repository.neo4j.Neo4jChatMemoryRepository;
 import org.springframework.ai.chat.messages.Message;
+import org.springframework.ai.chat.model.ChatModel;
 import org.springframework.stereotype.Component;
 
 /**
@@ -65,6 +66,8 @@ class LoanOfficer {
 
 	private final ChatClient chatClient;
 
+	private final ChatClient followUpClient;
+
 	private final ChatMemory chatMemory;
 
 	/**
@@ -73,7 +76,7 @@ class LoanOfficer {
 	 * bean, and an agent that wants the context without the recording registers the first of the
 	 * two and stops there.
 	 */
-	LoanOfficer(ChatClient.Builder builder, PrecedentAdvisor precedentAdvisor,
+	LoanOfficer(ChatClient.Builder builder, ChatModel chatModel, PrecedentAdvisor precedentAdvisor,
 			DecisionTraceAdvisor decisionTraceAdvisor,
 			Neo4jChatMemoryRepository chatMemoryRepository) {
 
@@ -84,6 +87,17 @@ class LoanOfficer {
 		this.chatClient = builder.defaultSystem(SYSTEM)
 			.defaultAdvisors(MessageChatMemoryAdvisor.builder(this.chatMemory).build(),
 					precedentAdvisor, decisionTraceAdvisor)
+			.build();
+
+		// A separate client for follow-up questions, built straight off the ChatModel rather than
+		// mutated from this.chatClient: PrecedentAdvisor and DecisionTraceAdvisor are baked into
+		// that one and cannot be un-registered, and both require the COMPANY_ID/REQUESTED_AMOUNT
+		// params and file context that only the original decision provides. Chat memory is the one
+		// advisor a follow-up needs, and it is the same instance, so it reads the transcript the
+		// first client just wrote.
+		this.followUpClient = ChatClient.builder(chatModel)
+			.defaultSystem(SYSTEM)
+			.defaultAdvisors(MessageChatMemoryAdvisor.builder(this.chatMemory).build())
 			.build();
 	}
 
@@ -114,6 +128,21 @@ class LoanOfficer {
 	 */
 	List<Message> transcript(String conversationId) {
 		return this.chatMemory.get(conversationId);
+	}
+
+	/**
+	 * A second turn on the same conversation, with none of the file re-supplied. This is the whole
+	 * point of chat memory: the verdict, the facts it was measured against, and the persona reading
+	 * the file are not passed in here, they are read back out of Neo4j by
+	 * {@link MessageChatMemoryAdvisor} under this id. An answer that makes sense is memory doing
+	 * something; an answer that does not is memory doing nothing, which is the demo either way.
+	 */
+	String followUp(String conversationId, String question) {
+		return this.followUpClient.prompt()
+			.user(question)
+			.advisors(advisor -> advisor.param(ChatMemory.CONVERSATION_ID, conversationId))
+			.call()
+			.content();
 	}
 
 }

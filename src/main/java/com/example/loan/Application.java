@@ -55,6 +55,7 @@ public class Application {
 			printPrecedentTrail(graph, companyId);
 			printApprovalsPastPolicies(graph);
 			printTranscript(officer.transcript(answer.conversationId()));
+			printFollowUp(officer, answer.conversationId());
 		};
 	}
 
@@ -191,6 +192,21 @@ public class Application {
 		for (Message message : transcript) {
 			System.out.printf("  %-10s %s%n", message.getMessageType(), oneLine(message.getText()));
 		}
+	}
+
+	/**
+	 * A second turn on the conversation the decision was just reached under, with nothing about
+	 * the file repeated. What makes this a demo of memory rather than of the model: the file, the
+	 * measurements, and the persona are not in this question, only in the transcript printed just
+	 * above it, and the answer below can only be grounded in that if chat memory actually carried
+	 * it forward.
+	 */
+	private void printFollowUp(LoanOfficer officer, String conversationId) {
+		String question = "In one sentence, what would have had to be different for the opposite "
+				+ "outcome?";
+		System.out.printf("%nFollow-up on the same conversation, nothing about the file repeated%n");
+		System.out.printf("  asked      %s%n", question);
+		System.out.printf("  answered   %s%n", oneLine(officer.followUp(conversationId, question)));
 	}
 
 	private static String oneLine(String text) {

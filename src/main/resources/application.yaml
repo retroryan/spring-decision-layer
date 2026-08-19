@@ -16,8 +16,11 @@ spring:
         # the graph. Two runs of the same command do not match word for word and are not meant to.
         #
         # No temperature, top_p or top_k, and not as a preference: they are removed on
-        # claude-sonnet-5 and sending one returns a 400. The variation between runs comes from
-        # which underwriter the run draws, which is a Cypher read rather than a sampling knob.
+        # claude-sonnet-5 and sending one returns a 400. Nothing is lost by their absence. What
+        # differs between two runs of the same command is the precedent the first run wrote into
+        # the graph, which is a read rather than a sampling knob, and the underwriter is drawn
+        # from the application rather than at random so that precedent is the only thing that
+        # moved.
         model: claude-sonnet-5
 
 # This module's own setting, not Spring's. spring.neo4j.* configures the Driver bean above but

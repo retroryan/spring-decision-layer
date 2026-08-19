@@ -12,15 +12,31 @@ import org.jspecify.annotations.Nullable;
  * The two enums are the only guardrails on the outcome: a schema that names its cases cannot
  * come back with a third one, which is cheaper than a Java check that rejects it afterwards.
  * {@code decidingPolicyKey} is the one nullable component, because a denial reached on the
- * pattern in a file rather than on a number has no line to point at.
+ * pattern in a file rather than on a number has no line to point at. {@code exception} is the
+ * other: null on most runs, because most runs decide today's file and nothing more.
  */
 record LoanVerdict(Outcome outcome, String reason, @Nullable String decidingPolicyKey,
-		List<String> citedDecisionIds, String explanation, Confidence confidence) {
+		List<String> citedDecisionIds, String explanation, Confidence confidence,
+		@Nullable Exception exception) {
 
 	enum Outcome {
 
 		APPROVED, DENIED
 
+	}
+
+	/**
+	 * A judgement about the record rather than a device for unblocking today's answer: an
+	 * underwriter may deny today and still decide that an older denial should stop counting. It
+	 * is independent of {@link #outcome}, which is why it is its own nullable component rather
+	 * than something folded into a denial's fields.
+	 *
+	 * @param decisionId the standing denial being set aside, which has to be one of the ids the
+	 * facts block listed as still counting; {@link DecisionTraceAdvisor} drops anything else
+	 * rather than writing a node with nothing real to point at
+	 * @param justification the underwriter's own reasoning for setting it aside
+	 */
+	record Exception(String decisionId, String justification) {
 	}
 
 	/**

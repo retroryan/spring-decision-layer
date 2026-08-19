@@ -27,6 +27,7 @@ import org.springframework.util.StringUtils;
  *                                                       (Decision)-[:ESCALATED_FROM]-&gt;(Decision)
  *                                                       (Decision)-[:DECIDED_BY]-&gt;(Underwriter)
  *                                  (Exception)-[:EXCEPTION_TO]-&gt;(Decision)
+ *                                  (Exception)-[:GRANTED_BY]-&gt;(Underwriter)
  * </pre>
  *
  * APPLIED_POLICY and WEIGHED_PAST carry the same two properties and point at the same node, and
@@ -82,6 +83,21 @@ class LoanGraph {
 			MATCH (u:Underwriter)<-[:DECIDED_BY]-(:Decision)-[:WEIGHED_PAST]->(p:Policy)
 			RETURN u.name AS name, p.name AS policyName, count(*) AS approvals
 			ORDER BY approvals DESC, name, policyName
+			""";
+
+	/**
+	 * The read back that stops Underwriter being a node this demo only ever writes to: who set
+	 * aside whose denial. Both hops are relationships and both ends are nodes, so the sentence is
+	 * a traversal rather than a traversal joined to a string property, even though the same names
+	 * already sit on {@code grantedBy} and on the decision's own reason for the console that
+	 * cannot join anything.
+	 */
+	private static final String FIND_EXCEPTION_GRANTS = """
+			MATCH (grantor:Underwriter)<-[:GRANTED_BY]-(e:Exception)-[:EXCEPTION_TO]->(d:Decision)
+			      -[:DECIDED_BY]->(decider:Underwriter)
+			RETURN grantor.name AS grantedBy, decider.name AS decidedBy, d.decisionId AS decisionId,
+			       e.justification AS justification
+			ORDER BY e.grantedAt
 			""";
 
 	private static final String LOAD_POLICIES = """
@@ -185,6 +201,27 @@ class LoanGraph {
 			RETURN d.decisionId AS decisionId
 			""";
 
+	/**
+	 * A judgement about the record, written as its own statement rather than folded into
+	 * {@link #SAVE_DECISION}: it is independent of the outcome the run just reached, and a run
+	 * that grants none never calls this at all. The denial is MATCHed rather than MERGEd, for the
+	 * same reason the seeder uses MATCH on {@code MERGE_EXCEPTION} for the same node: an exception
+	 * against a decisionId the graph does not hold is a broken graph, not a judgement call, and a
+	 * dangling node would hide it rather than fail loudly.
+	 *
+	 * {@code source} is 'underwriter' here and 'seed' on the row {@link GraphSeeder} writes, which
+	 * is the one property that tells a granted exception apart from the one shipped in seed.json.
+	 */
+	private static final String GRANT_EXCEPTION = """
+			MATCH (d:Decision {decisionId: $decisionId})
+			MATCH (u:Underwriter {underwriterId: $underwriterId})
+			CREATE (e:Exception {exceptionId: $exceptionId, grantedBy: $grantedBy,
+			        justification: $justification, grantedAt: $at, source: 'underwriter'})
+			CREATE (e)-[:EXCEPTION_TO]->(d)
+			CREATE (e)-[:GRANTED_BY]->(u)
+			RETURN e.exceptionId AS exceptionId
+			""";
+
 	private final Driver driver;
 
 	/** Reads are routed to a follower where the cluster has one. Writes are not. */
@@ -242,6 +279,15 @@ class LoanGraph {
 		return read(FIND_APPROVALS_PAST_POLICIES, Map.of()).stream()
 			.map(record -> new UnderwriterApprovals(record.get("name").asString(),
 					record.get("policyName").asString(), record.get("approvals").asLong()))
+			.toList();
+	}
+
+	/** Who set aside whose denial. Empty until an underwriter has granted one. */
+	List<ExceptionGrant> findExceptionGrants() {
+		return read(FIND_EXCEPTION_GRANTS, Map.of()).stream()
+			.map(record -> new ExceptionGrant(record.get("grantedBy").asString(),
+					record.get("decidedBy").asString(), record.get("decisionId").asString(),
+					record.get("justification").asString()))
 			.toList();
 	}
 
@@ -352,6 +398,32 @@ class LoanGraph {
 					+ "written. Both are seeded from seed.json, so restart the app to reseed them.");
 		}
 		return written.get(0).get("decisionId").asString();
+	}
+
+	/**
+	 * Called only when the model granted one and {@link DecisionTraceAdvisor} has already
+	 * checked that {@code decisionId} was one of the denials sent in the facts block. Whoever
+	 * drew this run is who granted it, whatever the outcome the run itself reached.
+	 *
+	 * @param decisionId the standing denial being set aside
+	 * @param justification the underwriter's own reasoning, kept as a string beside the
+	 * {@code GRANTED_BY} edge for the same reason the seeded exception carries one: the console
+	 * has something to print without a second traversal
+	 * @param underwriter whoever drew this run
+	 */
+	void grantException(String decisionId, String justification, Underwriter underwriter) {
+		Map<String, Object> parameters = Map.of("decisionId", decisionId, "underwriterId",
+				underwriter.underwriterId(), "exceptionId", "X-" + shortId(), "grantedBy",
+				underwriter.name() + ", " + underwriter.title(), "justification", justification,
+				"at", ZonedDateTime.now());
+
+		List<Record> written = write(GRANT_EXCEPTION, parameters);
+		if (written.isEmpty()) {
+			throw new IllegalStateException("Nothing in the graph matched decision " + decisionId
+					+ " and underwriter " + underwriter.underwriterId() + ", so no exception was "
+					+ "granted. The decision should already exist: it was one of the denials sent "
+					+ "in this run's facts block.");
+		}
 	}
 
 	private List<Record> read(String cypher, Map<String, Object> parameters) {
