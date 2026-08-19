@@ -96,10 +96,10 @@ who has set aside whose denial. Both are walks between nodes, rather than counts
 
 ## The Advisor Chain: Reading Precedent, Recording Decisions
 
-Precedent, in this demo, is not a rule. It is the record of what was actually decided before: the
-denials still standing against this specific company, each one carrying the number it was measured
-against and whether it was later set aside. A rule says what should happen in general; precedent is
-what the bank has already done to this company in particular, and it is what the underwriter reads
+Precedent, in this demo, is the record of what was actually decided before: the denials still
+standing against this specific company, each one carrying the number it was measured against and
+whether it was later set aside. A rule describes what should happen in general. Precedent describes
+what the bank has actually done to this company already, and it is what the underwriter reads
 before deciding again.
 
 Spring AI models a chat interaction as a chain of `CallAdvisor` beans wrapped around the actual
@@ -147,30 +147,30 @@ re-enters either of them per tool round trip. An agent that wants only the conte
 
 ## Configuring the Advisors
 
-Nothing about `PrecedentAdvisor` and `DecisionTraceAdvisor` is wired up by hand at the call site.
-Both are ordinary Spring beans, and what governs where each one sits in the chain and what it sees
-on a given call is a small set of mechanisms, not a line-by-line assembly in `LoanOfficer`:
+`PrecedentAdvisor` and `DecisionTraceAdvisor` are ordinary Spring beans, and Spring wires them up
+automatically. A small set of mechanisms controls where each one sits in the chain and what it sees
+on a given call:
 
-- **Registration: a bean, not a builder call.** Both advisors are `@Component`-annotated classes.
-  Spring constructs them once, with `LoanGraph` and `PolicyEngine` injected in, and `LoanOfficer`
-  takes them as constructor parameters and passes them straight to `.defaultAdvisors(...)` alongside
-  `MessageChatMemoryAdvisor`.
-- **Order: a method, not a position in the list.** Each advisor overrides `getOrder()` rather than
-  relying on where it appears in `.defaultAdvisors(...)`. `PrecedentAdvisor` returns
-  `ToolCallingAdvisor.DEFAULT_ORDER - 2` and `DecisionTraceAdvisor` returns `DEFAULT_ORDER - 1`, which
-  is what actually keeps both outside the tool-calling loop: an advisor placed inside it would read
-  the graph, or write to it, once per tool round trip instead of once per call.
-- **Per-call parameters: passed in, not held on the bean.** `PrecedentAdvisor.COMPANY_ID` and
-  `REQUESTED_AMOUNT` are not fields; `LoanOfficer` supplies them per call with
-  `.advisors(a -> a.param(...))`, so the one bean instance serves every application without being
-  rebuilt or holding state between them.
-- **The model: pinned in configuration, not left to the starter default.** `application.yaml` sets
-  `spring.ai.anthropic.chat.model` to `claude-sonnet-5` explicitly, since this is the model reading
-  what `PrecedentAdvisor` assembled and deciding the loan that gets written back.
-- **The lookback window: a graph property, not a constant.** How far back `PrecedentAdvisor` looks
-  for standing denials is read off each `Policy` node's own window property through
-  `PolicyEngine.denialWindowMonths(...)`, so widening or narrowing it is an edit to the graph, not a
-  redeploy.
+- **Registration happens through Spring's component scanning.** Both advisors are
+  `@Component`-annotated classes. Spring constructs them once, with `LoanGraph` and `PolicyEngine`
+  injected in, and `LoanOfficer` takes them as constructor parameters and passes them straight to
+  `.defaultAdvisors(...)` alongside `MessageChatMemoryAdvisor`.
+- **Order comes from an explicit method.** Each advisor overrides `getOrder()` to fix its place in
+  the chain. `PrecedentAdvisor` returns `ToolCallingAdvisor.DEFAULT_ORDER - 2` and
+  `DecisionTraceAdvisor` returns `DEFAULT_ORDER - 1`, and that is what keeps both outside the
+  tool-calling loop: an advisor placed inside it would read the graph, or write to it, once per tool
+  round trip, when the intent is once per call.
+- **Per-call parameters travel with the call, not the bean.** `LoanOfficer` supplies
+  `PrecedentAdvisor.COMPANY_ID` and `REQUESTED_AMOUNT` at call time with
+  `.advisors(a -> a.param(...))`, so one bean instance serves every application, and each call
+  carries its own state.
+- **The model is pinned explicitly in configuration.** `application.yaml` sets
+  `spring.ai.anthropic.chat.model` to `claude-sonnet-5`, since this is the model reading what
+  `PrecedentAdvisor` assembled and deciding the loan that gets written back.
+- **The lookback window lives on the graph.** How far back `PrecedentAdvisor` looks for standing
+  denials is read off each `Policy` node's own window property through
+  `PolicyEngine.denialWindowMonths(...)`, so widening or narrowing it means editing the graph
+  directly, with no code change or redeploy required.
 
 ## Why a Graph: Precedent Is a Traversal
 

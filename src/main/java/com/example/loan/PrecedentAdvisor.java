@@ -158,6 +158,14 @@ class PrecedentAdvisor implements CallAdvisor {
 	 * applications still reach different people, which is where the variation between companies
 	 * comes from.
 	 *
+	 * The seed goes through {@link #avalanche(long)} before the modulo. Combining the two hashes
+	 * with a plain {@code 31 * a + b} leaves nearby inputs close together, and the seeded
+	 * companies here (C-1042, C-1077, C-1096, C-1123) are exactly that: near-sequential IDs whose
+	 * hash codes land close enough that, against a roster this small, most of them survived the
+	 * modulo in the same bucket. Avalanching first means a one-bit difference in either input
+	 * flips roughly half the output bits, so the roster spreads evenly regardless of how close the
+	 * inputs are.
+	 *
 	 * String.hashCode is specified rather than implementation defined and FIND_UNDERWRITERS is
 	 * ordered by name, so the same application draws the same underwriter on any JVM against any
 	 * seeded graph, which is what keeps the transcripts in the README honest.
@@ -168,8 +176,19 @@ class PrecedentAdvisor implements CallAdvisor {
 					+ "to put this file in front of. They are seeded from seed.json, so restart "
 					+ "the app to seed them.");
 		}
-		int spread = 31 * companyId.hashCode() + Long.hashCode(requestedAmount);
-		return roster.get(Math.floorMod(spread, roster.size()));
+		long seed = (companyId.hashCode() * 0x9E3779B97F4A7C15L) ^ requestedAmount;
+		return roster.get((int) Math.floorMod(avalanche(seed), (long) roster.size()));
+	}
+
+	/**
+	 * MurmurHash3's 64-bit finalizer: three xor-shift/multiply rounds that spread a seed's bits
+	 * over the full 64 bits, so seeds that started close together (as {@link #draw} sees from the
+	 * near-sequential seeded company IDs) no longer collide once reduced by a small roster size.
+	 */
+	private static long avalanche(long seed) {
+		seed = (seed ^ (seed >>> 33)) * 0xff51afd7ed558ccdL;
+		seed = (seed ^ (seed >>> 33)) * 0xc4ceb9fe1a85ec53L;
+		return seed ^ (seed >>> 33);
 	}
 
 	/**

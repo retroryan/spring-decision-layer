@@ -23,6 +23,12 @@ spring:
         # moved.
         model: claude-sonnet-5
 
+        # Left at the starter's default (500) a verbose verdict gets cut off mid-string: the
+        # structured LoanVerdict JSON stops before its closing quote and Jackson throws
+        # UnexpectedEndOfInputException instead of a decision. Raised well past what a one-line
+        # reason, a signed two-or-three-sentence letter, and the rest of the fields need.
+        max-tokens: 4096
+
 # This module's own setting, not Spring's. spring.neo4j.* configures the Driver bean above but
 # has no database property, and spring.data.neo4j.database belongs to Spring Data Neo4j, which
 # is not on this classpath. Empty or unset means use the connection's home database, so an

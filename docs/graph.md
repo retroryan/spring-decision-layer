@@ -181,6 +181,25 @@ constraints and indexes, not the actual `Decision` nodes you have written, so cl
 Browser shows `name: "Decision"`, the label itself, rather than anything an underwriter said. These
 queries hit real data instead.
 
+Look up one company by its id, along with the applications it has submitted. Returning the path
+rather than a list of fields is what makes Browser draw it as a graph, company and applications as
+nodes, `SUBMITTED` as the edge between them, instead of a results table:
+
+```cypher
+MATCH p = (c:Company {companyId: 'C-1042'})-[:SUBMITTED]->(:LoanApplication)
+RETURN p
+```
+
+Look up the loan officers. The graph calls them `Underwriter`, not `LoanOfficer`: that name belongs
+to the Spring bean that talks to the model, and reusing it for the person who signs a decision would
+make one word mean two different things in the same sentence.
+
+```cypher
+MATCH (u:Underwriter)
+RETURN u.underwriterId, u.name, u.title, u.yearsOnTheJob, u.disposition
+ORDER BY u.name
+```
+
 See every decision on file, oldest first:
 
 ```cypher

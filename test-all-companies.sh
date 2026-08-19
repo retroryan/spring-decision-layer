@@ -5,6 +5,10 @@
 # above/below-the-line branch and the Repeat Denial Escalation history mechanic. Each case is a
 # real Spring Boot start, a real Anthropic call, and a real write to the Neo4j graph configured
 # in .env, so this costs model credits and takes real wall-clock time (mvnw start included).
+# Every run's console output streams live as it happens (and is also saved), with the headings
+# DecisionConsole already prints -- On duty for this run, Policies, as measured, and so on --
+# picked out in color so a demo audience can follow which section is on screen. Colors turn
+# themselves off automatically when stdout isn't a terminal (e.g. redirected to a file).
 #
 #   --tier quick     the four documented defaults only (one run per company)
 #   --tier boundary  quick + one amount that clears every policy and one that breaks debt-to-income
@@ -47,7 +51,7 @@ while [ "$#" -gt 0 ]; do
 		shift
 		;;
 	-h | --help)
-		sed -n '2,24p' "$0"
+		sed -n '2,26p' "$0"
 		exit 0
 		;;
 	*)
@@ -85,6 +89,26 @@ for required in ANTHROPIC_API_KEY NEO4J_URI NEO4J_PASSWORD; do
 	fi
 done
 
+# Only a terminal gets escape codes; a redirected run (or one piped into `tee full.log`) gets
+# plain text, and the per-case log files under test-results/ are always plain either way.
+if [ -t 1 ]; then
+	C_RESET=$'\033[0m'
+	C_BOLD=$'\033[1m'
+	C_BLUE=$'\033[34m'
+	C_CYAN=$'\033[36m'
+	C_GREEN=$'\033[32m'
+	C_RED=$'\033[31m'
+	C_YELLOW=$'\033[33m'
+else
+	C_RESET=""
+	C_BOLD=""
+	C_BLUE=""
+	C_CYAN=""
+	C_GREEN=""
+	C_RED=""
+	C_YELLOW=""
+fi
+
 RESULTS_DIR="test-results/$(date +%Y%m%d-%H%M%S)"
 mkdir -p "$RESULTS_DIR"
 SUMMARY="$RESULTS_DIR/summary.tsv"
@@ -121,8 +145,63 @@ reset_graph() {
 	echo "Reset done."
 }
 
+company_name() {
+	case "$1" in
+	C-1042) echo "Ridgeline Builders" ;;
+	C-1077) echo "Cornerstone Concrete" ;;
+	C-1096) echo "Northgate Framing" ;;
+	C-1123) echo "Summit Ironworks" ;;
+	*) echo "$1" ;;
+	esac
+}
+
+# 250000 -> 250,000. Left alone (no error) if it isn't all digits, which covers err-bad-amount's
+# deliberately unparseable amount.
+with_commas() {
+	case "$1" in
+	*[!0-9]*)
+		echo "$1"
+		return
+		;;
+	esac
+	echo "$1" | rev | sed -E 's/([0-9]{3})/\1,/g; s/,$//' | rev
+}
+
+# One heading per line printed, styled by matching it against DecisionConsole's own format
+# strings. If those change, this stops highlighting rather than mismatching, so a highlight is a
+# hint and the underlying text -- captured unstyled in the per-case log -- is still the record.
+hdr() { printf '%s▸ %s%s\n' "${C_BOLD}${C_BLUE}" "$1" "$C_RESET"; }
+approved_line() { printf '%s%s%s\n' "${C_BOLD}${C_GREEN}" "$1" "$C_RESET"; }
+denied_line() { printf '%s%s%s\n' "${C_BOLD}${C_RED}" "$1" "$C_RESET"; }
+flagged_line() { printf '%s%s%s\n' "${C_BOLD}${C_YELLOW}" "$1" "$C_RESET"; }
+
+format_sections() {
+	local line
+	while IFS= read -r line; do
+		case "$line" in
+		"Decision traces for "*) hdr "$line" ;;
+		"On duty for this run") hdr "$line" ;;
+		"Policies, as measured") hdr "$line" ;;
+		"Precedent trail, now that this decision is on file") hdr "$line" ;;
+		"Which underwriter approves past which line") hdr "$line" ;;
+		"Who has set aside whose denial") hdr "$line" ;;
+		"Transcript for this run, from Spring AI chat memory") hdr "$line" ;;
+		"Follow-up on the same conversation, nothing about the file repeated") hdr "$line" ;;
+		"APPROVED ("*) approved_line "$line" ;;
+		"DENIED ("*) denied_line "$line" ;;
+		"No company with id "*) flagged_line "$line" ;;
+		"No companies in the graph"*) flagged_line "$line" ;;
+		*"is not an amount"*) flagged_line "$line" ;;
+		*"has to be more than zero"*) flagged_line "$line" ;;
+		*) printf '%s\n' "$line" ;;
+		esac
+	done
+}
+
 # Extracts the one line this whole example exists to print (DecisionConsole.print), plus the
-# error-path messages, so the summary row means something without opening the log.
+# error-path messages, so the summary row means something without opening the log. Reads the
+# plain per-case log file, never the colored stream, so the regexes never have to skip escape
+# codes.
 outcome_of() {
 	local logfile="$1" line
 	line=$(grep -E '^(APPROVED|DENIED) \((clear|borderline)\)\.' "$logfile" | head -1)
@@ -143,21 +222,48 @@ outcome_of() {
 	echo "NO_VERDICT (check log)"
 }
 
+print_case_header() {
+	local num="$1" total="$2" label="$3" company="$4" amount="$5" desc rule
+	if [ -n "$company" ]; then
+		desc="$(company_name "$company") ($company) requesting \$$(with_commas "$amount")"
+	else
+		desc="no arguments -- Application's own defaults (C-1042, \$250,000)"
+	fi
+	rule="========================================================================"
+	echo
+	echo "${C_BOLD}${C_CYAN}${rule}${C_RESET}"
+	echo "${C_BOLD}${C_CYAN}Case $num/$total: $label -- $desc${C_RESET}"
+	echo "${C_BOLD}${C_CYAN}${rule}${C_RESET}"
+}
+
+print_case_footer() {
+	local label="$1" status="$2" outcome="$3" dur="$4"
+	echo "${C_BOLD}${C_CYAN}-- $label done: $status  $outcome  (${dur}s) --${C_RESET}"
+}
+
+# Streams live (so a demo audience watching the terminal sees each section as DecisionConsole
+# prints it) and tees the unstyled copy to disk at the same time; format_sections only touches
+# what reaches the terminal. pipefail (set at the top of this file) makes the if below see
+# ./run.sh's own exit status even though it isn't the last command in the pipe.
 run_case() {
-	local label="$1" logfile status start dur outcome
-	shift
+	local num="$1" total="$2" label="$3" company="${4:-}" amount="${5:-}"
+	local logfile status start dur outcome
+	shift 3
 	logfile="$RESULTS_DIR/$label.log"
+
+	print_case_header "$num" "$total" "$label" "$company" "$amount"
+
 	start=$SECONDS
-	echo "==> $label: ./run.sh $*"
-	if ./run.sh "$@" >"$logfile" 2>&1; then
+	if ./run.sh "$@" 2>&1 | tee "$logfile" | format_sections; then
 		status="ok"
 	else
 		status="nonzero-exit"
 	fi
 	dur=$((SECONDS - start))
 	outcome=$(outcome_of "$logfile")
+
 	printf '%s\t%s\t%s\t%ss\t%s\n' "$label" "$status" "$outcome" "$dur" "$logfile" >>"$SUMMARY"
-	echo "    $status  $outcome  (${dur}s)"
+	print_case_footer "$label" "$status" "$outcome" "$dur"
 }
 
 if [ "$DO_RESET" -eq 1 ]; then
@@ -183,23 +289,39 @@ CASES=(
 	"1123-compounded|C-1123|1000000|boundary"
 )
 
+SELECTED=()
 for entry in "${CASES[@]}"; do
 	IFS='|' read -r label company amount min_tier <<<"$entry"
 	if [ "$(tier_level "$min_tier")" -le "$SELECTED_LEVEL" ]; then
-		run_case "$label" "$company" "$amount"
+		SELECTED+=("$label|$company|$amount")
 	fi
 done
 
+TOTAL=${#SELECTED[@]}
 if [ "$DO_ERRORS" -eq 1 ]; then
-	run_case "err-unknown-company" C-9999 250000
-	run_case "err-bad-amount" C-1042 not-a-number
+	TOTAL=$((TOTAL + 3))
+fi
+
+CASE_NUM=0
+for entry in "${SELECTED[@]}"; do
+	IFS='|' read -r label company amount <<<"$entry"
+	CASE_NUM=$((CASE_NUM + 1))
+	run_case "$CASE_NUM" "$TOTAL" "$label" "$company" "$amount"
+done
+
+if [ "$DO_ERRORS" -eq 1 ]; then
+	CASE_NUM=$((CASE_NUM + 1))
+	run_case "$CASE_NUM" "$TOTAL" "err-unknown-company" C-9999 250000
+	CASE_NUM=$((CASE_NUM + 1))
+	run_case "$CASE_NUM" "$TOTAL" "err-bad-amount" C-1042 not-a-number
 	# No arguments falls back to Application's own defaults (C-1042, $250,000), so unlike the
 	# other two error cases this one does start the model and write a decision.
-	run_case "err-no-args"
+	CASE_NUM=$((CASE_NUM + 1))
+	run_case "$CASE_NUM" "$TOTAL" "err-no-args"
 fi
 
 echo
-echo "Results in $RESULTS_DIR"
+echo "${C_BOLD}Results in $RESULTS_DIR${C_RESET}"
 if command -v column >/dev/null 2>&1; then
 	{
 		printf 'case\tstatus\toutcome\ttime\tlog\n'
