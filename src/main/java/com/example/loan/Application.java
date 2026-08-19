@@ -3,6 +3,7 @@ package com.example.loan;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
+import java.util.Locale;
 
 import org.springframework.ai.chat.messages.Message;
 import org.springframework.boot.CommandLineRunner;
@@ -11,8 +12,9 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.context.annotation.Bean;
 
 /**
- * One loan application per run. Run it twice with the same arguments and the second run is
- * denied by a different policy, because the first run's decision is in the graph.
+ * One loan application per run. Run it twice with the same arguments and the second run reads
+ * the first run's decision as precedent, so what the underwriter is looking at has changed even
+ * though the arguments have not.
  */
 @SpringBootApplication
 public class Application {
@@ -80,7 +82,7 @@ public class Application {
 		for (PastDecision decision : decisions) {
 			System.out.printf("  %s  %-8s  $%,-10d %s%s%n", DATE.format(decision.decidedAt()),
 					decision.outcome(), decision.requestedAmount(),
-					decision.policyName() != null ? decision.policyName() : "every policy passed",
+					decision.policyName() != null ? decision.policyName() : "no policy named",
 					decision.excepted() ? "  (excepted, no longer counts)" : "");
 		}
 	}
@@ -89,8 +91,12 @@ public class Application {
 	 * The three hops, printed for each denial on file. A listing is what a system of record
 	 * gives you; this is what the relationships add to the same rows.
 	 *
-	 * Printed after the decision is written rather than before, so a denial that escalated shows
-	 * what it has just decided instead of leaving the third hop empty for one more run.
+	 * Printed after the decision is written rather than before, so a denial that was cited shows
+	 * what it has just driven instead of leaving the third hop empty for one more run.
+	 *
+	 * The third hop is a chain rather than a line, indented by how many citations away each
+	 * decision is. Run the same company enough times and the indentation grows, which is the
+	 * recursive traversal showing up in the output rather than in a comment about Cypher.
 	 */
 	private void printPrecedentTrail(LoanGraph graph, String companyId) {
 		List<PrecedentTrail> trail = graph.findPrecedentTrail(companyId);
@@ -102,29 +108,55 @@ public class Application {
 			System.out.printf("  %s  denied %s%n", denial.decisionId(),
 					DATE.format(denial.decidedAt()));
 			System.out.printf("    decided by   %s%n",
-					denial.policyName() != null ? denial.policyName() : "no policy on record");
+					denial.policyName() != null ? denial.policyName() : "no policy named");
 			System.out.printf("    exception    %s%n", denial.excepted()
 					? denial.grantedBy() + " -- " + denial.justification() : "none");
-			System.out.printf("    has decided  %s%n", denial.governed().isEmpty()
-					? "nothing yet" : String.join(", ", denial.governed()));
+			if (denial.governed().isEmpty()) {
+				System.out.printf("    has driven   nothing yet%n");
+				continue;
+			}
+			System.out.printf("    has driven%n");
+			for (PrecedentStep step : denial.governed()) {
+				System.out.printf("      %s%s%n", "  ".repeat((int) step.depth() - 1),
+						step.decisionId());
+			}
 		}
 	}
 
-	/** The checklist is the computed decision; the paragraph is the model's account of it. */
+	/**
+	 * The measurements are the bank's arithmetic; the verdict below them is the underwriter's
+	 * call on it. Printing both together is the point: the two can disagree now, and a denial
+	 * where everything measured above the line or an approval that went past one is the demo
+	 * rather than a bug.
+	 */
 	private void print(LoanAnswer answer) {
-		LoanDecision decision = answer.decision();
+		LoanVerdict verdict = answer.verdict();
 
-		System.out.println("\nPolicies");
-		for (PolicyResult result : decision.results()) {
+		System.out.println("\nPolicies, as measured");
+		for (PolicyResult result : answer.measurements()) {
 			// Wide enough for the longest policy name in seed.json, so the column lines up.
 			System.out.printf("  %-25s %s  (%s)%n", result.name() + ":",
-					result.passed() ? "PASS" : "FAIL", result.detail());
+					result.passed() ? "above the line" : "below the line", result.detail());
 		}
 
-		System.out.printf("%n%s. %s%n", decision.outcome(), decision.reason());
-		if (!answer.explanation().isBlank()) {
-			System.out.printf("%n  %s%n", answer.explanation().strip().replace("\n", "\n  "));
+		System.out.printf("%n%s (%s). %s%n", verdict.outcomeName(),
+				verdict.confidence().name().toLowerCase(Locale.ROOT), verdict.reason());
+		System.out.printf("  line crossed   %s%n", crossedLine(answer));
+		if (!verdict.explanation().isBlank()) {
+			System.out.printf("%n  %s%n", verdict.explanation().strip().replace("\n", "\n  "));
 		}
+	}
+
+	/**
+	 * The one sentence this whole example exists to print. An approval that names a line names
+	 * the line it was granted past, which is the fact a decision table has nowhere to put, and a
+	 * denial that names none was reached on judgement rather than on a number.
+	 */
+	private static String crossedLine(LoanAnswer answer) {
+		if (answer.crossed() == null) {
+			return "none, this was a judgement call on the file as a whole";
+		}
+		return "%s (%s)".formatted(answer.crossed().name(), answer.crossed().detail());
 	}
 
 	private void printTranscript(List<Message> transcript) {

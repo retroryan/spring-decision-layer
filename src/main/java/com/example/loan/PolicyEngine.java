@@ -3,14 +3,17 @@ package com.example.loan;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
-import java.util.stream.Stream;
 
 import org.springframework.stereotype.Component;
 
 /**
- * The bank's rules, as plain arithmetic. Nothing here reads the graph: the company, the denial
- * count, and the thresholds all arrive as arguments, so the rule set is testable without
- * storage.
+ * The bank's measurements, as plain arithmetic. Nothing here reads the graph and nothing here
+ * decides: the company, the denial count, and the thresholds all arrive as arguments, and what
+ * comes back is where each number sits against its threshold.
+ *
+ * Whether a number below the line should stop a loan is the underwriter's call, so it is not
+ * made here. What is made here is the measurement the underwriter is shown and the measurement
+ * the graph stores on the edge, which is why both cannot disagree about it.
  */
 @Component
 class PolicyEngine {
@@ -29,29 +32,18 @@ class PolicyEngine {
 		return require(policies, REPEAT_DENIAL_ESCALATION).windowMonths();
 	}
 
-	LoanDecision evaluate(Company company, long requestedAmount, long priorDenials,
+	/**
+	 * Every policy measured against one application, in the order the console prints them. No
+	 * ordering between them is meaningful any more: an earlier version ranked Repeat Denial
+	 * Escalation above the numeric policies to pick which one decided, and picking is exactly
+	 * what moved to the model.
+	 */
+	List<PolicyResult> measure(Company company, long requestedAmount, long priorDenials,
 			Map<String, Policy> policies) {
 
-		PolicyResult credit = creditScore(company, require(policies, MINIMUM_CREDIT_SCORE));
-		PolicyResult debt = debtToIncome(company, requestedAmount,
-				require(policies, DEBT_TO_INCOME_LIMIT));
-		Policy escalationPolicy = require(policies, REPEAT_DENIAL_ESCALATION);
-		PolicyResult escalation = escalation(priorDenials, escalationPolicy);
-
-		// Repeat Denial Escalation wins whenever it fires; otherwise the first failing numeric
-		// policy decided. The order of these two is behaviour, not presentation.
-		PolicyResult deciding = !escalation.passed() ? escalation
-				: Stream.of(credit, debt).filter(result -> !result.passed()).findFirst().orElse(null);
-
-		List<PolicyResult> results = List.of(credit, debt, escalation);
-
-		if (deciding == null) {
-			return new LoanDecision(LoanDecision.APPROVED, "All policies passed.", null, results,
-					priorDenials);
-		}
-		return new LoanDecision(LoanDecision.DENIED,
-				reasonFor(deciding, priorDenials, escalationPolicy.windowMonths()), deciding, results,
-				priorDenials);
+		return List.of(creditScore(company, require(policies, MINIMUM_CREDIT_SCORE)),
+				debtToIncome(company, requestedAmount, require(policies, DEBT_TO_INCOME_LIMIT)),
+				escalation(priorDenials, require(policies, REPEAT_DENIAL_ESCALATION)));
 	}
 
 	/** Thresholds are Policy nodes seeded from seed.json, so either can be edited away. */
@@ -63,16 +55,6 @@ class PolicyEngine {
 					+ "restart: git checkout src/main/resources/seed.json");
 		}
 		return policy;
-	}
-
-	/** The window is named in the reason too, so a stored reason still says what it counted. */
-	private String reasonFor(PolicyResult deciding, long priorDenials, long windowMonths) {
-		String reason = "Failed " + deciding.name() + " policy.";
-		if (REPEAT_DENIAL_ESCALATION.equals(deciding.key())) {
-			reason += " This company has been denied " + priorDenials + " times in the last "
-					+ windowMonths + " months.";
-		}
-		return reason;
 	}
 
 	private PolicyResult creditScore(Company company, Policy policy) {

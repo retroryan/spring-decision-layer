@@ -1,5 +1,6 @@
 package com.example.loan;
 
+import java.util.List;
 import java.util.Map;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -10,13 +11,15 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 /**
- * The rules, checked against the numbers the demo actually ships.
+ * The measurements, checked against the numbers the demo actually ships. Nothing here asserts an
+ * outcome, because nothing here produces one any more: what the engine does is say where a
+ * number sits against its threshold, and who that ought to persuade is the underwriter's problem.
  *
  * The companies and thresholds are read out of seed.json, the same file the graph is seeded
- * from, rather than copied into constants here, so editing the fixture cannot leave these
- * tests green and their assertions wrong. Nothing here touches Neo4j: the engine takes the
- * company, the prior denial count, and the policies as arguments, which is what lets the whole
- * rule set be tested without any storage at all.
+ * from, rather than copied into constants here, so editing the fixture cannot leave these tests
+ * green and their assertions wrong. Nothing here touches Neo4j: the engine takes the company,
+ * the prior denial count, and the policies as arguments, which is what lets the whole rule set
+ * be tested without any storage at all.
  */
 class PolicyEngineTests {
 
@@ -31,91 +34,96 @@ class PolicyEngineTests {
 	private final PolicyEngine engine = new PolicyEngine();
 
 	@Test
-	void approvesACompanyThatPassesEverything() {
-		LoanDecision decision = evaluate("C-1077", AMOUNT, 0);
-
-		assertThat(decision.outcome()).isEqualTo(LoanDecision.APPROVED);
-		assertThat(decision.decidingPolicy()).isNull();
-		assertThat(decision.results()).allMatch(PolicyResult::passed);
+	void measuresEveryPolicyOnEveryFile() {
+		assertThat(measure("C-1077", AMOUNT, 0)).extracting(PolicyResult::key)
+			.containsExactly(PolicyEngine.MINIMUM_CREDIT_SCORE, PolicyEngine.DEBT_TO_INCOME_LIMIT,
+					PolicyEngine.REPEAT_DENIAL_ESCALATION);
 	}
 
 	@Test
-	void deniesOnCreditScore() {
-		LoanDecision decision = evaluate("C-1096", AMOUNT, 0);
-
-		assertThat(decision.outcome()).isEqualTo(LoanDecision.DENIED);
-		assertThat(decision.decidingPolicy().key()).isEqualTo(PolicyEngine.MINIMUM_CREDIT_SCORE);
-		assertThat(decision.decidingPolicy().detail()).isEqualTo("score 47, needs 60");
+	void aCompanyCanClearEveryLine() {
+		assertThat(measure("C-1077", AMOUNT, 0)).allMatch(PolicyResult::passed);
 	}
 
 	@Test
-	void deniesOnDebtToIncome() {
-		LoanDecision decision = evaluate("C-1042", AMOUNT, 1);
+	void marksTheCreditScoreBelowTheLine() {
+		assertThat(below("C-1096", AMOUNT, 0)).singleElement()
+			.satisfies(result -> {
+				assertThat(result.key()).isEqualTo(PolicyEngine.MINIMUM_CREDIT_SCORE);
+				assertThat(result.detail()).isEqualTo("score 47, needs 60");
+			});
+	}
 
-		assertThat(decision.outcome()).isEqualTo(LoanDecision.DENIED);
-		assertThat(decision.decidingPolicy().key()).isEqualTo(PolicyEngine.DEBT_TO_INCOME_LIMIT);
-		assertThat(decision.decidingPolicy().detail())
-			.isEqualTo("48% with this loan, must be under 40%");
+	@Test
+	void marksDebtToIncomeBelowTheLine() {
+		assertThat(below("C-1042", AMOUNT, 0)).singleElement()
+			.satisfies(result -> {
+				assertThat(result.key()).isEqualTo(PolicyEngine.DEBT_TO_INCOME_LIMIT);
+				assertThat(result.detail()).isEqualTo("48% with this loan, must be under 40%");
+			});
 	}
 
 	/**
-	 * C-1042 owes 35.5 percent of its income on its own, which passes. It is the amount being
-	 * asked for that fails it, so the number the caller types is doing real work.
+	 * C-1042 owes 35.5 percent of its income on its own, which clears. It is the amount being
+	 * asked for that puts it below the line, so the number the caller types is doing real work.
 	 */
 	@Test
 	void theRequestedAmountDecidesDebtToIncome() {
-		assertThat(evaluate("C-1042", 1, 0).outcome()).isEqualTo(LoanDecision.APPROVED);
-		assertThat(evaluate("C-1042", AMOUNT, 0).outcome()).isEqualTo(LoanDecision.DENIED);
+		assertThat(below("C-1042", 1, 0)).isEmpty();
+		assertThat(below("C-1042", AMOUNT, 0)).extracting(PolicyResult::key)
+			.containsExactly(PolicyEngine.DEBT_TO_INCOME_LIMIT);
 	}
 
 	/** The one policy that only exists because of memory. */
 	@Test
-	void twoPriorDenialsEscalate() {
-		LoanDecision decision = evaluate("C-1042", AMOUNT, 2);
-
-		assertThat(decision.decidingPolicy().key())
-			.isEqualTo(PolicyEngine.REPEAT_DENIAL_ESCALATION);
-		assertThat(decision.reason()).isEqualTo(
-				"Failed Repeat Denial Escalation policy. This company has been denied 2 times in the "
-						+ "last 12 months.");
+	void twoPriorDenialsPutEscalationBelowTheLine() {
+		assertThat(below("C-1077", AMOUNT, 0)).isEmpty();
+		assertThat(below("C-1077", AMOUNT, 2)).singleElement()
+			.satisfies(result -> {
+				assertThat(result.key()).isEqualTo(PolicyEngine.REPEAT_DENIAL_ESCALATION);
+				assertThat(result.detail())
+					.isEqualTo("2 prior denials in the last 12 months, escalates at 2");
+			});
 	}
 
+	/**
+	 * Nothing ranks the policies any more. Two lines can be below at once, and which of them
+	 * mattered is the judgement the engine stopped making: it reports both and says neither
+	 * decided.
+	 */
 	@Test
-	void escalationOverridesNumbersThatWouldOtherwisePass() {
-		LoanDecision passing = evaluate("C-1077", AMOUNT, 0);
-		LoanDecision escalated = evaluate("C-1077", AMOUNT, 2);
-
-		assertThat(passing.outcome()).isEqualTo(LoanDecision.APPROVED);
-		assertThat(escalated.outcome()).isEqualTo(LoanDecision.DENIED);
-		assertThat(escalated.results().stream().filter(result -> !result.passed()))
-			.singleElement()
-			.extracting(PolicyResult::key)
-			.isEqualTo(PolicyEngine.REPEAT_DENIAL_ESCALATION);
+	void twoLinesCanBeBelowAtOnceAndNeitherIsTheDecidingOne() {
+		assertThat(below("C-1096", AMOUNT, 2)).extracting(PolicyResult::key)
+			.containsExactly(PolicyEngine.MINIMUM_CREDIT_SCORE,
+					PolicyEngine.REPEAT_DENIAL_ESCALATION);
 	}
 
 	/**
 	 * C-1123 is the exception case, in arithmetic. Two denials are on file and one of them was
-	 * excepted, so one counts and the loan is approved; had the exception not been granted, the
-	 * numbers would never have been reached, because history decides first.
+	 * excepted, so one counts and escalation stays above the line. The count arrives already
+	 * scoped, so the exception is what the difference between these two calls stands for.
 	 */
 	@Test
-	void theExceptedDenialIsTheDifferenceBetweenApprovedAndDenied() {
-		assertThat(evaluate("C-1123", AMOUNT, 1).outcome()).isEqualTo(LoanDecision.APPROVED);
-
-		LoanDecision withoutTheException = evaluate("C-1123", AMOUNT, 2);
-
-		assertThat(withoutTheException.outcome()).isEqualTo(LoanDecision.DENIED);
-		assertThat(withoutTheException.decidingPolicy().key())
-			.isEqualTo(PolicyEngine.REPEAT_DENIAL_ESCALATION);
+	void theExceptedDenialIsTheDifferenceBetweenAboveAndBelowTheLine() {
+		assertThat(below("C-1123", AMOUNT, 1)).isEmpty();
+		assertThat(below("C-1123", AMOUNT, 2)).extracting(PolicyResult::key)
+			.containsExactly(PolicyEngine.REPEAT_DENIAL_ESCALATION);
 	}
 
-	/** Long arithmetic would overflow to a negative ratio here, which passes an under check. */
+	/** Long arithmetic would overflow to a negative ratio here, which clears an under check. */
 	@Test
-	void anAbsurdAmountStillFailsDebtToIncome() {
-		LoanDecision decision = evaluate("C-1077", Long.MAX_VALUE, 0);
+	void anAbsurdAmountStillFallsBelowDebtToIncome() {
+		assertThat(below("C-1077", Long.MAX_VALUE, 0)).extracting(PolicyResult::key)
+			.containsExactly(PolicyEngine.DEBT_TO_INCOME_LIMIT);
+	}
 
-		assertThat(decision.outcome()).isEqualTo(LoanDecision.DENIED);
-		assertThat(decision.decidingPolicy().key()).isEqualTo(PolicyEngine.DEBT_TO_INCOME_LIMIT);
+	/** The observed value and the threshold are what the graph stores on the edge. */
+	@Test
+	void theMeasurementCarriesTheNumbersTheEdgeGets() {
+		PolicyResult credit = measure("C-1042", AMOUNT, 0).get(0);
+
+		assertThat(credit.observed()).isEqualTo(72);
+		assertThat(credit.threshold()).isEqualTo(60);
 	}
 
 	@Test
@@ -123,13 +131,20 @@ class PolicyEngineTests {
 		Map<String, Policy> incomplete = Map.of(PolicyEngine.MINIMUM_CREDIT_SCORE,
 				POLICIES.get(PolicyEngine.MINIMUM_CREDIT_SCORE));
 
-		assertThatThrownBy(() -> this.engine.evaluate(company("C-1077"), AMOUNT, 0, incomplete))
+		assertThatThrownBy(() -> this.engine.measure(company("C-1077"), AMOUNT, 0, incomplete))
 			.isInstanceOf(IllegalStateException.class)
 			.hasMessageContaining(PolicyEngine.DEBT_TO_INCOME_LIMIT);
 	}
 
-	private LoanDecision evaluate(String companyId, long requestedAmount, long priorDenials) {
-		return this.engine.evaluate(company(companyId), requestedAmount, priorDenials, POLICIES);
+	private List<PolicyResult> measure(String companyId, long requestedAmount, long priorDenials) {
+		return this.engine.measure(company(companyId), requestedAmount, priorDenials, POLICIES);
+	}
+
+	/** What the model is shown as below the line, and the only keys its verdict may name. */
+	private List<PolicyResult> below(String companyId, long requestedAmount, long priorDenials) {
+		return measure(companyId, requestedAmount, priorDenials).stream()
+			.filter(result -> !result.passed())
+			.toList();
 	}
 
 	private static Company company(String companyId) {

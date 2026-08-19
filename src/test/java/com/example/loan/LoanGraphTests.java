@@ -84,38 +84,84 @@ class LoanGraphTests {
 
 	@Test
 	void aDecisionWrittenNowIsCountedByTheNextRead() {
-		save("C-1042", denial(), List.of());
+		save("C-1042", denial(), belowTheLine(), List.of());
 
 		assertThat(new LoanGraph(driver, DATABASE).findPriorDenials("C-1042", window())).hasSize(2);
 	}
 
+	/**
+	 * One write, not two. The sentence the applicant was told arrives on the node with the
+	 * verdict that produced it, so there is no moment where a decision exists unexplained.
+	 */
 	@Test
-	void anExplanationAttachesToTheDecisionAlreadyWritten() {
-		String decisionId = save("C-1042", denial(), List.of());
+	void theExplanationIsWrittenWithTheDecisionItExplains() {
+		String decisionId = save("C-1042", denial(), null, List.of());
 
-		this.graph.attachExplanation(decisionId, "Denied on debt to income.");
+		Record stored = query("""
+				MATCH (d:Decision {decisionId: $id})
+				RETURN d.explanation AS e, d.confidence AS c
+				""", Map.of("id", decisionId)).get(0);
 
-		Record stored = query("MATCH (d:Decision {decisionId: $id}) RETURN d.explanation AS e",
-				Map.of("id", decisionId)).get(0);
-
-		assertThat(stored.get("e").asString()).isEqualTo("Denied on debt to income.");
+		assertThat(stored.get("e").asString()).isEqualTo("Your debt load is too high for this.");
+		assertThat(stored.get("c").asString()).isEqualTo("CLEAR");
 	}
 
-	/** No APPLIED_POLICY relationship is written, so the history comes back with no name. */
+	/**
+	 * The line an approval was granted past, which is the fact the schema had nowhere to put
+	 * before: the same policy and the same numbers a denial would carry, on the edge type that
+	 * says the loan was approved anyway.
+	 */
 	@Test
-	void anApprovalIsStoredWithNoDecidingPolicy() {
-		save("C-1077", new LoanDecision(LoanDecision.APPROVED, "All policies passed.", null,
-				List.of(), 0), List.of());
+	void anApprovalOverALineIsJoinedToTheLineItCrossed() {
+		PolicyResult crossed = belowTheLine();
 
-		PastDecision stored = this.graph.findDecisions("C-1077").get(0);
+		String decisionId = save("C-1042", approval(), crossed, List.of());
 
-		assertThat(stored.outcome()).isEqualTo(LoanDecision.APPROVED);
-		assertThat(stored.policyName()).isNull();
+		Record stored = query("""
+				MATCH (:Decision {decisionId: $id})-[w:WEIGHED_PAST]->(p:Policy)
+				RETURN p.key AS key, w.observed AS observed, w.threshold AS threshold
+				""", Map.of("id", decisionId)).get(0);
+
+		assertThat(stored.get("key").asString()).isEqualTo(PolicyEngine.DEBT_TO_INCOME_LIMIT);
+		assertThat(stored.get("observed").asDouble()).isEqualTo(crossed.observed());
+		assertThat(stored.get("threshold").asDouble()).isEqualTo(crossed.threshold());
+		assertThat(appliedPolicies(decisionId)).isEmpty();
+	}
+
+	/**
+	 * The same key, the other outcome, the other edge. One is written or the other is, never
+	 * both, because the type is the whole difference between a line that stopped a loan and a
+	 * line a loan was granted past.
+	 */
+	@Test
+	void aDenialOnTheSameLineIsJoinedByTheOtherEdgeType() {
+		String decisionId = save("C-1042", denial(), belowTheLine(), List.of());
+
+		assertThat(appliedPolicies(decisionId)).containsExactly(PolicyEngine.DEBT_TO_INCOME_LIMIT);
+		assertThat(weighedPast(decisionId)).isEmpty();
+	}
+
+	/**
+	 * A verdict can name no policy at all, either because nothing was below the line or because
+	 * the underwriter denied on the pattern in a file rather than on a number. Neither edge is
+	 * written, and the history listing has to survive it.
+	 */
+	@Test
+	void aVerdictThatNamesNoPolicyIsJoinedToNoPolicyAtAll() {
+		String approved = save("C-1077", approval(), null, List.of());
+		String denied = save("C-1077", denial(), null, List.of());
+
+		assertThat(appliedPolicies(approved)).isEmpty();
+		assertThat(weighedPast(approved)).isEmpty();
+		assertThat(appliedPolicies(denied)).isEmpty();
+		assertThat(weighedPast(denied)).isEmpty();
+		assertThat(this.graph.findDecisions("C-1077")).hasSize(2)
+			.allSatisfy(decision -> assertThat(decision.policyName()).isNull());
 	}
 
 	@Test
 	void historyComesBackOldestFirst() {
-		save("C-1042", denial(), List.of());
+		save("C-1042", denial(), belowTheLine(), List.of());
 
 		List<PastDecision> history = this.graph.findDecisions("C-1042");
 
@@ -134,7 +180,20 @@ class LoanGraphTests {
 	void aDecisionMadeByHistoryIsJoinedToTheDecisionsThatCausedIt() {
 		List<String> causes = this.graph.findPriorDenials("C-1042", window());
 
-		String decisionId = save("C-1042", escalation(), causes);
+		String decisionId = save("C-1042", escalation(), atTheThreshold(), causes);
+
+		assertThat(causedBy(decisionId)).containsExactly("D-1042-SEED");
+	}
+
+	/**
+	 * The ids come from the model now, so an id the graph does not hold has to be dropped rather
+	 * than fail the write. The advisor filters citations to the denials it sent; this is the
+	 * second net under that, in the Cypher itself.
+	 */
+	@Test
+	void anIdTheGraphDoesNotHoldIsDroppedRatherThanFailingTheWrite() {
+		String decisionId = save("C-1042", escalation(), atTheThreshold(),
+				List.of("D-1042-SEED", "D-DOES-NOT-EXIST"));
 
 		assertThat(causedBy(decisionId)).containsExactly("D-1042-SEED");
 	}
@@ -147,7 +206,7 @@ class LoanGraphTests {
 	@Test
 	void anExceptedDenialStaysOnFileAndStopsCounting() {
 		assertThat(this.graph.findDecisions("C-1123")).hasSize(2)
-			.allMatch(decision -> LoanDecision.DENIED.equals(decision.outcome()));
+			.allMatch(decision -> LoanVerdict.Outcome.DENIED.name().equals(decision.outcome()));
 
 		assertThat(this.graph.findPriorDenials("C-1123", window()))
 			.containsExactly("D-1123-SEED-1");
@@ -162,11 +221,11 @@ class LoanGraphTests {
 
 	/**
 	 * The three hops the talk turns on, in one traversal: the policy that decided a denial, the
-	 * exception that set it aside, and the later decisions that denial has since decided.
+	 * exception that set it aside, and the later decisions that denial has since driven.
 	 */
 	@Test
-	void theTrailWalksToThePolicyTheExceptionAndWhatTheDenialHasSinceDecided() {
-		String escalated = save("C-1042", escalation(), List.of("D-1042-SEED"));
+	void theTrailWalksToThePolicyTheExceptionAndWhatTheDenialHasSinceDriven() {
+		String escalated = save("C-1042", escalation(), atTheThreshold(), List.of("D-1042-SEED"));
 
 		// Two denials on file now: the seeded one, and the escalation that cites it.
 		assertThat(this.graph.findPrecedentTrail("C-1042")).hasSize(2)
@@ -174,7 +233,7 @@ class LoanGraphTests {
 				assertThat(denial.decisionId()).isEqualTo("D-1042-SEED");
 				assertThat(denial.policyName()).isEqualTo("Debt to Income Limit");
 				assertThat(denial.excepted()).isFalse();
-				assertThat(denial.governed()).containsExactly(escalated);
+				assertThat(denial.governed()).containsExactly(new PrecedentStep(1, escalated));
 			});
 
 		assertThat(this.graph.findPrecedentTrail("C-1123")).hasSize(2)
@@ -186,10 +245,36 @@ class LoanGraphTests {
 			});
 	}
 
-	/** Everything else read the history and was not decided by it, so nothing is joined. */
+	/**
+	 * The reason the trail is variable length. A decision that cited a denial can itself be
+	 * cited, and the denial at the root of that has driven both of them: one directly, one at a
+	 * remove. A single hop would report the first link as though it were the whole chain, which
+	 * is the read a relational schema needs a recursive CTE for.
+	 */
 	@Test
-	void aDecisionMadeByArithmeticIsJoinedToNothing() {
-		String decisionId = save("C-1042", denial(), List.of());
+	void theTrailFollowsCitationsOfCitationsAndSaysHowFarAway() {
+		String first = save("C-1042", escalation(), atTheThreshold(), List.of("D-1042-SEED"));
+		String second = save("C-1042", escalation(), atTheThreshold(), List.of(first));
+
+		assertThat(this.graph.findPrecedentTrail("C-1042"))
+			.filteredOn(denial -> denial.decisionId().equals("D-1042-SEED"))
+			.singleElement()
+			.extracting(PrecedentTrail::governed)
+			.isEqualTo(List.of(new PrecedentStep(1, first), new PrecedentStep(2, second)));
+	}
+
+	/** A denial nothing has cited comes back with an empty chain, not with a row of nulls. */
+	@Test
+	void aDenialNothingHasCitedHasDrivenNothing() {
+		assertThat(this.graph.findPrecedentTrail("C-1042")).singleElement()
+			.extracting(PrecedentTrail::governed)
+			.isEqualTo(List.of());
+	}
+
+	/** A verdict that cited nothing is joined to nothing, whatever it read on the way. */
+	@Test
+	void aDecisionThatCitedNothingIsJoinedToNothing() {
+		String decisionId = save("C-1042", denial(), belowTheLine(), List.of());
 
 		assertThat(causedBy(decisionId)).isEmpty();
 	}
@@ -201,7 +286,7 @@ class LoanGraphTests {
 	 */
 	@Test
 	void theDecisionCarriesTheConversationItWasExplainedIn() {
-		String decisionId = save("C-1042", denial(), List.of());
+		String decisionId = save("C-1042", denial(), belowTheLine(), List.of());
 
 		Record stored = query("MATCH (d:Decision {decisionId: $id}) RETURN d.conversationId AS c",
 				Map.of("id", decisionId)).get(0);
@@ -209,10 +294,6 @@ class LoanGraphTests {
 		assertThat(stored.get("c").asString()).isEqualTo(CONVERSATION);
 	}
 
-	/**
-	 * Stored as a temporal type rather than as ISO text, so ORDER BY is a real sort and a
-	 * reader can ask for the denials inside the last twelve months.
-	 */
 	/** Backs the unknown-id message: an empty graph and a typo have to be told apart. */
 	@Test
 	void theGraphNamesTheCompaniesItHolds() {
@@ -220,9 +301,13 @@ class LoanGraphTests {
 				"C-1123");
 	}
 
+	/**
+	 * Stored as a temporal type rather than as ISO text, so ORDER BY is a real sort and a
+	 * reader can ask for the denials inside the last twelve months.
+	 */
 	@Test
 	void timesAreNeo4jDatetimesAndNotStrings() {
-		save("C-1042", denial(), List.of());
+		save("C-1042", denial(), belowTheLine(), List.of());
 
 		List<Record> times = query("""
 				MATCH (:Company {companyId: 'C-1042'})-[:SUBMITTED]->(a:LoanApplication)
@@ -273,8 +358,28 @@ class LoanGraphTests {
 		assertThat(this.graph.findCompany("C-9999")).isEmpty();
 	}
 
-	private String save(String companyId, LoanDecision decision, List<String> causes) {
-		return this.graph.saveDecision(companyId, 250_000, decision, causes, CONVERSATION);
+	private String save(String companyId, LoanVerdict verdict, PolicyResult crossed,
+			List<String> causes) {
+		return this.graph.saveDecision(companyId, 250_000, verdict, crossed, causes, CONVERSATION);
+	}
+
+	private List<String> appliedPolicies(String decisionId) {
+		return policiesJoinedBy(decisionId, "APPLIED_POLICY");
+	}
+
+	private List<String> weighedPast(String decisionId) {
+		return policiesJoinedBy(decisionId, "WEIGHED_PAST");
+	}
+
+	/**
+	 * The relationship type is interpolated rather than parameterised, because Cypher does not
+	 * take a type as a parameter. It is a constant in this file either way.
+	 */
+	private List<String> policiesJoinedBy(String decisionId, String type) {
+		return query("MATCH (:Decision {decisionId: $id})-[:" + type + "]->(p:Policy) "
+				+ "RETURN p.key AS key", Map.of("id", decisionId)).stream()
+			.map(record -> record.get("key").asString())
+			.toList();
 	}
 
 	private List<String> causedBy(String decisionId) {
@@ -295,19 +400,40 @@ class LoanGraphTests {
 		return this.graph.loadPolicies().get(PolicyEngine.REPEAT_DENIAL_ESCALATION).windowMonths();
 	}
 
-	private static LoanDecision denial() {
-		PolicyResult failed = new PolicyResult(PolicyEngine.DEBT_TO_INCOME_LIMIT,
-				"Debt to Income Limit", false, 0.48, 0.40, "48% with this loan, must be under 40%");
-		return new LoanDecision(LoanDecision.DENIED, "Failed Debt to Income Limit policy.", failed,
-				List.of(failed), 1);
+	/**
+	 * The verdicts stand in for what a model returns. They are written by hand rather than by
+	 * calling one, because what these tests are about is the graph: no assertion here depends on
+	 * a model having reached the outcome, only on the outcome having been written faithfully.
+	 */
+	private static LoanVerdict denial() {
+		return new LoanVerdict(LoanVerdict.Outcome.DENIED, "Debt load is too high for this file.",
+				PolicyEngine.DEBT_TO_INCOME_LIMIT, List.of(),
+				"Your debt load is too high for this.", LoanVerdict.Confidence.CLEAR);
 	}
 
-	private static LoanDecision escalation() {
-		PolicyResult failed = new PolicyResult(PolicyEngine.REPEAT_DENIAL_ESCALATION,
-				"Repeat Denial Escalation", false, 2, 2,
-				"2 prior denials in the last 12 months, escalates at 2");
-		return new LoanDecision(LoanDecision.DENIED, "Failed Repeat Denial Escalation policy.",
-				failed, List.of(failed), 2);
+	private static LoanVerdict approval() {
+		return new LoanVerdict(LoanVerdict.Outcome.APPROVED, "Strong enough to carry the extra.",
+				PolicyEngine.DEBT_TO_INCOME_LIMIT, List.of(),
+				"Approved, and here is why we were comfortable.",
+				LoanVerdict.Confidence.BORDERLINE);
+	}
+
+	private static LoanVerdict escalation() {
+		return new LoanVerdict(LoanVerdict.Outcome.DENIED, "Too many denials still standing.",
+				PolicyEngine.REPEAT_DENIAL_ESCALATION, List.of(),
+				"We cannot lend again while the earlier denials still stand.",
+				LoanVerdict.Confidence.CLEAR);
+	}
+
+	/** The engine's measurement of the line those verdicts name, which is what the edge gets. */
+	private static PolicyResult belowTheLine() {
+		return new PolicyResult(PolicyEngine.DEBT_TO_INCOME_LIMIT, "Debt to Income Limit", false,
+				0.48, 0.40, "48% with this loan, must be under 40%");
+	}
+
+	private static PolicyResult atTheThreshold() {
+		return new PolicyResult(PolicyEngine.REPEAT_DENIAL_ESCALATION, "Repeat Denial Escalation",
+				false, 2, 2, "2 prior denials in the last 12 months, escalates at 2");
 	}
 
 }

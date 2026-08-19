@@ -4,22 +4,33 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
+import org.springframework.ai.chat.client.ChatClientAttributes;
 import org.springframework.ai.chat.client.ChatClientRequest;
 import org.springframework.ai.chat.client.ChatClientResponse;
 import org.springframework.ai.chat.client.advisor.ToolCallingAdvisor;
 import org.springframework.ai.chat.client.advisor.api.CallAdvisor;
 import org.springframework.ai.chat.client.advisor.api.CallAdvisorChain;
 import org.springframework.ai.chat.memory.ChatMemory;
+import org.springframework.ai.chat.messages.AssistantMessage;
+import org.springframework.ai.chat.model.ChatResponse;
+import org.springframework.ai.chat.model.Generation;
 import org.springframework.ai.chat.prompt.Prompt;
+import org.springframework.ai.converter.BeanOutputConverter;
 import org.springframework.stereotype.Component;
 
 /**
- * The advisor that decides the loan, so the model never has to: read the company and its
- * history out of the graph, compute PASS or FAIL for each policy in plain Java, commit the
- * decision, and only then hand the model a request that already contains the verdict.
+ * The advisor that gives the model everything it needs to decide the loan, and then records what
+ * it decided: read the company, its policies, and its standing denials out of the graph, hand
+ * them over as facts rather than as a verdict, and write the answer back as a decision trace.
  *
- * Committing before the call rather than after is deliberate: a decision is a fact the moment
- * it is computed, so a model that times out costs the sentence and nothing else.
+ * The write happens after the model answers, because there is no outcome until it does. That is
+ * the whole flip: an earlier version computed the verdict in Java, committed it, and asked the
+ * model to explain a conclusion it had no part in.
+ *
+ * Java still owns two things the model cannot be trusted with, and neither is the decision. The
+ * measurements are the engine's, so an edge cannot claim a number nothing measured. The cited
+ * ids are filtered to the ones that were actually sent, so a citation cannot join the trace to
+ * something that is not there.
  *
  * The conversation id is read back out of the request rather than injected, because the chat
  * memory advisor further out in the chain put it there.
@@ -31,31 +42,45 @@ class LoanPolicyAdvisor implements CallAdvisor {
 
 	static final String REQUESTED_AMOUNT = "requestedAmount";
 
-	/** Response context key the computed answer is handed back to the caller under. */
+	/** Response context key the answer is handed back to the caller under. */
 	static final String ANSWER = "loanAnswer";
 
 	/**
-	 * Appended to the applicant's question. Blunt on purpose: any softer framing invites the
-	 * model to weigh in on whether the conclusion it was handed was right.
+	 * Appended to the applicant's question. Facts and nothing else: every earlier version of
+	 * this block told the model what the outcome was, and the point of this one is that it
+	 * does not know until it decides.
 	 */
-	private static final String VERDICT = """
+	private static final String FACTS = """
 
 			---
-			The decision below has already been made by the bank's policy engine.
-			It is final. Explain it to the applicant. Do not re-check it, do not
-			second-guess it, and do not invent a different outcome.
+			The file in front of you.
 
-			Outcome: %s
-			Reason: %s
-			Prior denied decisions on file: %d
+			Applicant: %s (%s)
+			  credit risk score  %d
+			  current debt       $%,d
+			  annual income      $%,d
+			  asking for         $%,d
 
-			Policy checks:
+			The bank's policies, measured against this file. The key on the left is what
+			decidingPolicyKey takes; the name beside it is what you call the policy when
+			you write to the applicant.
+
 			%s
-			%s""";
+
+			Denials still counting against this company: %s
+			""";
 
 	private final LoanGraph graph;
 
 	private final PolicyEngine engine;
+
+	/**
+	 * Generates the schema from the record and converts the answer back. Its default cleaner
+	 * strips thinking tags and markdown fences, which a bare ObjectMapper would choke on:
+	 * Sonnet 5 thinks adaptively unless told not to, so those tags can be there.
+	 */
+	private final BeanOutputConverter<LoanVerdict> converter = new BeanOutputConverter<>(
+			LoanVerdict.class);
 
 	LoanPolicyAdvisor(LoanGraph graph, PolicyEngine engine) {
 		this.graph = graph;
@@ -69,8 +94,8 @@ class LoanPolicyAdvisor implements CallAdvisor {
 
 	/**
 	 * Outside the tool-calling loop, because an advisor placed under it is re-entered once per
-	 * tool round trip and this one commits a decision every time it is entered. Inside
-	 * MessageChatMemoryAdvisor, so the appended verdict never reaches the stored transcript.
+	 * tool round trip and this one writes a decision every time it is entered. Inside
+	 * MessageChatMemoryAdvisor, so the appended facts never reach the stored transcript.
 	 */
 	@Override
 	public int getOrder() {
@@ -83,7 +108,7 @@ class LoanPolicyAdvisor implements CallAdvisor {
 		long requestedAmount = number(request, REQUESTED_AMOUNT);
 
 		// Application gates on the same lookup with a friendlier message; this one is the
-		// invariant, since there is no decision to compute without the Company.
+		// invariant, since there is nothing to decide about without the Company.
 		Company company = this.graph.findCompany(companyId)
 			.orElseThrow(() -> new IllegalArgumentException("No company with id " + companyId));
 		// Policies first: the window Repeat Denial Escalation counts over is a property on its
@@ -91,52 +116,106 @@ class LoanPolicyAdvisor implements CallAdvisor {
 		Map<String, Policy> policies = this.graph.loadPolicies();
 		List<String> priorDenials = this.graph.findPriorDenials(companyId,
 				this.engine.denialWindowMonths(policies));
+		List<PolicyResult> measurements = this.engine.measure(company, requestedAmount,
+				priorDenials.size(), policies);
 
-		LoanDecision decision = this.engine.evaluate(company, requestedAmount, priorDenials.size(),
-				policies);
+		ChatClientResponse response = chain
+			.nextCall(withFacts(request, company, requestedAmount, measurements, priorDenials));
 
-		// The ESCALATED_FROM edge is written only when history is what decided, so its presence
-		// means one thing: these earlier decisions caused this one. On any other outcome the
-		// history was read and did not decide.
-		List<String> causes = decision.decidedBy(PolicyEngine.REPEAT_DENIAL_ESCALATION)
-				? priorDenials : List.of();
+		LoanVerdict verdict = this.converter.convert(text(response));
+		PolicyResult crossed = crossedLine(verdict, measurements);
 
-		String decisionId = this.graph.saveDecision(companyId, requestedAmount, decision, causes,
-				string(request, ChatMemory.CONVERSATION_ID));
+		this.graph.saveDecision(companyId, requestedAmount, verdict, crossed,
+				citedDenials(verdict, priorDenials), string(request, ChatMemory.CONVERSATION_ID));
 
-		ChatClientResponse response = chain.nextCall(withVerdict(request, decision));
-
-		String prose = text(response);
-		if (!prose.isBlank()) {
-			this.graph.attachExplanation(decisionId, prose);
-		}
-
-		// Handed back so the caller prints the checklist from the same object the graph got,
-		// rather than evaluating a second time for display.
-		return response.mutate().context(ANSWER, new LoanAnswer(decision, prose)).build();
+		return readable(response, new LoanAnswer(verdict, measurements, crossed));
 	}
 
-	private ChatClientRequest withVerdict(ChatClientRequest request, LoanDecision decision) {
-		String checks = decision.results()
-			.stream()
-			.map(result -> "  %s: %s (%s)".formatted(result.name(), result.passed() ? "PASS" : "FAIL",
-					result.detail()))
+	/**
+	 * The facts, plus the schema the answer has to come back in. The schema goes in the request
+	 * context rather than on the options directly: ChatModelCallAdvisor reads these two keys and
+	 * mutates the options it already has, so the model pin and everything else from
+	 * application.yaml survives, which building fresh options here would drop.
+	 *
+	 * OUTPUT_FORMAT is the fallback and is deliberately set even though the native path never
+	 * reads it. ChatModelCallAdvisor only takes the native branch when the options implement
+	 * StructuredOutputChatOptions, and falls through to appending this text when they do not.
+	 * Left unset, that fallback appends the word "null" to the prompt.
+	 */
+	private ChatClientRequest withFacts(ChatClientRequest request, Company company,
+			long requestedAmount, List<PolicyResult> measurements, List<String> priorDenials) {
+
+		// The key leads, because decidingPolicyKey is matched against it exactly and the model
+		// cannot be left to derive minimumCreditScore from "Minimum Credit Score". A near miss
+		// there is silent: crossedLine resolves nothing, no policy edge is written, and the run
+		// prints "no policy named" as though the underwriter had decided on the file as a whole.
+		// Both columns are wide enough for the longest key and name in seed.json.
+		String measured = measurements.stream()
+			.map(result -> "  %-24s %-26s %-15s %s".formatted(result.key(), result.name(),
+					result.passed() ? "above the line" : "below the line", result.detail()))
 			.collect(Collectors.joining("\n"));
 
-		String deciding = decision.decidingPolicy() != null
-				? "\nThe policy that decided the outcome: %s\n"
-					.formatted(decision.decidingPolicy().name())
-				: "";
-
-		String verdict = VERDICT.formatted(decision.outcome(), decision.reason(),
-				decision.priorDenials(), checks, deciding);
+		String facts = FACTS.formatted(company.name(), company.companyId(),
+				company.creditRiskScore(), company.currentDebt(), company.annualIncome(),
+				requestedAmount, measured,
+				priorDenials.isEmpty() ? "none" : String.join(", ", priorDenials));
 
 		Prompt augmented = request.prompt()
 			.augmentUserMessage(userMessage -> userMessage.mutate()
-				.text(userMessage.getText() + verdict)
+				.text(userMessage.getText() + facts)
 				.build());
 
-		return request.mutate().prompt(augmented).build();
+		return request.mutate()
+			.prompt(augmented)
+			.context(ChatClientAttributes.STRUCTURED_OUTPUT_SCHEMA.getKey(),
+					this.converter.getJsonSchema())
+			.context(ChatClientAttributes.STRUCTURED_OUTPUT_NATIVE.getKey(), true)
+			.context(ChatClientAttributes.OUTPUT_FORMAT.getKey(), this.converter.getFormat())
+			.build();
+	}
+
+	/**
+	 * The model names the policy and the engine owns the measurement, so the two have to be
+	 * joined here. A key that is not one of the policies measured below the line resolves to
+	 * nothing and writes no edge, which covers both a null key and a model naming a policy that
+	 * actually cleared. Letting Java substitute a policy the model did not choose would be
+	 * putting the deciding back where this phase took it from.
+	 */
+	private PolicyResult crossedLine(LoanVerdict verdict, List<PolicyResult> measurements) {
+		return measurements.stream()
+			.filter(result -> !result.passed())
+			.filter(result -> result.key().equals(verdict.decidingPolicyKey()))
+			.findFirst()
+			.orElse(null);
+	}
+
+	/**
+	 * ESCALATED_FROM means this decision was reached over a standing denial, so the citations
+	 * are kept only where they name one of the denials that were sent. That one filter drops an
+	 * id the model invented and an approval it cited alike, and both would make the edge mean
+	 * something other than what every read of it assumes.
+	 */
+	private List<String> citedDenials(LoanVerdict verdict, List<String> priorDenials) {
+		if (verdict.citedDecisionIds() == null) {
+			return List.of();
+		}
+		return verdict.citedDecisionIds().stream().distinct().filter(priorDenials::contains).toList();
+	}
+
+	/**
+	 * MessageChatMemoryAdvisor sits outside this advisor and stores whatever text came back, so
+	 * left alone it would store the JSON verdict and the transcript would print a blob where it
+	 * prints prose today. Rebuilt down to the explanation: chat memory stores the letter, and
+	 * the JSON never leaves this advisor.
+	 */
+	private ChatClientResponse readable(ChatClientResponse response, LoanAnswer answer) {
+		ChatResponse rebuilt = ChatResponse.builder()
+			.from(response.chatResponse())
+			.generations(List.of(new Generation(new AssistantMessage(answer.verdict().explanation()),
+					response.chatResponse().getResult().getMetadata())))
+			.build();
+
+		return response.mutate().chatResponse(rebuilt).context(ANSWER, answer).build();
 	}
 
 	/**
@@ -161,14 +240,23 @@ class LoanPolicyAdvisor implements CallAdvisor {
 		return amount.longValue();
 	}
 
-	/** Every step down to the text is optional in the API, and any of them can be absent. */
+	/**
+	 * Every step down to the text is optional in the API, and any of them can be absent. Blank
+	 * is not recoverable here the way it was when Java had already decided: there is no verdict
+	 * to fall back on, so the run fails and the operator runs it again.
+	 */
 	private static String text(ChatClientResponse response) {
 		if (response == null || response.chatResponse() == null
 				|| response.chatResponse().getResult() == null) {
-			return "";
+			throw new IllegalStateException("The model returned no result, so nothing decided this "
+					+ "application and nothing was written. Run it again.");
 		}
-		String prose = response.chatResponse().getResult().getOutput().getText();
-		return prose != null ? prose : "";
+		String json = response.chatResponse().getResult().getOutput().getText();
+		if (json == null || json.isBlank()) {
+			throw new IllegalStateException("The model returned an empty answer where a verdict was "
+					+ "expected. Run it again.");
+		}
+		return json;
 	}
 
 }

@@ -13,7 +13,7 @@ import org.springframework.ai.chat.messages.Message;
 import org.springframework.stereotype.Component;
 
 /**
- * The chat client the applicant talks to. Its transcript is what was said, not precedent:
+ * The underwriter the applicant's file reaches. Its transcript is what was said, not precedent:
  * Spring AI's own chat memory, stored by {@link Neo4jChatMemoryRepository} in the same database
  * as the context graph, on the library's own {@code (:Session)-[:HAS_MESSAGE]->(:Message)}
  * schema.
@@ -26,18 +26,36 @@ import org.springframework.stereotype.Component;
 class LoanOfficer {
 
 	private static final String SYSTEM = """
-			You work at a bank, explaining construction loan decisions to the companies
-			that applied for them.
+			You underwrite construction loans at a bank.
 
-			The decision is not yours to make. Every request you receive already carries
-			the outcome, the reason, and the policy checks behind it, decided by the bank's
-			policy engine before you saw it. Your only job is to say it back to the
-			applicant in plain English.
+			The decision is yours. What you are given is a file, not an answer: the
+			company's numbers, the bank's policies with the observed value beside each
+			threshold, and the denials still counting against the company. The policies
+			are guidance you weigh, not gates that answer for you. A number below the line
+			is a reason to deny and not an instruction to, and a file that clears every
+			line can still be denied on the pattern in its history.
 
-			Write two or three sentences. Lead with the outcome. Name the one policy that
-			decided it and what about their numbers triggered it. Be direct and courteous,
-			and do not apologise at length. No bullet points, no headings, no restating the
-			whole checklist, and never a number that was not given to you.
+			How far off is too far. One line below by a small margin is arguable, and a
+			clean history can outweigh it. Two lines below at once, or one below by a
+			wide margin, is not arguable.
+
+			Fill in the verdict:
+
+			outcome            APPROVED or DENIED.
+			reason             One line naming what drove it, for the record.
+			decidingPolicyKey  The key of the policy that weighed heaviest on you, copied
+			                   exactly from the left column, and it has to be one that came
+			                   back below the line. Leave it out when nothing below the line
+			                   drove the call.
+			citedDecisionIds   The ids of the denials you actually leaned on, from the ones
+			                   listed as still counting. Empty when history did not move you.
+			explanation        Two or three sentences to the applicant. Lead with the
+			                   outcome and name what drove it. Be direct and courteous and
+			                   do not apologise at length. No bullet points, no headings,
+			                   no restating the checklist, and never a number that was not
+			                   given to you.
+			confidence         CLEAR when the file is not close. BORDERLINE when it is, and
+			                   another underwriter could reasonably land the other way.
 			""";
 
 	private final ChatClient chatClient;
@@ -75,8 +93,9 @@ class LoanOfficer {
 		LoanAnswer answer = (LoanAnswer) response.context().get(LoanPolicyAdvisor.ANSWER);
 		if (answer == null) {
 			throw new IllegalStateException(
-					"LoanPolicyAdvisor did not run, so nothing computed a verdict. Check that it "
-							+ "is still registered as a default advisor on this ChatClient.");
+					"LoanPolicyAdvisor did not run, so the file was never put in front of anyone "
+							+ "and no verdict came back. Check that it is still registered as a "
+							+ "default advisor on this ChatClient.");
 		}
 		return answer;
 	}

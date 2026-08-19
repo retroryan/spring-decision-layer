@@ -23,13 +23,15 @@ import org.springframework.util.StringUtils;
  *
  * <pre>
  * (Company)-[:SUBMITTED]-&gt;(LoanApplication)&lt;-[:ABOUT]-(Decision)-[:APPLIED_POLICY]-&gt;(Policy)
+ *                                                       (Decision)-[:WEIGHED_PAST]-&gt;(Policy)
  *                                                       (Decision)-[:ESCALATED_FROM]-&gt;(Decision)
  *                                  (Exception)-[:EXCEPTION_TO]-&gt;(Decision)
  * </pre>
  *
- * An approved decision has no APPLIED_POLICY relationship at all, because nothing causes an
- * approval the way a failing rule causes a denial, so every read below treats that hop as
- * optional.
+ * APPLIED_POLICY and WEIGHED_PAST carry the same two properties and point at the same node, and
+ * the type is the whole difference: one says a line stopped the loan, the other says the loan
+ * was approved past it. Only one of the two is ever written, and neither is written when the
+ * verdict named no policy, so every read below treats that hop as optional.
  *
  * {@code spring.neo4j.*} has no property for the target database, and
  * {@code spring.data.neo4j.database} belongs to Spring Data Neo4j, which is not on this
@@ -88,26 +90,42 @@ class LoanGraph {
 
 	/**
 	 * The three hops a graph adds to a stored decision, in one query: the policy that decided it,
-	 * the exception that modified it, and every later decision it has since governed. The last one
-	 * is ESCALATED_FROM read backwards, which is the whole argument for keeping decisions joined
-	 * rather than merely stored.
+	 * the exception that modified it, and the chain of later decisions it has since driven. The
+	 * last one is ESCALATED_FROM read backwards, which is the whole argument for keeping decisions
+	 * joined rather than merely stored.
+	 *
+	 * The chain is variable length rather than one hop, because a decision that cited a denial
+	 * can itself be cited, and a fixed hop count would report the first link of a chain as though
+	 * it were the whole thing. min(length(path)) is how far away the nearest route is, so a
+	 * decision reachable two ways is reported once at its shortest distance. The COLLECT subquery
+	 * rather than an OPTIONAL MATCH is what keeps a denial that has driven nothing returning an
+	 * empty list instead of one row of nulls.
 	 */
 	private static final String FIND_PRECEDENT_TRAIL = """
 			MATCH (:Company {companyId: $companyId})-[:SUBMITTED]->(:LoanApplication)
 			      <-[:ABOUT]-(d:Decision {outcome: $denied})
 			OPTIONAL MATCH (d)-[:APPLIED_POLICY]->(p:Policy)
 			OPTIONAL MATCH (e:Exception)-[:EXCEPTION_TO]->(d)
-			OPTIONAL MATCH (later:Decision)-[:ESCALATED_FROM]->(d)
 			RETURN d.decisionId AS decisionId, d.decidedAt AS decidedAt, p.name AS policyName,
 			       e.grantedBy AS grantedBy, e.justification AS justification,
-			       collect(DISTINCT later.decisionId) AS governed
+			       COLLECT {
+			         MATCH path = (later:Decision)-[:ESCALATED_FROM*1..]->(d)
+			         WITH later, min(length(path)) AS depth
+			         RETURN {depth: depth, decisionId: later.decisionId} AS step
+			         ORDER BY depth, later.decisionId
+			       } AS governed
 			ORDER BY d.decidedAt
 			""";
 
 	/**
 	 * FOREACH over a list that is empty or holds one policy is how Cypher writes an optional
-	 * relationship: for an approval $policyKey is null, the OPTIONAL MATCH finds nothing, and
-	 * no APPLIED_POLICY is created. Likewise $escalatedFrom is empty unless history decided.
+	 * relationship: a verdict that named no policy leaves $policyKey null, the OPTIONAL MATCH
+	 * finds nothing, and neither policy edge is created. $approved routes the one that is,
+	 * because the same key means two different things depending on how the run came out.
+	 *
+	 * $escalatedFrom is the ids the model cited, already filtered to the denials that were sent
+	 * to it. The OPTIONAL MATCH resolves them, so an id that no longer exists is dropped here
+	 * rather than failing the write.
 	 */
 	private static final String SAVE_DECISION = """
 			MATCH (c:Company {companyId: $companyId})
@@ -117,19 +135,16 @@ class LoanGraph {
 			CREATE (c)-[:SUBMITTED]->(a:LoanApplication {applicationId: $applicationId,
 			        requestedAmount: $requestedAmount, submittedAt: $at})
 			CREATE (d:Decision {decisionId: $decisionId, outcome: $outcome, reason: $reason,
-			        decidedAt: $at, conversationId: $conversationId})
+			        confidence: $confidence, explanation: $explanation, decidedAt: $at,
+			        conversationId: $conversationId})
 			CREATE (d)-[:ABOUT]->(a)
-			FOREACH (policy IN CASE WHEN p IS NULL THEN [] ELSE [p] END |
+			FOREACH (policy IN CASE WHEN p IS NULL OR $approved THEN [] ELSE [p] END |
 			  CREATE (d)-[:APPLIED_POLICY {observed: $observed, threshold: $threshold}]->(policy))
+			FOREACH (policy IN CASE WHEN p IS NULL OR NOT $approved THEN [] ELSE [p] END |
+			  CREATE (d)-[:WEIGHED_PAST {observed: $observed, threshold: $threshold}]->(policy))
 			FOREACH (cause IN causes |
 			  CREATE (d)-[:ESCALATED_FROM]->(cause))
 			RETURN d.decisionId AS decisionId
-			""";
-
-	private static final String ATTACH_EXPLANATION = """
-			MATCH (d:Decision {decisionId: $decisionId})
-			SET d.explanation = $explanation
-			RETURN count(d) AS updated
 			""";
 
 	private final Driver driver;
@@ -180,19 +195,23 @@ class LoanGraph {
 
 	/**
 	 * Walks SUBMITTED and then ABOUT, and returns what came back denied inside the window,
-	 * oldest first. Ids rather than a count, because the ids are what {@link #saveDecision}
-	 * joins the next decision to.
+	 * oldest first. Ids rather than a count, because these are the ids the model is shown and
+	 * the only ones its citations are accepted from.
 	 *
 	 * @param windowMonths how far back to count, from the Repeat Denial Escalation policy node
 	 */
 	List<String> findPriorDenials(String companyId, long windowMonths) {
 		return read(FIND_PRIOR_DENIALS, Map.of("companyId", companyId, "denied",
-				LoanDecision.DENIED, "windowMonths", windowMonths)).stream()
+				LoanVerdict.Outcome.DENIED.name(), "windowMonths", windowMonths)).stream()
 			.map(record -> record.get("decisionId").asString())
 			.toList();
 	}
 
-	/** The same walk, one hop further, resolving APPLIED_POLICY to the policy's name. */
+	/**
+	 * The same walk, one hop further, resolving APPLIED_POLICY to the policy's name. Only that
+	 * edge, because this is the listing of what stopped past loans; the line an approval was
+	 * granted past is on WEIGHED_PAST and is read by the trail rather than the listing.
+	 */
 	List<PastDecision> findDecisions(String companyId) {
 		return read(FIND_DECISIONS, Map.of("companyId", companyId)).stream()
 			.map(record -> new PastDecision(
@@ -205,33 +224,36 @@ class LoanGraph {
 	/** What {@link #FIND_PRECEDENT_TRAIL} walks, one row per denial on file. */
 	List<PrecedentTrail> findPrecedentTrail(String companyId) {
 		return read(FIND_PRECEDENT_TRAIL,
-				Map.of("companyId", companyId, "denied", LoanDecision.DENIED)).stream()
+				Map.of("companyId", companyId, "denied", LoanVerdict.Outcome.DENIED.name())).stream()
 			.map(record -> new PrecedentTrail(record.get("decisionId").asString(),
 					record.get("decidedAt").asZonedDateTime().toInstant(),
 					record.get("policyName").asString(null),
 					record.get("grantedBy").asString(null),
 					record.get("justification").asString(null),
-					record.get("governed").asList(id -> id.asString())))
+					record.get("governed").asList(step -> new PrecedentStep(
+							step.get("depth").asLong(), step.get("decisionId").asString()))))
 			.toList();
 	}
 
 	/**
-	 * Called before the model runs, so what the bank decided is in the graph whether or not a
-	 * sentence about it ever gets written.
+	 * Called after the model answers, because there is no outcome until it does. One write
+	 * rather than two: the sentence the applicant was told goes on the node with the verdict
+	 * that produced it, instead of being attached a moment later.
 	 *
-	 * @param escalatedFrom the earlier decisions that caused this one, empty when history did
-	 * not decide it. Only the caller knows which policy actually decided.
+	 * @param crossed the policy the verdict named, resolved to the engine's own measurement of
+	 * it, or null when the verdict named none. The verdict supplies the key and the engine
+	 * supplies the numbers, so the edge cannot claim a measurement nothing took.
+	 * @param escalatedFrom the denials the model cited, already filtered by the caller to the
+	 * ones it was shown. Empty when history did not move it.
 	 * @param conversationId a property rather than a relationship, because the Session node
 	 * belongs to Spring AI's chat memory schema and does not exist yet at this point in the
 	 * request, so the two kinds of memory join on a shared key.
 	 */
-	String saveDecision(String companyId, long requestedAmount, LoanDecision decision,
-			List<String> escalatedFrom, String conversationId) {
+	String saveDecision(String companyId, long requestedAmount, LoanVerdict verdict,
+			PolicyResult crossed, List<String> escalatedFrom, String conversationId) {
 
-		PolicyResult deciding = decision.decidingPolicy();
-
-		// HashMap rather than Map.of, because three of these values are null for an approval
-		// and Map.of rejects nulls. The driver maps a null value to Cypher's null.
+		// HashMap rather than Map.of, because three of these values are null when the verdict
+		// named no policy and Map.of rejects nulls. The driver maps a null value to Cypher's null.
 		Map<String, Object> parameters = new HashMap<>();
 		parameters.put("companyId", companyId);
 		parameters.put("applicationId", "A-" + shortId());
@@ -240,13 +262,16 @@ class LoanGraph {
 		// A java.time value, not its toString, so it is stored as a Neo4j datetime and
 		// ORDER BY is a real temporal sort.
 		parameters.put("at", ZonedDateTime.now());
-		parameters.put("outcome", decision.outcome());
-		parameters.put("reason", decision.reason());
+		parameters.put("outcome", verdict.outcomeName());
+		parameters.put("reason", verdict.reason());
+		parameters.put("confidence", verdict.confidence().name());
+		parameters.put("explanation", verdict.explanation());
+		parameters.put("approved", verdict.approved());
 		parameters.put("conversationId", conversationId);
 		parameters.put("escalatedFrom", escalatedFrom);
-		parameters.put("policyKey", deciding != null ? deciding.key() : null);
-		parameters.put("observed", deciding != null ? deciding.observed() : null);
-		parameters.put("threshold", deciding != null ? deciding.threshold() : null);
+		parameters.put("policyKey", crossed != null ? crossed.key() : null);
+		parameters.put("observed", crossed != null ? crossed.observed() : null);
+		parameters.put("threshold", crossed != null ? crossed.threshold() : null);
 
 		List<Record> written = write(SAVE_DECISION, parameters);
 		if (written.isEmpty()) {
@@ -254,21 +279,6 @@ class LoanGraph {
 					+ " in the graph, so nothing was written. Restart the app to reseed it.");
 		}
 		return written.get(0).get("decisionId").asString();
-	}
-
-	/**
-	 * Not called the reason: the reason is computed and committed before the model is called,
-	 * and this is the sentence the applicant was told afterward.
-	 */
-	void attachExplanation(String decisionId, String explanation) {
-		long updated = write(ATTACH_EXPLANATION,
-				Map.of("decisionId", decisionId, "explanation", explanation))
-			.get(0)
-			.get("updated")
-			.asLong();
-		if (updated == 0) {
-			throw new IllegalStateException("No decision " + decisionId + " to explain.");
-		}
 	}
 
 	private List<Record> read(String cypher, Map<String, Object> parameters) {
