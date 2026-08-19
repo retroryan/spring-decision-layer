@@ -128,15 +128,22 @@ class GraphSeeder implements CommandLineRunner {
 	/**
 	 * The decision is MATCHed rather than MERGEd: an exception against a decision that is not in
 	 * the graph is a typo in seed.json, and writing an Exception hanging off nothing would hide
-	 * it. Nothing here touches the denial itself, which is the point of an exception.
+	 * it. Nothing here touches the denial itself, which is the point of an exception. The
+	 * underwriter is a plain MATCH for the same reason MERGE_DECISION's is: an underwriterId that
+	 * names nobody is a typo, not a graph with one less person in it.
+	 *
+	 * source is 'seed' here and 'underwriter' on the row {@link LoanGraph#grantException} writes,
+	 * so a granted exception is visibly different from the one shipped with the demo.
 	 */
 	private static final String MERGE_EXCEPTION = """
 			UNWIND $rows AS row
 			MATCH (d:Decision {decisionId: row.decisionId})
+			MATCH (u:Underwriter {underwriterId: row.underwriterId})
 			MERGE (e:Exception {exceptionId: row.exceptionId})
 			SET e.grantedBy = row.grantedBy, e.justification = row.justification,
-			    e.grantedAt = row.grantedAt
+			    e.grantedAt = row.grantedAt, e.source = 'seed'
 			MERGE (e)-[:EXCEPTION_TO]->(d)
+			MERGE (e)-[:GRANTED_BY]->(u)
 			""";
 
 	private final Driver driver;
@@ -199,7 +206,8 @@ class GraphSeeder implements CommandLineRunner {
 
 		merge(MERGE_EXCEPTION, seed.exceptions(),
 				exception -> Map.of("exceptionId", exception.exceptionId(), "decisionId",
-						exception.decisionId(), "grantedBy", exception.grantedBy(), "justification",
+						exception.decisionId(), "underwriterId", exception.underwriterId(),
+						"grantedBy", exception.grantedBy(), "justification",
 						exception.justification(), "grantedAt", when(exception.monthsAgo())));
 	}
 

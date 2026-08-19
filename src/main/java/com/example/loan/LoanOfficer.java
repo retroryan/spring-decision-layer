@@ -44,6 +44,13 @@ class LoanOfficer {
 			Who you are is at the end of the file below, with how you have come to read
 			one. Read the file as that person and decide as they would.
 
+			Separately from today's file, you may judge that one of the denials still
+			counting against this company should stop counting: circumstances since
+			resolved, a reason that no longer holds. That is a judgement about the
+			record, not a way to change today's answer, so it does not depend on what
+			you decide below. Denying today while setting aside an old denial is
+			ordinary underwriting.
+
 			Fill in the verdict:
 
 			outcome            APPROVED or DENIED.
@@ -62,6 +69,10 @@ class LoanOfficer {
 			                   that was not given to you.
 			confidence         CLEAR when the file is not close. BORDERLINE when it is, and
 			                   another underwriter could reasonably land the other way.
+			exception          Optional. Set only when you judge one of the denials listed
+			                   as still counting should stop counting: decisionId, one of
+			                   those ids, and justification, your reasoning for setting it
+			                   aside.
 			""";
 
 	private final ChatClient chatClient;

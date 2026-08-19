@@ -121,8 +121,14 @@ class DecisionTraceAdvisor implements CallAdvisor {
 				file.underwriter(), crossed, citedDenials(verdict, file.priorDenials()),
 				file.conversationId());
 
+		LoanVerdict.Pardon exception = grantedException(verdict, file.priorDenials());
+		if (exception != null) {
+			this.graph.grantException(exception.decisionId(), exception.justification(),
+					file.underwriter());
+		}
+
 		return applicantLetter(response, answered, new LoanAnswer(file.conversationId(),
-				file.underwriter(), verdict, file.measurements(), crossed));
+				file.underwriter(), verdict, file.measurements(), crossed, exception));
 	}
 
 	/**
@@ -225,6 +231,21 @@ class DecisionTraceAdvisor implements CallAdvisor {
 			return List.of();
 		}
 		return verdict.citedDecisionIds().stream().distinct().filter(priorDenials::contains).toList();
+	}
+
+	/**
+	 * The one guardrail this design keeps: the decisionId on a granted exception has to be one of
+	 * the denials that were actually sent in the facts block. Anything else is dropped rather than
+	 * written, the same treatment an unsent citation gets, because an exception hanging off a
+	 * decisionId the model invented is a broken graph rather than a judgement call. Independent
+	 * of {@link LoanVerdict#outcome}: a denial today can still set aside a denial from before it.
+	 */
+	static LoanVerdict.Pardon grantedException(LoanVerdict verdict, List<String> priorDenials) {
+		LoanVerdict.Pardon exception = verdict.exception();
+		if (exception == null || !priorDenials.contains(exception.decisionId())) {
+			return null;
+		}
+		return exception;
 	}
 
 	/**

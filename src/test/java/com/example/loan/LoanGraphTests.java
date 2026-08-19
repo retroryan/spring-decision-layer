@@ -15,6 +15,7 @@ import org.testcontainers.junit.jupiter.Testcontainers;
 import org.testcontainers.neo4j.Neo4jContainer;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatIllegalStateException;
 
 /**
  * The claim this example lives on, checked against real Cypher: a decision written by one run
@@ -388,10 +389,13 @@ class LoanGraphTests {
 
 		assertThat(deciders).containsExactly("Marcus Feld");
 
-		Record granted = query("MATCH (e:Exception) RETURN e.grantedBy AS grantedBy", Map.of())
-			.get(0);
+		Record granted = query("""
+				MATCH (e:Exception)-[:GRANTED_BY]->(u:Underwriter)
+				RETURN e.grantedBy AS grantedBy, u.name AS grantorName
+				""", Map.of()).get(0);
 
 		assertThat(granted.get("grantedBy").asString()).contains("Dana Whitfield");
+		assertThat(granted.get("grantorName").asString()).isEqualTo("Dana Whitfield");
 	}
 
 	/**
@@ -418,6 +422,64 @@ class LoanGraphTests {
 	@Test
 	void theReadBackIsEmptyUntilSomebodyApprovesPastALine() {
 		assertThat(this.graph.findApprovalsPastPolicies()).isEmpty();
+	}
+
+	/**
+	 * The write grantException owns: an Exception node CREATEd fresh and joined both to the
+	 * denial it sets aside and to the underwriter granting it, marked source 'underwriter' so
+	 * it reads differently from the one seed.json ships.
+	 */
+	@Test
+	void grantingAnExceptionJoinsItToTheDenialAndTheGrantor() {
+		Underwriter dana = rosterMember("Dana Whitfield");
+
+		this.graph.grantException("D-1123-SEED-1", "Since resolved.", dana);
+
+		Record stored = query("""
+				MATCH (e:Exception)-[:EXCEPTION_TO]->(:Decision {decisionId: $id})
+				MATCH (e)-[:GRANTED_BY]->(:Underwriter {underwriterId: $underwriterId})
+				RETURN e.source AS source, e.grantedBy AS grantedBy, e.justification AS justification
+				""", Map.of("id", "D-1123-SEED-1", "underwriterId", dana.underwriterId())).get(0);
+
+		assertThat(stored.get("source").asString()).isEqualTo("underwriter");
+		assertThat(stored.get("grantedBy").asString()).isEqualTo("Dana Whitfield, Commercial Underwriter");
+		assertThat(stored.get("justification").asString()).isEqualTo("Since resolved.");
+	}
+
+	/** A decisionId nothing in the graph holds is a bug in the caller, not a silent no-op. */
+	@Test
+	void grantingAnExceptionAgainstADecisionThatDoesNotExistFailsRatherThanWritingNothing() {
+		Underwriter dana = rosterMember("Dana Whitfield");
+
+		assertThatIllegalStateException()
+			.isThrownBy(() -> this.graph.grantException("D-DOES-NOT-EXIST", "Since resolved.", dana))
+			.withMessageContaining("D-DOES-NOT-EXIST");
+	}
+
+	/** The read back: every grant on file, who made it, and whose denial it set aside. */
+	@Test
+	void theReadBackListsWhoHasSetAsideWhoseDenial() {
+		Underwriter dana = rosterMember("Dana Whitfield");
+
+		this.graph.grantException("D-1123-SEED-1", "Second chance.", dana);
+
+		assertThat(this.graph.findExceptionGrants()).hasSize(2)
+			.anySatisfy(grant -> {
+				assertThat(grant.decisionId()).isEqualTo("D-1123-SEED-1");
+				assertThat(grant.justification()).isEqualTo("Second chance.");
+				assertThat(grant.decidedBy()).isEqualTo("Marcus Feld");
+				assertThat(grant.grantedBy()).contains("Dana Whitfield");
+			});
+	}
+
+	/** The seeded grant is on the read back before anything in a run has granted another. */
+	@Test
+	void theReadBackHoldsTheSeededGrantOnAFreshGraph() {
+		assertThat(this.graph.findExceptionGrants()).singleElement().satisfies(grant -> {
+			assertThat(grant.decisionId()).isEqualTo("D-1123-SEED-2");
+			assertThat(grant.decidedBy()).isEqualTo("Marcus Feld");
+			assertThat(grant.grantedBy()).contains("Dana Whitfield");
+		});
 	}
 
 	/**
@@ -581,21 +643,21 @@ class LoanGraphTests {
 	private static LoanVerdict denial() {
 		return new LoanVerdict(LoanVerdict.Outcome.DENIED, "Debt load is too high for this file.",
 				PolicyEngine.DEBT_TO_INCOME_LIMIT, List.of(),
-				"Your debt load is too high for this.", LoanVerdict.Confidence.CLEAR);
+				"Your debt load is too high for this.", LoanVerdict.Confidence.CLEAR, null);
 	}
 
 	private static LoanVerdict approval() {
 		return new LoanVerdict(LoanVerdict.Outcome.APPROVED, "Strong enough to carry the extra.",
 				PolicyEngine.DEBT_TO_INCOME_LIMIT, List.of(),
 				"Approved, and here is why we were comfortable.",
-				LoanVerdict.Confidence.BORDERLINE);
+				LoanVerdict.Confidence.BORDERLINE, null);
 	}
 
 	private static LoanVerdict escalation() {
 		return new LoanVerdict(LoanVerdict.Outcome.DENIED, "Too many denials still standing.",
 				PolicyEngine.REPEAT_DENIAL_ESCALATION, List.of(),
 				"We cannot lend again while the earlier denials still stand.",
-				LoanVerdict.Confidence.CLEAR);
+				LoanVerdict.Confidence.CLEAR, null);
 	}
 
 	/** The engine's measurement of the line those verdicts name, which is what the edge gets. */

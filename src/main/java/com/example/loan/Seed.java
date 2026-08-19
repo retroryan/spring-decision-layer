@@ -68,9 +68,14 @@ record Seed(List<Company> companies, List<Policy> policies, List<SeedUnderwriter
 	 * An underwriter's judgement that a denial should not be held against the company later. It
 	 * does not undo the decision: the denial stays on file with its policy and its numbers, and
 	 * stops counting as precedent.
+	 *
+	 * underwriterId is one of the three on the roster, so {@code GRANTED_BY} joins to a real node
+	 * and the read back returns a row on a graph nobody has run against yet. grantedBy stays a
+	 * string alongside it, for the console, the same way a decision keeps its disposition text
+	 * beside {@code DECIDED_BY}.
 	 */
 	record SeedException(String exceptionId, String decisionId, String grantedBy,
-			String justification, long monthsAgo) {
+			String underwriterId, String justification, long monthsAgo) {
 	}
 
 }

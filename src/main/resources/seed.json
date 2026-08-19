@@ -155,6 +155,7 @@
       "exceptionId": "X-1123-SEED",
       "decisionId": "D-1123-SEED-2",
       "grantedBy": "Dana Whitfield, Commercial Underwriter",
+      "underwriterId": "U-WHITFIELD",
       "justification": "The debt was short-term bridge financing against a signed municipal contract, since repaid.",
       "monthsAgo": 5
     }

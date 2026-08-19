@@ -17,7 +17,7 @@ import org.jspecify.annotations.Nullable;
  */
 record LoanVerdict(Outcome outcome, String reason, @Nullable String decidingPolicyKey,
 		List<String> citedDecisionIds, String explanation, Confidence confidence,
-		@Nullable Exception exception) {
+		@Nullable Pardon exception) {
 
 	enum Outcome {
 
@@ -31,12 +31,16 @@ record LoanVerdict(Outcome outcome, String reason, @Nullable String decidingPoli
 	 * is independent of {@link #outcome}, which is why it is its own nullable component rather
 	 * than something folded into a denial's fields.
 	 *
+	 * Named Pardon rather than Exception so the type cannot be mistaken for {@code
+	 * java.lang.Exception} at a glance; the domain word "exception" stays everywhere else, on the
+	 * JSON field, the prompt, and the graph's own {@code Exception} node label.
+	 *
 	 * @param decisionId the standing denial being set aside, which has to be one of the ids the
 	 * facts block listed as still counting; {@link DecisionTraceAdvisor} drops anything else
 	 * rather than writing a node with nothing real to point at
 	 * @param justification the underwriter's own reasoning for setting it aside
 	 */
-	record Exception(String decisionId, String justification) {
+	record Pardon(String decisionId, String justification) {
 	}
 
 	/**

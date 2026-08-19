@@ -125,6 +125,37 @@ class DecisionTraceAdvisorTests {
 			.isEmpty();
 	}
 
+	/** An exception naming a denial that was actually sent survives the guardrail. */
+	@Test
+	void anExceptionNamingADenialThatWasSentIsGranted() {
+		LoanVerdict.Pardon exception = new LoanVerdict.Pardon("D-real", "Since resolved.");
+		LoanVerdict verdict = verdict(null, List.of(), exception);
+
+		assertThat(DecisionTraceAdvisor.grantedException(verdict, List.of("D-real")))
+			.isSameAs(exception);
+	}
+
+	/**
+	 * An id nothing sent, the same failure {@link #aCitationThatWasNeverSentIsDropped} guards
+	 * against: an exception hanging off a decisionId the model invented is a broken graph rather
+	 * than a judgement call.
+	 */
+	@Test
+	void anExceptionNamingADenialThatWasNeverSentIsDropped() {
+		LoanVerdict.Pardon exception = new LoanVerdict.Pardon("D-invented", "Since resolved.");
+		LoanVerdict verdict = verdict(null, List.of(), exception);
+
+		assertThat(DecisionTraceAdvisor.grantedException(verdict, List.of("D-real"))).isNull();
+	}
+
+	/** No exception at all is the ordinary case, and it resolves to nothing rather than a throw. */
+	@Test
+	void noExceptionAtAllGrantsNothing() {
+		LoanVerdict verdict = verdict(null, List.of());
+
+		assertThat(DecisionTraceAdvisor.grantedException(verdict, List.of("D-real"))).isNull();
+	}
+
 	/**
 	 * The same two filters again, this time through the advisor rather than against the methods,
 	 * so what is asserted is what actually reaches the graph.
@@ -146,6 +177,30 @@ class DecisionTraceAdvisorTests {
 		assertThat(crossed.getValue()).isNull();
 		assertThat(cited.getValue()).containsExactly("D-real");
 		assertThat(response).isNotNull();
+	}
+
+	/** An exception naming a denial the file actually carried is written to the graph. */
+	@Test
+	void anExceptionNamingASentDenialIsGrantedOnTheGraph() {
+		advise("""
+				{"outcome":"DENIED","reason":"Too far off.",\
+				"citedDecisionIds":[],"explanation":"We cannot approve this today.",\
+				"confidence":"CLEAR",\
+				"exception":{"decisionId":"D-real","justification":"Since resolved."}}""");
+
+		verify(this.graph).grantException("D-real", "Since resolved.", UNDERWRITER);
+	}
+
+	/** An exception naming a denial the file never carried is dropped rather than granted. */
+	@Test
+	void anExceptionNamingAnUnsentDenialIsNeverGranted() {
+		advise("""
+				{"outcome":"DENIED","reason":"Too far off.",\
+				"citedDecisionIds":[],"explanation":"We cannot approve this today.",\
+				"confidence":"CLEAR",\
+				"exception":{"decisionId":"D-invented","justification":"Since resolved."}}""");
+
+		verify(this.graph, never()).grantException(anyString(), anyString(), any());
 	}
 
 	/**
@@ -369,8 +424,14 @@ class DecisionTraceAdvisorTests {
 	}
 
 	private static LoanVerdict verdict(String decidingPolicyKey, List<String> citedDecisionIds) {
+		return verdict(decidingPolicyKey, citedDecisionIds, null);
+	}
+
+	private static LoanVerdict verdict(String decidingPolicyKey, List<String> citedDecisionIds,
+			LoanVerdict.Pardon exception) {
 		return new LoanVerdict(LoanVerdict.Outcome.DENIED, "Too far off.", decidingPolicyKey,
-				citedDecisionIds, "We cannot approve this today.", LoanVerdict.Confidence.CLEAR);
+				citedDecisionIds, "We cannot approve this today.", LoanVerdict.Confidence.CLEAR,
+				exception);
 	}
 
 	private static final String VERDICT = "{\"outcome\":\"DENIED\",\"reason\":\"Too far off.\"}";
