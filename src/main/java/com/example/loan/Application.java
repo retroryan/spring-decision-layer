@@ -37,13 +37,13 @@ public class Application {
 				requestedAmount = args.length > 1 ? amount(args[1]) : DEFAULT_AMOUNT;
 			}
 			catch (IllegalArgumentException ex) {
-				System.out.printf("%s%nUsage: ./run.sh [companyId] [amount]%n", ex.getMessage());
+				System.out.printf("%s%nUsage: ./run.sh [--no-seed] [companyId] [amount]%n",
+						ex.getMessage());
 				return;
 			}
 
 			if (graph.findCompany(companyId).isEmpty()) {
-				System.out.printf("No company with id %s. Try C-1042, C-1077, C-1096, or C-1123.%n",
-						companyId);
+				printUnknownCompany(graph, companyId);
 				return;
 			}
 
@@ -52,6 +52,21 @@ public class Application {
 			printPrecedentTrail(graph, companyId);
 			printTranscript(officer.transcript());
 		};
+	}
+
+	/**
+	 * The ids come from the graph rather than a constant, so this cannot suggest the id that just
+	 * failed. An empty graph is a different mistake and gets a different answer: --no-seed skips
+	 * seeding, and on a graph that was never seeded there is nothing at all to decide about.
+	 */
+	private void printUnknownCompany(LoanGraph graph, String companyId) {
+		List<String> known = graph.findCompanyIds();
+		if (known.isEmpty()) {
+			System.out.printf("No companies in the graph, so nothing has been seeded. Run without "
+					+ "--no-seed to seed it.%n");
+			return;
+		}
+		System.out.printf("No company with id %s. Try %s.%n", companyId, String.join(", ", known));
 	}
 
 	/** Printed before the decision because the decision reads it. */

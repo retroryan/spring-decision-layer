@@ -44,6 +44,16 @@ class LoanGraph {
 			       c.currentDebt AS currentDebt, c.annualIncome AS annualIncome
 			""";
 
+	/**
+	 * Only used to answer an unknown company id. Naming the ids the graph actually holds keeps the
+	 * message from suggesting the id that just failed, and tells an empty graph apart from a typo.
+	 */
+	private static final String FIND_COMPANY_IDS = """
+			MATCH (c:Company)
+			RETURN c.companyId AS companyId
+			ORDER BY companyId
+			""";
+
 	private static final String LOAD_POLICIES = """
 			MATCH (p:Policy)
 			RETURN p.key AS key, p.name AS name, p.threshold AS threshold,
@@ -152,6 +162,12 @@ class LoanGraph {
 					record.get("name").asString(), record.get("creditRiskScore").asLong(),
 					record.get("currentDebt").asLong(), record.get("annualIncome").asLong()))
 			.findFirst();
+	}
+
+	List<String> findCompanyIds() {
+		return read(FIND_COMPANY_IDS, Map.of()).stream()
+			.map(record -> record.get("companyId").asString())
+			.toList();
 	}
 
 	Map<String, Policy> loadPolicies() {

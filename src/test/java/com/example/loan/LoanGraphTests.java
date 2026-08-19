@@ -213,6 +213,13 @@ class LoanGraphTests {
 	 * Stored as a temporal type rather than as ISO text, so ORDER BY is a real sort and a
 	 * reader can ask for the denials inside the last twelve months.
 	 */
+	/** Backs the unknown-id message: an empty graph and a typo have to be told apart. */
+	@Test
+	void theGraphNamesTheCompaniesItHolds() {
+		assertThat(this.graph.findCompanyIds()).containsExactly("C-1042", "C-1077", "C-1096",
+				"C-1123");
+	}
+
 	@Test
 	void timesAreNeo4jDatetimesAndNotStrings() {
 		save("C-1042", denial(), List.of());

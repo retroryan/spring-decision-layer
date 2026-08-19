@@ -45,6 +45,7 @@ Rules for whoever executes this, human or agent:
 | 12 | `./run.sh C-1096 250000`, the credit score denial | PASS | DENIED on Minimum Credit Score, 47 against 60, with 29.5% passing. |
 | 13 | Error paths: unknown company, unparseable amount, no arguments | PASS | All three refuse or default correctly. Two message defects found, findings 5 and 6. |
 | 14 | Final reset, leaving the seeded state for the next run to rebuild | PASS | Loan labels at 0. The next ordinary run reseeds, which is what the README's Reset section says. |
+| 15 | Findings 5 and 6 fixed and exercised | PASS | Both messages correct on an empty graph, an unknown id, and a bad amount. 26 tests green. No model calls. |
 
 ### Progress log
 
@@ -150,19 +151,34 @@ Newest entry last. One line per event, with what changed.
 - Run complete. Every step PASS. One defect found and fixed, four README drifts found and fixed,
   two message defects open as findings 5 and 6.
 
-### Findings 5 and 6, open: two messages the flag made wrong
+### Findings 5 and 6, fixed: two messages the flag made wrong
 
-Neither is in the graph or the rules. Both are one line of `Application.java`, and neither is
-applied, because they are outside what option 1 asked for.
+Neither was in the graph or the rules. Both are now fixed, and the fix for 5 removed a hardcoded
+list rather than adding a special case.
 
 **Finding 5.** `./run.sh --no-seed C-1042 250000` on an emptied graph prints
 `No company with id C-1042. Try C-1042, C-1077, C-1096, or C-1123.` It suggests the id that just
 failed, because the list is a constant and the real problem is that nothing is seeded. Reachable
-only with `--no-seed`, which is new. Proposed: when no `Company` exists at all, say the graph is
-empty and to run without `--no-seed`, and keep the current message for a genuinely unknown id.
+only with `--no-seed`, which is new. Fixed by reading the ids out of the graph: `LoanGraph` gained
+`findCompanyIds`, so an unknown id is answered with the companies that are actually there and can
+never name the one that just failed, and an empty result gets its own message naming `--no-seed` as
+the cause. Covered by `theGraphNamesTheCompaniesItHolds`.
 
-**Finding 6.** The unparseable-amount path prints `Usage: ./run.sh [companyId] [amount]`, which no
-longer describes `run.sh`. Proposed: `Usage: ./run.sh [--no-seed] [companyId] [amount]`.
+**Finding 6.** The unparseable-amount path printed `Usage: ./run.sh [companyId] [amount]`, which no
+longer described `run.sh`. Fixed to `Usage: ./run.sh [--no-seed] [companyId] [amount]`.
+
+### Step 15, observed
+
+```
+No companies in the graph, so nothing has been seeded. Run without --no-seed to seed it.
+No company with id C-9999. Try C-1042, C-1077, C-1096, C-1123.
+'twelve' is not an amount. Try a whole number, like 250000.
+Usage: ./run.sh [--no-seed] [companyId] [amount]
+```
+
+Unit tests after the change: `LoanGraphTests` 17, `PolicyEngineTests` 9, no failures. None of the
+three runs reached the model, so the pass was free. The unknown-id run seeded the graph on its way
+past, which is where it was left: the seeded state, no run-generated decisions.
 - Original halt, kept for the record: halted at step 5 per rule 2.
 
 ### Finding 4, written: restoring the relationship does not restore the approval
