@@ -21,8 +21,8 @@ import org.springframework.util.StringUtils;
  * Puts seed.json into Neo4j at startup, ahead of the run that reads it.
  *
  * Everything MERGEs on a stable id, so starting the app ten times leaves the same four
- * companies, three policies, three historical denials, and the one exception granted against
- * one of them. The seeded decision is wired
+ * companies, three policies, three underwriters, four historical denials, and the one exception
+ * granted against one of them. The seeded decision is wired
  * exactly as {@link LoanGraph#saveDecision} wires a live one, so the traversal cannot tell
  * them apart.
  *
@@ -56,6 +56,9 @@ class GraphSeeder implements CommandLineRunner {
 			""", """
 			CREATE CONSTRAINT loan_exception_id IF NOT EXISTS
 			FOR (e:Exception) REQUIRE e.exceptionId IS UNIQUE
+			""", """
+			CREATE CONSTRAINT loan_underwriter_id IF NOT EXISTS
+			FOR (u:Underwriter) REQUIRE u.underwriterId IS UNIQUE
 			""");
 
 	/** One list parameter, UNWOUND in Cypher: one round trip and one plan per label, not row. */
@@ -74,6 +77,18 @@ class GraphSeeder implements CommandLineRunner {
 			    p.windowMonths = row.windowMonths, p.description = row.description
 			""";
 
+	/**
+	 * The wording is rewritten on every start, like the thresholds, so seed.json stays the source
+	 * of truth for how each person reads a file. What is already on a DECIDED_BY edge is left
+	 * alone, which is the point of putting it there.
+	 */
+	private static final String MERGE_UNDERWRITER = """
+			UNWIND $rows AS row
+			MERGE (u:Underwriter {underwriterId: row.underwriterId})
+			SET u.name = row.name, u.title = row.title, u.yearsOnTheJob = row.yearsOnTheJob,
+			    u.label = row.label, u.disposition = row.disposition
+			""";
+
 	private static final String MERGE_APPLICATION = """
 			UNWIND $rows AS row
 			MATCH (c:Company {companyId: row.companyId})
@@ -86,14 +101,25 @@ class GraphSeeder implements CommandLineRunner {
 	 * The policy hop is OPTIONAL because an approval has no policy that decided it. As a plain
 	 * MATCH, a seeded approval would match nothing and the statement would quietly write no
 	 * decision at all. Inside UNWIND it still runs per row, against that row's own policyKey.
+	 *
+	 * The underwriter hop is a plain MATCH, because every decision was made by somebody: an
+	 * underwriterId that names nobody is a typo in seed.json, and the missing decision it leaves
+	 * is a louder failure than a decision with no decider on it.
+	 *
+	 * The disposition is copied onto the edge from the node MERGEd moments ago in this same run,
+	 * for the reason APPLIED_POLICY carries its two numbers: a later edit to how a person reads a
+	 * file must not rewrite why the decisions they already made went the way they did.
 	 */
 	private static final String MERGE_DECISION = """
 			UNWIND $rows AS row
 			MATCH (a:LoanApplication {applicationId: row.applicationId})
+			MATCH (u:Underwriter {underwriterId: row.underwriterId})
 			OPTIONAL MATCH (p:Policy {key: row.policyKey})
 			MERGE (d:Decision {decisionId: row.decisionId})
 			SET d.outcome = row.outcome, d.reason = row.reason, d.decidedAt = row.decidedAt
 			MERGE (d)-[:ABOUT]->(a)
+			MERGE (d)-[decided:DECIDED_BY]->(u)
+			SET decided.disposition = u.disposition
 			FOREACH (policy IN CASE WHEN p IS NULL THEN [] ELSE [p] END |
 			  MERGE (d)-[applied:APPLIED_POLICY]->(policy)
 			  SET applied.observed = row.observed, applied.threshold = row.threshold)
@@ -143,6 +169,13 @@ class GraphSeeder implements CommandLineRunner {
 						policy.threshold(), "windowMonths", policy.windowMonths(), "description",
 						policy.description()));
 
+		// Before the decisions, because each of those MATCHes the person who made it.
+		merge(MERGE_UNDERWRITER, seed.underwriters(),
+				underwriter -> Map.of("underwriterId", underwriter.underwriterId(), "name",
+						underwriter.name(), "title", underwriter.title(), "yearsOnTheJob",
+						underwriter.yearsOnTheJob(), "label", underwriter.label(), "disposition",
+						underwriter.disposition()));
+
 		merge(MERGE_APPLICATION, seed.applications(),
 				application -> Map.of("applicationId", application.applicationId(), "companyId",
 						application.companyId(), "requestedAmount", application.requestedAmount(),
@@ -157,6 +190,7 @@ class GraphSeeder implements CommandLineRunner {
 			row.put("outcome", decision.outcome());
 			row.put("reason", decision.reason());
 			row.put("decidedAt", when(decision.monthsAgo()));
+			row.put("underwriterId", decision.underwriterId());
 			row.put("policyKey", decision.policyKey());
 			row.put("observed", decision.observed());
 			row.put("threshold", decision.threshold());

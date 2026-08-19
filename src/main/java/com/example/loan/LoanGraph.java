@@ -25,6 +25,7 @@ import org.springframework.util.StringUtils;
  * (Company)-[:SUBMITTED]-&gt;(LoanApplication)&lt;-[:ABOUT]-(Decision)-[:APPLIED_POLICY]-&gt;(Policy)
  *                                                       (Decision)-[:WEIGHED_PAST]-&gt;(Policy)
  *                                                       (Decision)-[:ESCALATED_FROM]-&gt;(Decision)
+ *                                                       (Decision)-[:DECIDED_BY]-&gt;(Underwriter)
  *                                  (Exception)-[:EXCEPTION_TO]-&gt;(Decision)
  * </pre>
  *
@@ -56,6 +57,33 @@ class LoanGraph {
 			ORDER BY companyId
 			""";
 
+	/**
+	 * The roster the run draws from. Ordered by name so the read is stable, which the draw does
+	 * not care about and a test asserting on the roster does.
+	 */
+	private static final String FIND_UNDERWRITERS = """
+			MATCH (u:Underwriter)
+			RETURN u.underwriterId AS underwriterId, u.name AS name, u.title AS title,
+			       u.yearsOnTheJob AS yearsOnTheJob, u.label AS label,
+			       u.disposition AS disposition
+			ORDER BY u.name
+			""";
+
+	/**
+	 * The read back, and the whole reason Underwriter is worth adding as a node: which person
+	 * approves a loan past which line, and how often. Two relationships and three labels, joining
+	 * who decided to what they decided over.
+	 *
+	 * Only WEIGHED_PAST, because APPLIED_POLICY on the same policy means the opposite: that the
+	 * line stopped the loan. The tie-break on the count is so two people with the same number of
+	 * approvals print in the same order on every run.
+	 */
+	private static final String FIND_APPROVALS_PAST_POLICIES = """
+			MATCH (u:Underwriter)<-[:DECIDED_BY]-(:Decision)-[:WEIGHED_PAST]->(p:Policy)
+			RETURN u.name AS name, p.name AS policyName, count(*) AS approvals
+			ORDER BY approvals DESC, name, policyName
+			""";
+
 	private static final String LOAD_POLICIES = """
 			MATCH (p:Policy)
 			RETURN p.key AS key, p.name AS name, p.threshold AS threshold,
@@ -80,10 +108,13 @@ class LoanGraph {
 	private static final String FIND_DECISIONS = """
 			MATCH (:Company {companyId: $companyId})-[:SUBMITTED]->(a:LoanApplication)
 			      <-[:ABOUT]-(d:Decision)
-			OPTIONAL MATCH (d)-[:APPLIED_POLICY]->(p:Policy)
+			OPTIONAL MATCH (d)-[:APPLIED_POLICY]->(applied:Policy)
+			OPTIONAL MATCH (d)-[:WEIGHED_PAST]->(weighed:Policy)
 			OPTIONAL MATCH (e:Exception)-[:EXCEPTION_TO]->(d)
 			RETURN d.decidedAt AS decidedAt, d.outcome AS outcome,
-			       a.requestedAmount AS requestedAmount, p.name AS policyName,
+			       a.requestedAmount AS requestedAmount,
+			       coalesce(applied.name, weighed.name) AS policyName,
+			       weighed IS NOT NULL AS weighedPast,
 			       e IS NOT NULL AS excepted
 			ORDER BY d.decidedAt
 			""";
@@ -126,18 +157,25 @@ class LoanGraph {
 	 * $escalatedFrom is the ids the model cited, already filtered to the denials that were sent
 	 * to it. The OPTIONAL MATCH resolves them, so an id that no longer exists is dropped here
 	 * rather than failing the write.
+	 *
+	 * The underwriter is MATCHed rather than OPTIONAL: somebody decided this, and the draw read
+	 * them out of this graph moments ago. $disposition is the wording as it stood then, stored on
+	 * the edge for the reason the two numbers ride on the policy edge, so retuning a disposition
+	 * in seed.json cannot rewrite why an old decision went the way it did.
 	 */
 	private static final String SAVE_DECISION = """
 			MATCH (c:Company {companyId: $companyId})
+			MATCH (u:Underwriter {underwriterId: $underwriterId})
 			OPTIONAL MATCH (p:Policy {key: $policyKey})
 			OPTIONAL MATCH (earlier:Decision) WHERE earlier.decisionId IN $escalatedFrom
-			WITH c, p, collect(earlier) AS causes
+			WITH c, u, p, collect(earlier) AS causes
 			CREATE (c)-[:SUBMITTED]->(a:LoanApplication {applicationId: $applicationId,
 			        requestedAmount: $requestedAmount, submittedAt: $at})
 			CREATE (d:Decision {decisionId: $decisionId, outcome: $outcome, reason: $reason,
 			        confidence: $confidence, explanation: $explanation, decidedAt: $at,
 			        conversationId: $conversationId})
 			CREATE (d)-[:ABOUT]->(a)
+			CREATE (d)-[:DECIDED_BY {disposition: $disposition}]->(u)
 			FOREACH (policy IN CASE WHEN p IS NULL OR $approved THEN [] ELSE [p] END |
 			  CREATE (d)-[:APPLIED_POLICY {observed: $observed, threshold: $threshold}]->(policy))
 			FOREACH (policy IN CASE WHEN p IS NULL OR NOT $approved THEN [] ELSE [p] END |
@@ -185,6 +223,28 @@ class LoanGraph {
 			.toList();
 	}
 
+	/**
+	 * The roster, for the run to draw one person out of. It comes from the graph rather than from
+	 * seed.json directly, so the person named on the console is the same node the decision is
+	 * joined to.
+	 */
+	List<Underwriter> findUnderwriters() {
+		return read(FIND_UNDERWRITERS, Map.of()).stream()
+			.map(record -> new Underwriter(record.get("underwriterId").asString(),
+					record.get("name").asString(), record.get("title").asString(),
+					record.get("yearsOnTheJob").asLong(), record.get("label").asString(),
+					record.get("disposition").asString()))
+			.toList();
+	}
+
+	/** Who approves past which line, and how often. Empty until somebody has approved past one. */
+	List<UnderwriterApprovals> findApprovalsPastPolicies() {
+		return read(FIND_APPROVALS_PAST_POLICIES, Map.of()).stream()
+			.map(record -> new UnderwriterApprovals(record.get("name").asString(),
+					record.get("policyName").asString(), record.get("approvals").asLong()))
+			.toList();
+	}
+
 	Map<String, Policy> loadPolicies() {
 		return read(LOAD_POLICIES, Map.of()).stream()
 			.map(record -> new Policy(record.get("key").asString(), record.get("name").asString(),
@@ -208,16 +268,20 @@ class LoanGraph {
 	}
 
 	/**
-	 * The same walk, one hop further, resolving APPLIED_POLICY to the policy's name. Only that
-	 * edge, because this is the listing of what stopped past loans; the line an approval was
-	 * granted past is on WEIGHED_PAST and is read by the trail rather than the listing.
+	 * The same walk, one hop further, resolving both policy edges to the policy's name. Both,
+	 * because a decision holds one or the other and reading only APPLIED_POLICY reported an
+	 * approval that recorded its line as naming no policy at all. That is the exact phrase this
+	 * design uses for the fact being lost, printed on a run where the fact was stored correctly.
+	 * Which edge it came back on is kept, because the line that stopped a loan and the line one
+	 * was granted past are not the same claim.
 	 */
 	List<PastDecision> findDecisions(String companyId) {
 		return read(FIND_DECISIONS, Map.of("companyId", companyId)).stream()
 			.map(record -> new PastDecision(
 					record.get("decidedAt").asZonedDateTime().toInstant(),
 					record.get("outcome").asString(), record.get("requestedAmount").asLong(),
-					record.get("policyName").asString(null), record.get("excepted").asBoolean()))
+					record.get("policyName").asString(null),
+					record.get("weighedPast").asBoolean(), record.get("excepted").asBoolean()))
 			.toList();
 	}
 
@@ -240,6 +304,9 @@ class LoanGraph {
 	 * rather than two: the sentence the applicant was told goes on the node with the verdict
 	 * that produced it, instead of being attached a moment later.
 	 *
+	 * @param underwriter whoever the run drew, joined to the decision by DECIDED_BY in this same
+	 * statement. Their disposition is copied onto the edge, so the decision keeps the wording that
+	 * produced it rather than whatever the node says later.
 	 * @param crossed the policy the verdict named, resolved to the engine's own measurement of
 	 * it, or null when the verdict named none. The verdict supplies the key and the engine
 	 * supplies the numbers, so the edge cannot claim a measurement nothing took.
@@ -250,7 +317,8 @@ class LoanGraph {
 	 * request, so the two kinds of memory join on a shared key.
 	 */
 	String saveDecision(String companyId, long requestedAmount, LoanVerdict verdict,
-			PolicyResult crossed, List<String> escalatedFrom, String conversationId) {
+			Underwriter underwriter, PolicyResult crossed, List<String> escalatedFrom,
+			String conversationId) {
 
 		// HashMap rather than Map.of, because three of these values are null when the verdict
 		// named no policy and Map.of rejects nulls. The driver maps a null value to Cypher's null.
@@ -268,15 +336,20 @@ class LoanGraph {
 		parameters.put("explanation", verdict.explanation());
 		parameters.put("approved", verdict.approved());
 		parameters.put("conversationId", conversationId);
+		parameters.put("underwriterId", underwriter.underwriterId());
+		parameters.put("disposition", underwriter.disposition());
 		parameters.put("escalatedFrom", escalatedFrom);
 		parameters.put("policyKey", crossed != null ? crossed.key() : null);
 		parameters.put("observed", crossed != null ? crossed.observed() : null);
 		parameters.put("threshold", crossed != null ? crossed.threshold() : null);
 
 		List<Record> written = write(SAVE_DECISION, parameters);
+		// Both MATCHes have to hit for anything to be written, so the message names both rather
+		// than blaming the company for an underwriter that went missing between the draw and here.
 		if (written.isEmpty()) {
-			throw new IllegalStateException("No company with id " + companyId
-					+ " in the graph, so nothing was written. Restart the app to reseed it.");
+			throw new IllegalStateException("Nothing in the graph matched company " + companyId
+					+ " and underwriter " + underwriter.underwriterId() + ", so no decision was "
+					+ "written. Both are seeded from seed.json, so restart the app to reseed them.");
 		}
 		return written.get(0).get("decisionId").asString();
 	}

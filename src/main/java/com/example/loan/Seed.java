@@ -7,14 +7,16 @@ import tools.jackson.databind.json.JsonMapper;
 
 /**
  * What the graph starts with, read from seed.json on the classpath: the companies and policies
- * the bank does not invent as it goes, plus the applications, the denials that answered them, and
- * the one exception granted against a denial, so there is precedent the first time the demo runs.
+ * the bank does not invent as it goes, the three underwriters one of whom decides each run, plus
+ * the applications, the denials that answered them, and the one exception granted against a
+ * denial, so there is precedent the first time the demo runs.
  *
  * Nothing here writes. {@link GraphSeeder} MERGEs this into Neo4j at startup, and the tests
  * read the same numbers, so a hand edit to the file cannot leave assertions green and wrong.
  */
-record Seed(List<Company> companies, List<Policy> policies, List<SeedApplication> applications,
-		List<SeedDecision> decisions, List<SeedException> exceptions) {
+record Seed(List<Company> companies, List<Policy> policies, List<SeedUnderwriter> underwriters,
+		List<SeedApplication> applications, List<SeedDecision> decisions,
+		List<SeedException> exceptions) {
 
 	private static final String RESOURCE = "/seed.json";
 
@@ -42,9 +44,24 @@ record Seed(List<Company> companies, List<Policy> policies, List<SeedApplication
 			long monthsAgo) {
 	}
 
-	/** Its policyKey and the two numbers beside it become the APPLIED_POLICY relationship. */
+	/**
+	 * One of the three people on the roster, written as a person rather than as a setting. The
+	 * disposition is the line that goes in the prompt and the label is the short form the console
+	 * prints, so both can be retuned by editing this file with no rebuild.
+	 */
+	record SeedUnderwriter(String underwriterId, String name, String title, long yearsOnTheJob,
+			String label, String disposition) {
+	}
+
+	/**
+	 * Its policyKey and the two numbers beside it become the APPLIED_POLICY relationship, and its
+	 * underwriterId becomes the DECIDED_BY relationship. Every seeded denial names one of the
+	 * three, so the read back has people in it that a later run can draw rather than a name that
+	 * appears nowhere else.
+	 */
 	record SeedDecision(String decisionId, String applicationId, String outcome, String reason,
-			long monthsAgo, String policyKey, Double observed, Double threshold) {
+			long monthsAgo, String underwriterId, String policyKey, Double observed,
+			Double threshold) {
 	}
 
 	/**

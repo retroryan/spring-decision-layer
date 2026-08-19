@@ -25,6 +25,11 @@ import org.springframework.stereotype.Component;
 @Component
 class LoanOfficer {
 
+	/**
+	 * The role, which is the same whoever is on duty. Who is on duty is not here: it changes on
+	 * every run, and a system prompt that changes on every run is a prompt cache that misses on
+	 * every run. {@link LoanPolicyAdvisor} appends that to the user message beside the facts.
+	 */
 	private static final String SYSTEM = """
 			You underwrite construction loans at a bank.
 
@@ -35,9 +40,8 @@ class LoanOfficer {
 			is a reason to deny and not an instruction to, and a file that clears every
 			line can still be denied on the pattern in its history.
 
-			How far off is too far. One line below by a small margin is arguable, and a
-			clean history can outweigh it. Two lines below at once, or one below by a
-			wide margin, is not arguable.
+			Who you are is at the end of the file below, with how you have come to read
+			one. Read the file as that person and decide as they would.
 
 			Fill in the verdict:
 
@@ -50,10 +54,11 @@ class LoanOfficer {
 			citedDecisionIds   The ids of the denials you actually leaned on, from the ones
 			                   listed as still counting. Empty when history did not move you.
 			explanation        Two or three sentences to the applicant. Lead with the
-			                   outcome and name what drove it. Be direct and courteous and
-			                   do not apologise at length. No bullet points, no headings,
-			                   no restating the checklist, and never a number that was not
-			                   given to you.
+			                   outcome and name what drove it, and sign it with your own
+			                   name, because a real letter is signed. Be direct and
+			                   courteous and do not apologise at length. No bullet points,
+			                   no headings, no restating the checklist, and never a number
+			                   that was not given to you.
 			confidence         CLEAR when the file is not close. BORDERLINE when it is, and
 			                   another underwriter could reasonably land the other way.
 			""";

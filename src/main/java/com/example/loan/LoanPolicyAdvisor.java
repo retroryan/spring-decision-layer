@@ -2,6 +2,7 @@ package com.example.loan;
 
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ThreadLocalRandom;
 import java.util.stream.Collectors;
 
 import org.springframework.ai.chat.client.ChatClientAttributes;
@@ -11,6 +12,7 @@ import org.springframework.ai.chat.client.advisor.ToolCallingAdvisor;
 import org.springframework.ai.chat.client.advisor.api.CallAdvisor;
 import org.springframework.ai.chat.client.advisor.api.CallAdvisorChain;
 import org.springframework.ai.chat.memory.ChatMemory;
+import org.springframework.ai.chat.memory.ChatMemoryRepository;
 import org.springframework.ai.chat.messages.AssistantMessage;
 import org.springframework.ai.chat.model.ChatResponse;
 import org.springframework.ai.chat.model.Generation;
@@ -20,8 +22,9 @@ import org.springframework.stereotype.Component;
 
 /**
  * The advisor that gives the model everything it needs to decide the loan, and then records what
- * it decided: read the company, its policies, and its standing denials out of the graph, hand
- * them over as facts rather than as a verdict, and write the answer back as a decision trace.
+ * it decided: read the company, its policies, and its standing denials out of the graph, draw one
+ * of the underwriters on the roster, hand all of it over as facts rather than as a verdict, and
+ * write the answer back as a decision trace joined to whoever drew the run.
  *
  * The write happens after the model answers, because there is no outcome until it does. That is
  * the whole flip: an earlier version computed the verdict in Java, committed it, and asked the
@@ -70,21 +73,46 @@ class LoanPolicyAdvisor implements CallAdvisor {
 			Denials still counting against this company: %s
 			""";
 
+	/**
+	 * Who is on duty, appended to the last user message beside the facts rather than set on the
+	 * system prompt. The identity changes on every run, and a system prompt that changes on every
+	 * run invalidates the prompt cache on every run. What does not vary stays in the system
+	 * prompt: the role and how far off is too far.
+	 */
+	private static final String PERSONA = """
+
+			---
+			Who is on duty today. You are %s, %s, %d years on the job.
+
+			%s
+			""";
+
 	private final LoanGraph graph;
 
 	private final PolicyEngine engine;
 
 	/**
 	 * Generates the schema from the record and converts the answer back. Its default cleaner
-	 * strips thinking tags and markdown fences, which a bare ObjectMapper would choke on:
-	 * Sonnet 5 thinks adaptively unless told not to, so those tags can be there.
+	 * strips markdown fences, which a bare ObjectMapper would choke on. It is no defence against
+	 * adaptive thinking: thinking never arrives as inline tags inside the text, it arrives as a
+	 * content block of its own that becomes a Generation of its own, which is what
+	 * {@link #verdictGeneration} is for.
 	 */
 	private final BeanOutputConverter<LoanVerdict> converter = new BeanOutputConverter<>(
 			LoanVerdict.class);
 
-	LoanPolicyAdvisor(LoanGraph graph, PolicyEngine engine) {
+	/**
+	 * The repository rather than the {@link ChatMemory} wrapping it, because LoanOfficer builds
+	 * that ChatMemory itself and depends on this advisor, so asking for it here would be a cycle.
+	 * Used for one thing: undoing a question that never got an answer.
+	 */
+	private final ChatMemoryRepository chatMemoryRepository;
+
+	LoanPolicyAdvisor(LoanGraph graph, PolicyEngine engine,
+			ChatMemoryRepository chatMemoryRepository) {
 		this.graph = graph;
 		this.engine = engine;
+		this.chatMemoryRepository = chatMemoryRepository;
 	}
 
 	@Override
@@ -118,24 +146,59 @@ class LoanPolicyAdvisor implements CallAdvisor {
 				this.engine.denialWindowMonths(policies));
 		List<PolicyResult> measurements = this.engine.measure(company, requestedAmount,
 				priorDenials.size(), policies);
+		Underwriter underwriter = draw();
 
-		ChatClientResponse response = chain
-			.nextCall(withFacts(request, company, requestedAmount, measurements, priorDenials));
-
-		LoanVerdict verdict = this.converter.convert(text(response));
+		String conversationId = string(request, ChatMemory.CONVERSATION_ID);
+		ChatClientResponse response;
+		Generation answered;
+		LoanVerdict verdict;
+		try {
+			response = chain.nextCall(withFacts(request, company, requestedAmount, measurements,
+					priorDenials, underwriter));
+			answered = verdict(response);
+			verdict = this.converter.convert(answered.getOutput().getText());
+		}
+		catch (RuntimeException ex) {
+			// MessageChatMemoryAdvisor stored the question on its way in and adds the answer on
+			// the way back out, which it never reaches if anything in here throws. Left alone, a
+			// run that decided nothing leaves a Session behind holding half an exchange.
+			this.chatMemoryRepository.deleteByConversationId(conversationId);
+			throw ex;
+		}
 		PolicyResult crossed = crossedLine(verdict, measurements);
 
-		this.graph.saveDecision(companyId, requestedAmount, verdict, crossed,
-				citedDenials(verdict, priorDenials), string(request, ChatMemory.CONVERSATION_ID));
+		this.graph.saveDecision(companyId, requestedAmount, verdict, underwriter, crossed,
+				citedDenials(verdict, priorDenials), conversationId);
 
-		return readable(response, new LoanAnswer(verdict, measurements, crossed));
+		return readable(response, answered,
+				new LoanAnswer(underwriter, verdict, measurements, crossed));
 	}
 
 	/**
-	 * The facts, plus the schema the answer has to come back in. The schema goes in the request
-	 * context rather than on the options directly: ChatModelCallAdvisor reads these two keys and
-	 * mutates the options it already has, so the model pin and everything else from
-	 * application.yaml survives, which building fresh options here would drop.
+	 * Who is on duty for this run, drawn at random out of the roster in the graph. There is no
+	 * flag to pin it, on purpose: an underwriter chosen on the command line is a scripted outcome
+	 * in the language of judgement, and it turns three people back into a dial with three
+	 * settings. What the seed pins is the position; who answers it is drawn.
+	 */
+	private Underwriter draw() {
+		List<Underwriter> roster = this.graph.findUnderwriters();
+		if (roster.isEmpty()) {
+			throw new IllegalStateException("No Underwriter nodes in the graph, so there is nobody "
+					+ "to put this file in front of. They are seeded from seed.json, so restart "
+					+ "the app to seed them.");
+		}
+		return roster.get(ThreadLocalRandom.current().nextInt(roster.size()));
+	}
+
+	/**
+	 * The facts and who is reading them, plus the schema the answer has to come back in. Both
+	 * blocks go on the last user message: the facts because that is where they have always gone,
+	 * and the persona because it changes every run and the system prompt is cached.
+	 *
+	 * The schema goes in the request context rather than on the options directly:
+	 * ChatModelCallAdvisor reads these two keys and mutates the options it already has, so the
+	 * model pin and everything else from application.yaml survives, which building fresh options
+	 * here would drop.
 	 *
 	 * OUTPUT_FORMAT is the fallback and is deliberately set even though the native path never
 	 * reads it. ChatModelCallAdvisor only takes the native branch when the options implement
@@ -143,7 +206,8 @@ class LoanPolicyAdvisor implements CallAdvisor {
 	 * Left unset, that fallback appends the word "null" to the prompt.
 	 */
 	private ChatClientRequest withFacts(ChatClientRequest request, Company company,
-			long requestedAmount, List<PolicyResult> measurements, List<String> priorDenials) {
+			long requestedAmount, List<PolicyResult> measurements, List<String> priorDenials,
+			Underwriter underwriter) {
 
 		// The key leads, because decidingPolicyKey is matched against it exactly and the model
 		// cannot be left to derive minimumCreditScore from "Minimum Credit Score". A near miss
@@ -160,9 +224,14 @@ class LoanPolicyAdvisor implements CallAdvisor {
 				requestedAmount, measured,
 				priorDenials.isEmpty() ? "none" : String.join(", ", priorDenials));
 
+		String persona = PERSONA.formatted(underwriter.name(), underwriter.title(),
+				underwriter.yearsOnTheJob(), underwriter.disposition());
+
+		// The persona last, so the file reads as a file and the person reading it comes after it,
+		// which is the order a real one arrives in.
 		Prompt augmented = request.prompt()
 			.augmentUserMessage(userMessage -> userMessage.mutate()
-				.text(userMessage.getText() + facts)
+				.text(userMessage.getText() + facts + persona)
 				.build());
 
 		return request.mutate()
@@ -207,12 +276,16 @@ class LoanPolicyAdvisor implements CallAdvisor {
 	 * left alone it would store the JSON verdict and the transcript would print a blob where it
 	 * prints prose today. Rebuilt down to the explanation: chat memory stores the letter, and
 	 * the JSON never leaves this advisor.
+	 *
+	 * The metadata is taken from the generation that carried the verdict rather than from the
+	 * first one, for the same reason {@link #verdictGeneration} exists.
 	 */
-	private ChatClientResponse readable(ChatClientResponse response, LoanAnswer answer) {
+	private ChatClientResponse readable(ChatClientResponse response, Generation answered,
+			LoanAnswer answer) {
 		ChatResponse rebuilt = ChatResponse.builder()
 			.from(response.chatResponse())
 			.generations(List.of(new Generation(new AssistantMessage(answer.verdict().explanation()),
-					response.chatResponse().getResult().getMetadata())))
+					answered.getMetadata())))
 			.build();
 
 		return response.mutate().chatResponse(rebuilt).context(ANSWER, answer).build();
@@ -241,22 +314,48 @@ class LoanPolicyAdvisor implements CallAdvisor {
 	}
 
 	/**
-	 * Every step down to the text is optional in the API, and any of them can be absent. Blank
-	 * is not recoverable here the way it was when Java had already decided: there is no verdict
-	 * to fall back on, so the run fails and the operator runs it again.
+	 * Every step down to the generations is optional in the API, and any of them can be absent.
 	 */
-	private static String text(ChatClientResponse response) {
-		if (response == null || response.chatResponse() == null
-				|| response.chatResponse().getResult() == null) {
+	private static Generation verdict(ChatClientResponse response) {
+		if (response == null || response.chatResponse() == null) {
 			throw new IllegalStateException("The model returned no result, so nothing decided this "
 					+ "application and nothing was written. Run it again.");
 		}
-		String json = response.chatResponse().getResult().getOutput().getText();
-		if (json == null || json.isBlank()) {
+		return verdictGeneration(response.chatResponse().getResults());
+	}
+
+	/**
+	 * The generation carrying the verdict, which is not the first one on a model that thinks.
+	 * claude-sonnet-5 thinks adaptively unless told otherwise, AnthropicChatModel gives every
+	 * thinking block a Generation of its own and appends the text one last, and
+	 * ChatResponse.getResult() returns the first. So getResult() is the thinking block: empty
+	 * text and a signature. Reading it handed the converter an empty string and failed every
+	 * live run while the model's answer sat in the generation behind it.
+	 *
+	 * Taking the last non-blank text is what the provider contract actually guarantees, and it
+	 * holds whether the thinking block is empty or full. Disabling thinking would have worked
+	 * too, and only in Java: spring.ai.anthropic.chat.thinking cannot be bound from YAML,
+	 * because ThinkingConfigParam is an SDK union type the Boot binder cannot construct. This is
+	 * the better half of that choice anyway, since it survives thinking being turned back on.
+	 *
+	 * Blank throughout is not recoverable the way it was when Java had already decided: there is
+	 * no verdict to fall back on, so the run fails and the operator runs it again.
+	 */
+	static Generation verdictGeneration(List<Generation> generations) {
+		Generation answered = null;
+		if (generations != null) {
+			for (Generation generation : generations) {
+				String text = generation.getOutput().getText();
+				if (text != null && !text.isBlank()) {
+					answered = generation;
+				}
+			}
+		}
+		if (answered == null) {
 			throw new IllegalStateException("The model returned an empty answer where a verdict was "
 					+ "expected. Run it again.");
 		}
-		return json;
+		return answered;
 	}
 
 }

@@ -99,9 +99,10 @@ class PolicyEngineTests {
 	}
 
 	/**
-	 * C-1123 is the exception case, in arithmetic. Two denials are on file and one of them was
-	 * excepted, so one counts and escalation stays above the line. The count arrives already
-	 * scoped, so the exception is what the difference between these two calls stands for.
+	 * C-1123 is the exception case, in arithmetic. Three denials are on file and one of them was
+	 * excepted, so two count and escalation lands below the line, which is the position the demo
+	 * is built on. The count arrives already scoped, so the exception is what the difference
+	 * between these two calls stands for: granting one more takes this company back above it.
 	 */
 	@Test
 	void theExceptedDenialIsTheDifferenceBetweenAboveAndBelowTheLine() {

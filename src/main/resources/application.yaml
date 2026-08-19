@@ -10,9 +10,14 @@ spring:
     anthropic:
       api-key: ${ANTHROPIC_API_KEY}
       chat:
-        # Pinned rather than left to the starter default, which is claude-haiku-4-5. The
-        # model only turns a decision that was already computed into two sentences, so this
-        # is about the README transcripts staying reproducible, not about capability.
+        # Pinned rather than left to the starter default, which is claude-haiku-4-5. The model
+        # decides the loan now, so this is about capability: it has to weigh three measurements
+        # against a history and answer as a named person, and the answer is what gets written to
+        # the graph. Two runs of the same command do not match word for word and are not meant to.
+        #
+        # No temperature, top_p or top_k, and not as a preference: they are removed on
+        # claude-sonnet-5 and sending one returns a 400. The variation between runs comes from
+        # which underwriter the run draws, which is a Cypher read rather than a sampling knob.
         model: claude-sonnet-5
 
 # This module's own setting, not Spring's. spring.neo4j.* configures the Driver bean above but

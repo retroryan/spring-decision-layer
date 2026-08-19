@@ -52,6 +52,7 @@ public class Application {
 			printHistory(graph, companyId);
 			print(officer.answer(companyId, requestedAmount));
 			printPrecedentTrail(graph, companyId);
+			printApprovalsPastPolicies(graph);
 			printTranscript(officer.transcript());
 		};
 	}
@@ -81,8 +82,7 @@ public class Application {
 		}
 		for (PastDecision decision : decisions) {
 			System.out.printf("  %s  %-8s  $%,-10d %s%s%n", DATE.format(decision.decidedAt()),
-					decision.outcome(), decision.requestedAmount(),
-					decision.policyName() != null ? decision.policyName() : "no policy named",
+					decision.outcome(), decision.requestedAmount(), decision.line(),
 					decision.excepted() ? "  (excepted, no longer counts)" : "");
 		}
 	}
@@ -124,6 +124,25 @@ public class Application {
 	}
 
 	/**
+	 * The read back, and the reason the Underwriter node is not something this demo only ever
+	 * writes to: one traversal from the person, through the decision they made, to the line that
+	 * decision was granted past. Empty until somebody has approved past a line, which is worth
+	 * saying rather than printing a heading with nothing under it.
+	 */
+	private void printApprovalsPastPolicies(LoanGraph graph) {
+		List<UnderwriterApprovals> approvals = graph.findApprovalsPastPolicies();
+		System.out.printf("%nWhich underwriter approves past which line%n");
+		if (approvals.isEmpty()) {
+			System.out.println("  Nobody has been approved past a line yet.");
+			return;
+		}
+		for (UnderwriterApprovals row : approvals) {
+			// Wide enough for the longest name in seed.json and the longest policy name.
+			System.out.printf("  %-16s %-25s %d%n", row.name(), row.policyName(), row.approvals());
+		}
+	}
+
+	/**
 	 * The measurements are the bank's arithmetic; the verdict below them is the underwriter's
 	 * call on it. Printing both together is the point: the two can disagree now, and a denial
 	 * where everything measured above the line or an approval that went past one is the demo
@@ -131,6 +150,13 @@ public class Application {
 	 */
 	private void print(LoanAnswer answer) {
 		LoanVerdict verdict = answer.verdict();
+		Underwriter underwriter = answer.underwriter();
+
+		// Who decided leads, because a reader who sees two different answers to identical
+		// arguments has to be able to see who answered in the same output.
+		System.out.printf("%nOn duty for this run%n  %s, %s, %d years on the job (%s)%n",
+				underwriter.name(), underwriter.title(), underwriter.yearsOnTheJob(),
+				underwriter.label());
 
 		System.out.println("\nPolicies, as measured");
 		for (PolicyResult result : answer.measurements()) {

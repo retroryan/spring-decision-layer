@@ -52,6 +52,32 @@
       "description": "Two or more denied decisions inside this policy's windowMonths window deny the next request automatically."
     }
   ],
+  "underwriters": [
+    {
+      "underwriterId": "U-FELD",
+      "name": "Marcus Feld",
+      "title": "Senior Underwriter",
+      "yearsOnTheJob": 17,
+      "label": "cautious, worked through 2008",
+      "disposition": "You started underwriting in 2006 and spent 2008 watching files that read as well as this one come apart, so a number below the line is a warning you have already seen come true. You are looking for a reason to say yes and you seldom find one in a clean history by itself. A file that clears every line you approve without fuss; past anything that does not, you take some persuading."
+    },
+    {
+      "underwriterId": "U-WHITFIELD",
+      "name": "Dana Whitfield",
+      "title": "Commercial Underwriter",
+      "yearsOnTheJob": 6,
+      "label": "growth-minded, backs a clean record",
+      "disposition": "Six years in, all of them on a growing book, and you think this bank loses more to the loans it talked itself out of than to the ones it wrote. A clean record and one number that misses by a little is a file you back, and you say so plainly rather than hedging. Two lines below at once, or one a long way below, is where you stop."
+    },
+    {
+      "underwriterId": "U-RAMAN",
+      "name": "Priya Raman",
+      "title": "Senior Underwriter",
+      "yearsOnTheJob": 11,
+      "label": "splits the difference, weighs the record",
+      "disposition": "Eleven years, and what you trust is the record rather than any single ratio. You read the history first: what the company was turned down for, whether that reason still holds, and what has changed since. Numbers that all clear over a pattern that keeps repeating give you pause, and one number off with a history that explains it does not."
+    }
+  ],
   "applications": [
     {
       "applicationId": "A-1042-SEED",
@@ -70,6 +96,12 @@
       "companyId": "C-1123",
       "requestedAmount": 1000000,
       "monthsAgo": 6
+    },
+    {
+      "applicationId": "A-1123-SEED-3",
+      "companyId": "C-1123",
+      "requestedAmount": 1200000,
+      "monthsAgo": 3
     }
   ],
   "decisions": [
@@ -79,6 +111,7 @@
       "outcome": "DENIED",
       "reason": "Failed Debt to Income Limit policy.",
       "monthsAgo": 3,
+      "underwriterId": "U-FELD",
       "policyKey": "debtToIncomeLimit",
       "observed": 0.555,
       "threshold": 0.4
@@ -89,6 +122,7 @@
       "outcome": "DENIED",
       "reason": "Failed Debt to Income Limit policy.",
       "monthsAgo": 9,
+      "underwriterId": "U-FELD",
       "policyKey": "debtToIncomeLimit",
       "observed": 0.55,
       "threshold": 0.4
@@ -99,8 +133,20 @@
       "outcome": "DENIED",
       "reason": "Failed Debt to Income Limit policy.",
       "monthsAgo": 6,
+      "underwriterId": "U-FELD",
       "policyKey": "debtToIncomeLimit",
       "observed": 0.417,
+      "threshold": 0.4
+    },
+    {
+      "decisionId": "D-1123-SEED-3",
+      "applicationId": "A-1123-SEED-3",
+      "outcome": "DENIED",
+      "reason": "Failed Debt to Income Limit policy.",
+      "monthsAgo": 3,
+      "underwriterId": "U-FELD",
+      "policyKey": "debtToIncomeLimit",
+      "observed": 0.483,
       "threshold": 0.4
     }
   ],
@@ -108,7 +154,7 @@
     {
       "exceptionId": "X-1123-SEED",
       "decisionId": "D-1123-SEED-2",
-      "grantedBy": "M. Alvarez, Senior Underwriter",
+      "grantedBy": "Dana Whitfield, Commercial Underwriter",
       "justification": "The debt was short-term bridge financing against a signed municipal contract, since repaid.",
       "monthsAgo": 5
     }

@@ -156,7 +156,37 @@ class LoanGraphTests {
 		assertThat(appliedPolicies(denied)).isEmpty();
 		assertThat(weighedPast(denied)).isEmpty();
 		assertThat(this.graph.findDecisions("C-1077")).hasSize(2)
-			.allSatisfy(decision -> assertThat(decision.policyName()).isNull());
+			.allSatisfy(decision -> assertThat(decision.policyName()).isNull())
+			.allSatisfy(decision -> assertThat(decision.line()).isEqualTo("the file as a whole"));
+	}
+
+	/**
+	 * The listing resolves both policy edges, so an approval names the line it was granted past
+	 * instead of reporting no policy at all. Reading only APPLIED_POLICY printed "no policy
+	 * named" for a decision that had recorded its line correctly, and that phrase is the one this
+	 * design reserves for the fact having been lost.
+	 */
+	@Test
+	void anApprovalInTheListingNamesTheLineItWasGrantedPast() {
+		save("C-1077", approval(), belowTheLine(), List.of());
+
+		assertThat(this.graph.findDecisions("C-1077")).singleElement().satisfies(decision -> {
+			assertThat(decision.policyName()).isEqualTo("Debt to Income Limit");
+			assertThat(decision.weighedPast()).isTrue();
+			assertThat(decision.line()).isEqualTo("approved past Debt to Income Limit");
+		});
+	}
+
+	/** The same line read back off the other edge is the line that stopped the loan, not one
+	 * anybody was granted past. */
+	@Test
+	void aDenialInTheListingNamesTheLineThatStoppedIt() {
+		save("C-1077", denial(), belowTheLine(), List.of());
+
+		assertThat(this.graph.findDecisions("C-1077")).singleElement().satisfies(decision -> {
+			assertThat(decision.weighedPast()).isFalse();
+			assertThat(decision.line()).isEqualTo("Debt to Income Limit");
+		});
 	}
 
 	@Test
@@ -202,21 +232,25 @@ class LoanGraphTests {
 	 * An exception is not a deletion. The denial stays on file with its policy and its numbers,
 	 * and stops being precedent, which is the difference between correcting a record and
 	 * overriding what it means for the next decision.
+	 *
+	 * Three denials on file and one of them excepted is also the position the demo is built on:
+	 * two still count, which is exactly where Repeat Denial Escalation trips, on a company whose
+	 * other numbers all clear.
 	 */
 	@Test
 	void anExceptedDenialStaysOnFileAndStopsCounting() {
-		assertThat(this.graph.findDecisions("C-1123")).hasSize(2)
+		assertThat(this.graph.findDecisions("C-1123")).hasSize(3)
 			.allMatch(decision -> LoanVerdict.Outcome.DENIED.name().equals(decision.outcome()));
 
 		assertThat(this.graph.findPriorDenials("C-1123", window()))
-			.containsExactly("D-1123-SEED-1");
+			.containsExactly("D-1123-SEED-1", "D-1123-SEED-3");
 	}
 
 	/** The excepted denial is marked where it is listed, so the count and the listing agree. */
 	@Test
 	void theListingSaysWhichDenialWasExcepted() {
 		assertThat(this.graph.findDecisions("C-1123")).extracting(PastDecision::excepted)
-			.containsExactly(false, true);
+			.containsExactly(false, true, false);
 	}
 
 	/**
@@ -236,10 +270,10 @@ class LoanGraphTests {
 				assertThat(denial.governed()).containsExactly(new PrecedentStep(1, escalated));
 			});
 
-		assertThat(this.graph.findPrecedentTrail("C-1123")).hasSize(2)
+		assertThat(this.graph.findPrecedentTrail("C-1123")).hasSize(3)
 			.anySatisfy(denial -> {
 				assertThat(denial.decisionId()).isEqualTo("D-1123-SEED-2");
-				assertThat(denial.grantedBy()).isEqualTo("M. Alvarez, Senior Underwriter");
+				assertThat(denial.grantedBy()).isEqualTo("Dana Whitfield, Commercial Underwriter");
 				assertThat(denial.justification()).contains("bridge financing");
 				assertThat(denial.governed()).isEmpty();
 			});
@@ -277,6 +311,113 @@ class LoanGraphTests {
 		String decisionId = save("C-1042", denial(), belowTheLine(), List.of());
 
 		assertThat(causedBy(decisionId)).isEmpty();
+	}
+
+	/**
+	 * The roster is read out of the graph and not out of the file, because the draw and the fourth
+	 * node of the context graph are the same object. Three people, each with the wording that goes
+	 * in the prompt.
+	 */
+	@Test
+	void theRosterComesBackFromTheGraphAsPeople() {
+		List<Underwriter> roster = this.graph.findUnderwriters();
+
+		assertThat(roster).extracting(Underwriter::name)
+			.containsExactly("Dana Whitfield", "Marcus Feld", "Priya Raman");
+		assertThat(roster).allSatisfy(underwriter -> {
+			assertThat(underwriter.underwriterId()).startsWith("U-");
+			assertThat(underwriter.title()).isNotBlank();
+			assertThat(underwriter.label()).isNotBlank();
+			assertThat(underwriter.disposition()).isNotBlank();
+			assertThat(underwriter.yearsOnTheJob()).isPositive();
+		});
+		assertThat(rosterMember("Marcus Feld").yearsOnTheJob()).isEqualTo(17);
+	}
+
+	/**
+	 * A decision knows who made it, which is the fact the schema had nobody to hold before. It is
+	 * written by the same statement that writes the decision, so no decision exists for even a
+	 * moment without a decider on it.
+	 */
+	@Test
+	void aDecisionIsJoinedToTheUnderwriterWhoMadeIt() {
+		Underwriter priya = rosterMember("Priya Raman");
+
+		String decisionId = save("C-1042", denial(), belowTheLine(), List.of(), priya);
+
+		Record stored = query("""
+				MATCH (:Decision {decisionId: $id})-[:DECIDED_BY]->(u:Underwriter)
+				RETURN u.underwriterId AS underwriterId, u.name AS name
+				""", Map.of("id", decisionId)).get(0);
+
+		assertThat(stored.get("underwriterId").asString()).isEqualTo(priya.underwriterId());
+		assertThat(stored.get("name").asString()).isEqualTo("Priya Raman");
+	}
+
+	/**
+	 * The wording rides on the edge for the same reason the two numbers ride on APPLIED_POLICY:
+	 * retuning a disposition in seed.json must not rewrite why a decision made last month came out
+	 * the way it did. The node moves on; the edge keeps what the underwriter was reading at the
+	 * time.
+	 */
+	@Test
+	void theDispositionOnTheEdgeIsTheWordingAsItStoodAtDecisionTime() {
+		Underwriter drawn = onDuty();
+		String decisionId = save("C-1042", denial(), belowTheLine(), List.of(), drawn);
+
+		query("MATCH (u:Underwriter {underwriterId: $id}) SET u.disposition = $retuned",
+				Map.of("id", drawn.underwriterId(), "retuned", "Retuned since this was decided."));
+
+		assertThat(dispositionOn(decisionId)).isEqualTo(drawn.disposition());
+		assertThat(rosterMember(drawn.name()).disposition())
+			.isEqualTo("Retuned since this was decided.");
+	}
+
+	/**
+	 * Every name in the seeded history is somebody a later run can draw, so the read back is
+	 * populated on a graph nobody has run against yet and no fourth underwriter appears that the
+	 * roster cannot explain. The denials are the cautious one's; the exception setting one of them
+	 * aside is the permissive one's.
+	 */
+	@Test
+	void theSeededHistoryIsAttributedToPeopleTheRosterCanExplain() {
+		List<String> deciders = query("""
+				MATCH (:Decision)-[:DECIDED_BY]->(u:Underwriter)
+				RETURN DISTINCT u.name AS name
+				""", Map.of()).stream().map(record -> record.get("name").asString()).toList();
+
+		assertThat(deciders).containsExactly("Marcus Feld");
+
+		Record granted = query("MATCH (e:Exception) RETURN e.grantedBy AS grantedBy", Map.of())
+			.get(0);
+
+		assertThat(granted.get("grantedBy").asString()).contains("Dana Whitfield");
+	}
+
+	/**
+	 * The traversal the fourth node exists for: which underwriter approves past which line, and
+	 * how often. A denial on the same policy is joined by APPLIED_POLICY instead, so it is
+	 * counted by nothing here, which is what makes the number mean approvals rather than
+	 * decisions.
+	 */
+	@Test
+	void theReadBackSaysWhichUnderwriterApprovesPastWhichLine() {
+		Underwriter dana = rosterMember("Dana Whitfield");
+		Underwriter marcus = rosterMember("Marcus Feld");
+		save("C-1042", approval(), belowTheLine(), List.of(), dana);
+		save("C-1042", approval(), belowTheLine(), List.of(), dana);
+		save("C-1042", approval(), belowTheLine(), List.of(), marcus);
+		save("C-1042", denial(), belowTheLine(), List.of(), marcus);
+
+		assertThat(this.graph.findApprovalsPastPolicies()).containsExactly(
+				new UnderwriterApprovals("Dana Whitfield", "Debt to Income Limit", 2),
+				new UnderwriterApprovals("Marcus Feld", "Debt to Income Limit", 1));
+	}
+
+	/** Nobody has approved past a line on a freshly seeded graph, and the read says so. */
+	@Test
+	void theReadBackIsEmptyUntilSomebodyApprovesPastALine() {
+		assertThat(this.graph.findApprovalsPastPolicies()).isEmpty();
 	}
 
 	/**
@@ -335,7 +476,8 @@ class LoanGraphTests {
 			.toList();
 
 		assertThat(constrained).contains("Company.companyId", "Policy.key",
-				"LoanApplication.applicationId", "Decision.decisionId");
+				"LoanApplication.applicationId", "Decision.decisionId", "Exception.exceptionId",
+				"Underwriter.underwriterId");
 	}
 
 	/** Seeding again is what happens on every app start, and it has to change nothing. */
@@ -360,7 +502,38 @@ class LoanGraphTests {
 
 	private String save(String companyId, LoanVerdict verdict, PolicyResult crossed,
 			List<String> causes) {
-		return this.graph.saveDecision(companyId, 250_000, verdict, crossed, causes, CONVERSATION);
+		return save(companyId, verdict, crossed, causes, onDuty());
+	}
+
+	private String save(String companyId, LoanVerdict verdict, PolicyResult crossed,
+			List<String> causes, Underwriter underwriter) {
+		return this.graph.saveDecision(companyId, 250_000, verdict, underwriter, crossed, causes,
+				CONVERSATION);
+	}
+
+	/**
+	 * Read out of the graph rather than built by hand, because the DECIDED_BY edge MATCHes the
+	 * Underwriter node: an id seed.json does not hold would write no decision at all. Which of
+	 * the three it is does not matter to a test that is about the edge.
+	 */
+	private Underwriter onDuty() {
+		return this.graph.findUnderwriters().get(0);
+	}
+
+	/** By name, for the two tests where which person decided is the thing being asserted. */
+	private Underwriter rosterMember(String name) {
+		return this.graph.findUnderwriters()
+			.stream()
+			.filter(underwriter -> underwriter.name().equals(name))
+			.findFirst()
+			.orElseThrow();
+	}
+
+	private String dispositionOn(String decisionId) {
+		return query("""
+				MATCH (:Decision {decisionId: $id})-[decided:DECIDED_BY]->(:Underwriter)
+				RETURN decided.disposition AS disposition
+				""", Map.of("id", decisionId)).get(0).get("disposition").asString();
 	}
 
 	private List<String> appliedPolicies(String decisionId) {
