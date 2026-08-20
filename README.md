@@ -10,7 +10,7 @@ This is one, small enough to read in a sitting. A construction bank decides loan
 Three policies are measured in plain Java, a named underwriter on the bank's roster decides the
 loan, and the decision is written to a Neo4j graph that the next application reads before anyone
 answers it. Apply twice with the same numbers and the second answer can come back different,
-because the first answer is now part of the input. One Neo4j instance and an Anthropic key run all
+because the first answer is now part of the input. One Neo4j instance and a Bedrock token run all
 of it.
 
 The bank is the one deciding. The companies are the entities its decision traces are stitched
@@ -20,27 +20,22 @@ excepted.
 
 ## Quick Start
 
-Java 17 or later, an Anthropic API key from the
-[Anthropic Console](https://console.anthropic.com/settings/keys), and a Neo4j 5 instance you do
-not mind the demo writing to: Aura, Neo4j Desktop, or a container.
-
-```shell
-# Neo4j, in a terminal of its own
-docker run -p 7687:7687 -p 7474:7474 -e NEO4J_AUTH=neo4j/password neo4j:5.26
-
-# then, in this directory
-cp .env.example .env
-# add ANTHROPIC_API_KEY, NEO4J_URI, NEO4J_USERNAME, and NEO4J_PASSWORD
-```
-
-`NEO4J_DATABASE` is optional: set it to run against a database of the demo's own rather than the
-connection's home database. The app only ever seeds its own nodes, so an instance holding other
-work is safe to point at.
+1. [Create a Bedrock Bearer token](https://us-east-1.console.aws.amazon.com/bedrock/home?region=us-east-1#/api-keys/long-term/create)
+2. Set the env var: `export AWS_BEARER_TOKEN_BEDROCK=YOUR_TOKEN`
 
 Then run it with a company id and a requested loan amount:
 
 ```shell
 ./run.sh C-1042 250000
+```
+
+Or start the Spring Shell
+```shell
+./mvnw spring-boot:test-run
+```
+And run with:
+```
+decide C-1042 250000
 ```
 
 Any of these ids works:
@@ -164,8 +159,9 @@ on a given call:
   `PrecedentAdvisor.COMPANY_ID` and `REQUESTED_AMOUNT` at call time with
   `.advisors(a -> a.param(...))`, so one bean instance serves every application, and each call
   carries its own state.
-- **The model is pinned explicitly in configuration.** `application.yaml` sets
-  `spring.ai.anthropic.chat.model` to `claude-sonnet-5`, since this is the model reading what
+- **The model is pinned explicitly in configuration.** `application.properties` sets
+  `spring.ai.openai.chat.model` to `openai.gpt-oss-120b` and points `spring.ai.openai.base-url` at
+  an OpenAI-compatible Bedrock endpoint, since this is the model reading what
   `PrecedentAdvisor` assembled and deciding the loan that gets written back.
 - **The lookback window lives on the graph.** How far back `PrecedentAdvisor` looks for standing
   denials is read off each `Policy` node's own window property through
@@ -238,4 +234,4 @@ paths: an unknown company id, an unparseable amount, and no arguments at all.
 drops the boundary cases too, one documented run per company. `--no-reset` leaves the graph as it
 is instead of asking to wipe it, `--skip-errors` drops the three non-loan cases, and `--yes` skips
 the reset prompt for an unattended run. Every case's console output and a `summary.tsv` land under
-`test-results/<timestamp>/`, gitignored, since each run costs a real Anthropic call.
+`test-results/<timestamp>/`, gitignored, since each run costs a real model call.

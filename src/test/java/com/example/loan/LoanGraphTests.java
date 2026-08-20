@@ -3,16 +3,19 @@ package com.example.loan;
 import java.util.List;
 import java.util.Map;
 
-import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.neo4j.driver.AuthTokens;
 import org.neo4j.driver.Driver;
-import org.neo4j.driver.GraphDatabase;
 import org.neo4j.driver.Record;
-import org.testcontainers.junit.jupiter.Container;
-import org.testcontainers.junit.jupiter.Testcontainers;
-import org.testcontainers.neo4j.Neo4jContainer;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.autoconfigure.ImportAutoConfiguration;
+import org.springframework.boot.jackson.autoconfigure.JacksonAutoConfiguration;
+import org.springframework.boot.neo4j.autoconfigure.Neo4jAutoConfiguration;
+import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.testcontainers.service.connection.ServiceConnectionAutoConfiguration;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Import;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatIllegalStateException;
@@ -25,14 +28,18 @@ import static org.assertj.core.api.Assertions.assertThatIllegalStateException;
  * touch anything a demo run cares about, and the traversal is exercised for real instead of
  * being described in a comment. Docker has to be running for {@code ./mvnw test}.
  *
+ * The context is scoped to exactly what the graph needs: the container {@link
+ * TestcontainersConfiguration} exposes as a {@code @ServiceConnection} bean, and the Neo4j
+ * autoconfiguration that turns it into a {@link org.neo4j.driver.Driver}. It does not boot {@link
+ * Application}, so there is no Spring Shell, no {@link LoanOfficer}, no model layer, and nothing
+ * that would want an {@code AWS_BEARER_TOKEN_BEDROCK}. Loading only that is the point of the
+ * {@code classes} attribute below.
+ *
  * Every test starts from an empty database and reseeds it with {@link GraphSeeder}, which is
  * the same code path the app takes at startup.
  */
-@Testcontainers
+@SpringBootTest(classes = LoanGraphTests.Neo4jTestContext.class)
 class LoanGraphTests {
-
-	@Container
-	static final Neo4jContainer NEO4J = new Neo4jContainer("neo4j:5.26").withoutAuthentication();
 
 	private static final String CONVERSATION = "conversation-1";
 
@@ -44,26 +51,42 @@ class LoanGraphTests {
 	 */
 	private static final String DATABASE = "neo4j";
 
-	private static Driver driver;
+	/**
+	 * Autoconfigured against the container {@link TestcontainersConfiguration} contributes, so
+	 * the connection details come from {@code @ServiceConnection} rather than from a URL built by
+	 * hand. Spring starts the container and closes the driver with the context.
+	 */
+	@Autowired
+	private Driver driver;
 
 	private LoanGraph graph;
 
-	@BeforeEach
-	void seedAnEmptyGraph() {
-		if (driver == null) {
-			driver = GraphDatabase.driver(NEO4J.getBoltUrl(), AuthTokens.none());
-		}
-		driver.executableQuery("MATCH (n) DETACH DELETE n").execute();
-		new GraphSeeder(driver, DATABASE).run();
-		this.graph = new LoanGraph(driver, DATABASE);
+	/** The seed fixture as the app loads it: the {@link SeedConfig} bean, parsed by Boot's mapper. */
+	@Autowired
+	private Seed seed;
+
+	/**
+	 * The whole context these tests load: the {@code @ServiceConnection} Neo4j container from
+	 * {@link TestcontainersConfiguration} with the autoconfiguration that builds a driver from it,
+	 * and {@link SeedConfig} (plus the Jackson autoconfiguration its mapper needs) for the
+	 * {@link Seed} bean. {@link ServiceConnectionAutoConfiguration} is what turns the
+	 * {@code @ServiceConnection} bean into connection details; without a full
+	 * {@code @EnableAutoConfiguration} it has to be named explicitly, or the driver falls back to
+	 * {@code localhost}.
+	 */
+	@Configuration(proxyBeanMethods = false)
+	@ImportAutoConfiguration({ Neo4jAutoConfiguration.class, ServiceConnectionAutoConfiguration.class,
+			JacksonAutoConfiguration.class })
+	@Import({ TestcontainersConfiguration.class, SeedConfig.class })
+	static class Neo4jTestContext {
+
 	}
 
-	@AfterAll
-	static void closeTheDriver() {
-		if (driver != null) {
-			driver.close();
-			driver = null;
-		}
+	@BeforeEach
+	void seedAnEmptyGraph() {
+		this.driver.executableQuery("MATCH (n) DETACH DELETE n").execute();
+		new GraphSeeder(this.driver, this.seed, DATABASE).run();
+		this.graph = new LoanGraph(this.driver, DATABASE);
 	}
 
 	@Test
@@ -545,8 +568,8 @@ class LoanGraphTests {
 	/** Seeding again is what happens on every app start, and it has to change nothing. */
 	@Test
 	void reseedingAddsNothing() {
-		new GraphSeeder(driver, DATABASE).run();
-		new GraphSeeder(driver, DATABASE).run();
+		new GraphSeeder(driver, seed, DATABASE).run();
+		new GraphSeeder(driver, seed, DATABASE).run();
 
 		assertThat(this.graph.findPriorDenials("C-1042", window())).hasSize(1);
 		assertThat(this.graph.findDecisions("C-1042")).hasSize(1);
@@ -626,8 +649,8 @@ class LoanGraphTests {
 			.toList();
 	}
 
-	private static List<Record> query(String cypher, Map<String, Object> parameters) {
-		return driver.executableQuery(cypher).withParameters(parameters).execute().records();
+	private List<Record> query(String cypher, Map<String, Object> parameters) {
+		return this.driver.executableQuery(cypher).withParameters(parameters).execute().records();
 	}
 
 	/** Read back rather than hardcoded, so editing seed.json cannot leave these assertions stale. */
