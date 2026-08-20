@@ -2,10 +2,6 @@ package com.example.loan;
 
 import java.util.List;
 
-import com.anthropic.models.messages.ThinkingConfigDisabled;
-import com.anthropic.models.messages.ThinkingConfigParam;
-
-import org.springframework.ai.anthropic.AnthropicChatOptions;
 import org.springframework.ai.chat.client.ChatClientAttributes;
 import org.springframework.ai.chat.client.ChatClientRequest;
 import org.springframework.ai.chat.client.ChatClientResponse;
@@ -18,7 +14,6 @@ import org.springframework.ai.chat.memory.ChatMemoryRepository;
 import org.springframework.ai.chat.messages.AssistantMessage;
 import org.springframework.ai.chat.model.ChatResponse;
 import org.springframework.ai.chat.model.Generation;
-import org.springframework.ai.chat.prompt.ChatOptions;
 import org.springframework.ai.converter.BeanOutputConverter;
 import org.springframework.stereotype.Component;
 
@@ -60,9 +55,9 @@ class DecisionTraceAdvisor implements CallAdvisor {
 	 * Generates the schema from the record and converts the answer back, which is why the schema
 	 * is declared here rather than one advisor further out: the shape of the answer belongs with
 	 * the thing that reads it. Its default cleaner strips markdown fences, which a bare
-	 * ObjectMapper would choke on. It is no defence against adaptive thinking: thinking never
-	 * arrives as inline tags inside the text, it arrives as a content block of its own that
-	 * becomes a Generation of its own, which is what {@link #verdictGeneration} is for.
+	 * ObjectMapper would choke on. This is the same {@link BeanOutputConverter} that
+	 * {@code ChatClient.entity(...)} uses; the advisor runs it directly because it reads the
+	 * verdict off the response rather than being the caller.
 	 */
 	private final BeanOutputConverter<LoanVerdict> converter = new BeanOutputConverter<>(
 			LoanVerdict.class);
@@ -148,61 +143,27 @@ class DecisionTraceAdvisor implements CallAdvisor {
 
 	/**
 	 * The schema the answer has to come back in, set on the request context rather than on the
-	 * options directly: ChatModelCallAdvisor reads these two keys and mutates the options it
-	 * already has, so the model pin and everything else from application.yaml survives, which
+	 * options directly: {@code ChatModelCallAdvisor} reads these keys and mutates the options it
+	 * already has, so the model pin and everything else from application.properties survives, which
 	 * building fresh options here would drop.
 	 *
-	 * OUTPUT_FORMAT is the fallback and is deliberately set even though the native path never
-	 * reads it. ChatModelCallAdvisor only takes the native branch when the options implement
-	 * StructuredOutputChatOptions, and falls through to appending this text when they do not. Left
-	 * unset, that fallback appends the word "null" to the prompt.
-	 *
-	 * Thinking goes off on the way past too. That is a decision about the record rather than about
-	 * the answer, and {@link #withoutThinking} is where it is argued.
+	 * Two keys and no more: the JSON schema, and the flag that turns on native enforcement. When
+	 * STRUCTURED_OUTPUT_NATIVE is present, the schema has text, and the options implement
+	 * StructuredOutputChatOptions (OpenAiChatOptions does), {@code ChatModelCallAdvisor} sets the
+	 * schema as the request's {@code response_format} and leaves the prompt untouched. That is the
+	 * same provider-native path {@code ChatClient.entity(type, spec ->
+	 * spec.useProviderStructuredOutput())} takes; this advisor sets the keys itself only because it
+	 * sits inside the chain rather than being the caller. OUTPUT_FORMAT, the prompt-appended
+	 * fallback for options that are not StructuredOutputChatOptions, is deliberately not set: on
+	 * this OpenAI configuration the native branch is always the one taken, so it would never be
+	 * read.
 	 */
 	private ChatClientRequest withSchema(ChatClientRequest request) {
 		return request.mutate()
-			.prompt(request.prompt()
-				.mutate()
-				.chatOptions(withoutThinking(request.prompt().getOptions()))
-				.build())
 			.context(ChatClientAttributes.STRUCTURED_OUTPUT_SCHEMA.getKey(),
 					this.converter.getJsonSchema())
 			.context(ChatClientAttributes.STRUCTURED_OUTPUT_NATIVE.getKey(), true)
-			.context(ChatClientAttributes.OUTPUT_FORMAT.getKey(), this.converter.getFormat())
 			.build();
-	}
-
-	/**
-	 * Thinking off, because reading the right generation is only half the problem.
-	 * {@link #verdictGeneration} picks the generation the answer is in; this is about what is
-	 * inside that one generation.
-	 *
-	 * claude-sonnet-5 thinks adaptively unless told otherwise, and thinking interleaves with the
-	 * answer rather than finishing before it. AnthropicChatModel accumulates every text block into
-	 * one StringBuilder, so when the model pauses to think and then restarts its answer, the
-	 * abandoned attempt and the real one arrive concatenated. The merged document still parses,
-	 * because the junk lands inside a string value, which is how one run in four wrote a
-	 * 996-character reason to the graph with fragments of a discarded draft inside it. Generation
-	 * selection cannot help: the damage is within a single generation. A field that quietly
-	 * absorbs an abandoned draft is worse than a run that fails outright, because it is stored,
-	 * cited as precedent, and read back as though somebody meant it.
-	 *
-	 * It has to be Java. spring.ai.anthropic.chat.thinking cannot be bound from application.yaml
-	 * because ThinkingConfigParam is an SDK union type the Boot binder cannot construct, and
-	 * trying fails the whole startup with a message about a property named '-json'.
-	 *
-	 * mutate() rather than fresh options, for the same reason the schema goes on the request
-	 * context: the model pin and everything else from application.yaml has to survive.
-	 */
-	private static ChatOptions withoutThinking(ChatOptions options) {
-		if (options instanceof AnthropicChatOptions anthropic) {
-			return anthropic.mutate()
-				.thinking(ThinkingConfigParam
-					.ofDisabled(ThinkingConfigDisabled.builder().build()))
-				.build();
-		}
-		return options;
 	}
 
 	/**
@@ -263,8 +224,7 @@ class DecisionTraceAdvisor implements CallAdvisor {
 	 * what the model emitted, which is why {@link #answerIn} exists and why the class javadoc says
 	 * so out loud.
 	 *
-	 * The metadata is taken from the generation that carried the verdict rather than from the
-	 * first one, for the same reason {@link #verdictGeneration} exists.
+	 * The metadata is taken from the same generation the verdict was read from.
 	 */
 	private ChatClientResponse applicantLetter(ChatClientResponse response, Generation answered,
 			LoanAnswer answer) {
@@ -278,49 +238,22 @@ class DecisionTraceAdvisor implements CallAdvisor {
 	}
 
 	/**
-	 * Every step down to the generations is optional in the API, and any of them can be absent.
+	 * The generation carrying the verdict: the primary result, the same one
+	 * {@code ChatClient.entity(...)} reads it out of (its {@code getContentFromChatResponse} is
+	 * {@code getResult().getOutput().getText()}). On chat completions there is one generation, and
+	 * native structured output puts the JSON in it. A blank or absent answer is not recoverable now
+	 * that the verdict is the model's rather than something Java already decided, so the run fails
+	 * and the operator runs it again.
 	 */
 	private static Generation verdict(ChatClientResponse response) {
-		if (response == null || response.chatResponse() == null) {
-			throw new IllegalStateException("The model returned no result, so nothing decided this "
-					+ "application and nothing was written. Run it again.");
-		}
-		return verdictGeneration(response.chatResponse().getResults());
-	}
-
-	/**
-	 * The generation carrying the verdict, which is not the first one on a model that thinks.
-	 * claude-sonnet-5 thinks adaptively unless told otherwise, AnthropicChatModel gives every
-	 * thinking block a Generation of its own and appends the text one last, and
-	 * ChatResponse.getResult() returns the first. So getResult() is the thinking block: empty text
-	 * and a signature. Reading it handed the converter an empty string and failed every live run
-	 * while the model's answer sat in the generation behind it.
-	 *
-	 * Taking the last non-blank text is what the provider contract actually guarantees, and it
-	 * holds whether the thinking block is empty or full. {@link #withoutThinking} turns thinking
-	 * off, so on this configuration there is only ever one generation to choose from. This stays
-	 * because it is the half that survives thinking being turned back on, and because the two
-	 * cover different failures: that one is about what is inside a generation, this one is about
-	 * which generation to read.
-	 *
-	 * Blank throughout is not recoverable the way it was when Java had already decided: there is
-	 * no verdict to fall back on, so the run fails and the operator runs it again.
-	 */
-	static Generation verdictGeneration(List<Generation> generations) {
-		Generation answered = null;
-		if (generations != null) {
-			for (Generation generation : generations) {
-				String text = generation.getOutput().getText();
-				if (text != null && !text.isBlank()) {
-					answered = generation;
-				}
-			}
-		}
-		if (answered == null) {
+		ChatResponse chatResponse = (response != null) ? response.chatResponse() : null;
+		Generation result = (chatResponse != null) ? chatResponse.getResult() : null;
+		if (result == null || result.getOutput() == null || result.getOutput().getText() == null
+				|| result.getOutput().getText().isBlank()) {
 			throw new IllegalStateException("The model returned an empty answer where a verdict was "
 					+ "expected. Run it again.");
 		}
-		return answered;
+		return result;
 	}
 
 }

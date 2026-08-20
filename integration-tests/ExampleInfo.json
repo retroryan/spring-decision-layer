@@ -21,7 +21,7 @@
     "\\n  ASSISTANT +\\S"
   ],
   "requiredEnv": [
-    "ANTHROPIC_API_KEY",
+    "AWS_BEARER_TOKEN_BEDROCK",
     "NEO4J_URI",
     "NEO4J_PASSWORD"
   ],

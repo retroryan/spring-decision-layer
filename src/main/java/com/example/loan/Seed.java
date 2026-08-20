@@ -1,15 +1,12 @@
 package com.example.loan;
 
-import java.io.InputStream;
 import java.util.List;
 
-import tools.jackson.databind.json.JsonMapper;
-
 /**
- * What the graph starts with, read from seed.json on the classpath: the companies and policies
- * the bank does not invent as it goes, the three underwriters one of whom decides each run, plus
- * the applications, the denials that answered them, and the one exception granted against a
- * denial, so there is precedent the first time the demo runs.
+ * What the graph starts with, read from seed.json on the classpath by {@link SeedConfig}: the
+ * companies and policies the bank does not invent as it goes, the three underwriters one of whom
+ * decides each run, plus the applications, the denials that answered them, and the one exception
+ * granted against a denial, so there is precedent the first time the demo runs.
  *
  * Nothing here writes. {@link GraphSeeder} MERGEs this into Neo4j at startup, and the tests
  * read the same numbers, so a hand edit to the file cannot leave assertions green and wrong.
@@ -17,21 +14,6 @@ import tools.jackson.databind.json.JsonMapper;
 record Seed(List<Company> companies, List<Policy> policies, List<SeedUnderwriter> underwriters,
 		List<SeedApplication> applications, List<SeedDecision> decisions,
 		List<SeedException> exceptions) {
-
-	private static final String RESOURCE = "/seed.json";
-
-	static Seed load() {
-		try (InputStream stream = Seed.class.getResourceAsStream(RESOURCE)) {
-			if (stream == null) {
-				throw new IllegalStateException("No " + RESOURCE + " on the classpath.");
-			}
-			return JsonMapper.builder().build().readValue(stream, Seed.class);
-		}
-		catch (Exception ex) {
-			throw new IllegalStateException("Could not read " + RESOURCE
-					+ ". Restore it with: git checkout src/main/resources/seed.json", ex);
-		}
-	}
 
 	/**
 	 * One request for money that was already on file before the demo ever ran.

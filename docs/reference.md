@@ -31,9 +31,10 @@ the console is the same node the decision is joined to.
 | U-RAMAN | Priya Raman | Senior Underwriter | 11 | splits the difference, weighs the record |
 
 - **Disposition instead of temperature**: the disposition is a paragraph in `seed.json` written as a
-  person rather than as a sampling setting, and it is what goes in the prompt. It replaces a knob
-  Sonnet 5 no longer exposes: `temperature`, `top_p`, and `top_k` are removed on `claude-sonnet-5`,
-  and sending one returns a 400.
+  person rather than as a sampling setting, and it is what goes in the prompt. Steering the read
+  from the persona rather than from `temperature` keeps what varies between two runs the precedent
+  the graph holds, not a sampling knob, so the configuration sets no `temperature`, `top_p`, or
+  `top_k` at all.
 - **Assignment is deterministic**: who is on duty is drawn from the company id and the requested
   amount rather than at random, so running the same application again puts it in front of the same
   person. The only thing that changes between two runs of the same application is the precedent that
@@ -69,10 +70,10 @@ Invented, and picked so that each one puts a different kind of pressure on the u
 
 ## The Verdict Record
 
-The answer is a Java record, and Anthropic's `output_config.format` is what makes it valid by
-construction. Spring AI generates the schema from `LoanVerdict`, and because `AnthropicChatOptions`
-implements `StructuredOutputChatOptions`, the schema goes on the wire as `output_config.format`
-rather than being asked for in the prompt.
+The answer is a Java record, and OpenAI's structured outputs are what make it valid by
+construction. Spring AI generates the schema from `LoanVerdict`, and because `OpenAiChatOptions`
+implements `StructuredOutputChatOptions`, the schema goes on the wire as the `response_format`
+JSON schema rather than being asked for in the prompt.
 
 | Field | What it carries |
 | --- | --- |
@@ -104,14 +105,13 @@ Three of those fields carry more than the table can hold:
   under you, because each run's own denial becomes precedent for the next one. That ratchet is what
   makes a file sitting exactly at a line a poor fixture to run repeatedly.
 
-Thinking is turned off in `DecisionTraceAdvisor` rather than in `application.yaml`. Sonnet 5 thinks
-adaptively unless told otherwise, thinking interleaves with the answer rather than finishing before
-it, and `AnthropicChatModel` accumulates every text block into one string, so an abandoned draft and
-the real answer can arrive concatenated. The merged document still parses, because the junk lands
-inside a string value, which is how one run wrote a 996-character `reason` to the graph with
-fragments of a discarded draft inside it. A field that quietly absorbs an abandoned draft is worse
-than a run that fails outright, because it is stored, cited as precedent, and read back as though
-somebody meant it.
+`DecisionTraceAdvisor` reads the verdict from the last generation that has text in it rather than
+the first. On OpenAI's chat completions there is normally a single generation, so this is a no-op in
+the common case, but it is the defence that holds whichever provider is behind the `ChatModel`: a
+reasoning model that emits a separate block ahead of its answer, or a response padded with an empty
+leading generation, would otherwise hand the converter a blank string while the verdict sat behind
+it. Blank throughout is not recoverable, since there is no Java-side verdict to fall back on, so the
+run fails and the operator runs it again.
 
 ## Reset
 

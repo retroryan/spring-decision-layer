@@ -6,8 +6,9 @@ import org.jspecify.annotations.Nullable;
 
 /**
  * What the model sends back, as a Java record rather than prose to be scraped. Spring AI
- * generates a JSON schema from these components and Anthropic's {@code output_config.format}
- * enforces it, so nothing about the format has to be asked for in the prompt.
+ * generates a JSON schema from these components and OpenAI's structured outputs enforce it on the
+ * wire as the {@code response_format} JSON schema, so nothing about the format has to be asked for
+ * in the prompt.
  *
  * The two enums are the only guardrails on the outcome: a schema that names its cases cannot
  * come back with a third one, which is cheaper than a Java check that rejects it afterwards.
