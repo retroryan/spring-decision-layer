@@ -1,0 +1,181 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1600 900" role="img" aria-labelledby="title description" font-family="Arial, Helvetica, sans-serif">
+  <title id="title">Anatomy of a Labeled Property Graph</title>
+  <desc id="description">A loan decision graph showing the three parts of a labeled property graph. Nodes: Company, LoanApplication, Decision, Underwriter, Exception, and an earlier Decision. Relationships: Company SUBMITTED LoanApplication, Decision ABOUT LoanApplication, Decision DECIDED_BY Underwriter, Decision ESCALATED_FROM an earlier Decision, Exception EXCEPTION_TO that earlier Decision, and Exception GRANTED_BY Underwriter. Properties: callouts show properties on the Company and Decision nodes, and a disposition property carried on the DECIDED_BY relationship itself.</desc>
+
+  <defs>
+    <filter id="soft-shadow" x="-20%" y="-20%" width="140%" height="150%">
+      <feDropShadow dx="0" dy="6" stdDeviation="10" flood-color="#183142" flood-opacity="0.14"/>
+    </filter>
+    <marker id="arrow" markerWidth="12" markerHeight="12" refX="10" refY="6" orient="auto" markerUnits="userSpaceOnUse">
+      <path d="M0,0 L12,6 L0,12 Z" fill="#586570"/>
+    </marker>
+    <style>
+      .heading { fill: #17212B; font-size: 50px; font-weight: 700; }
+      .subtitle { fill: #53616D; font-size: 24px; }
+      .legend-title { fill: #0B668E; font-size: 30px; font-weight: 700; }
+      .legend-copy { fill: #53616D; font-size: 17px; }
+      .relationship { fill: none; stroke: #586570; stroke-width: 8; marker-end: url(#arrow); }
+      .relationship-label { fill: #394651; font-size: 21px; font-weight: 700; text-anchor: middle; }
+      .node-label { fill: #FFFFFF; font-size: 20px; font-weight: 700; text-anchor: middle; letter-spacing: 1px; }
+      .node-label-hub { fill: #FFFFFF; font-size: 23px; font-weight: 700; text-anchor: middle; letter-spacing: 1px; }
+      .property-label { fill: #0B668E; font-size: 19px; font-weight: 700; }
+      .property-copy { fill: #53616D; font-size: 18px; }
+      .property-copy-sm { fill: #53616D; font-size: 17px; }
+      .caption { fill: #53616D; font-size: 17px; text-anchor: end; }
+      .leader { fill: none; stroke: #8A98A4; stroke-width: 2.5; stroke-dasharray: 5 6; }
+    </style>
+  </defs>
+
+  <rect width="1600" height="900" fill="#FFFFFF"/>
+  <path d="M1230 0 H1600 V235 C1510 205 1455 140 1395 82 C1340 30 1280 20 1230 0 Z" fill="#0B668E"/>
+  <path d="M1410 0 H1600 V94 C1536 62 1474 34 1410 0 Z" fill="#57A7B2" opacity="0.75"/>
+  <path d="M0 900 V820 C115 790 205 800 298 850 C333 869 369 885 410 900 Z" fill="#0B668E"/>
+
+  <text class="heading" x="66" y="78">Anatomy of a Labeled Property Graph</text>
+  <text class="subtitle" x="68" y="122">A graph stores things, their connections, and the facts that describe them.</text>
+
+  <g aria-label="Legend">
+    <circle cx="88" cy="190" r="12" fill="#0B668E"/>
+    <text class="legend-title" x="118" y="199">Nodes</text>
+    <text class="legend-copy" x="118" y="227">A node is a thing: a company,</text>
+    <text class="legend-copy" x="118" y="249">a person, a decision.</text>
+
+    <circle cx="88" cy="300" r="12" fill="#0B668E"/>
+    <text class="legend-title" x="118" y="309">Relationships</text>
+    <text class="legend-copy" x="118" y="337">A relationship is a claim</text>
+    <text class="legend-copy" x="118" y="359">about two of them, typed.</text>
+
+    <circle cx="88" cy="410" r="12" fill="#0B668E"/>
+    <text class="legend-title" x="118" y="419">Properties</text>
+    <text class="legend-copy" x="118" y="447">Properties are facts on a</text>
+    <text class="legend-copy" x="118" y="469">node or on a relationship.</text>
+  </g>
+
+  <!-- Relationships are drawn first so they stay behind the nodes. -->
+  <path class="relationship" d="M646 210 C700 204 790 199 848 196"/>
+  <path class="relationship" d="M917 385 C920 358 925 312 929 281"/>
+  <path class="relationship" d="M1025 604 C1090 632 1190 700 1256 740"/>
+  <path class="relationship" d="M783 616 C720 660 660 720 606 762"/>
+  <path class="relationship" d="M878 807 C800 806 690 802 600 798"/>
+  <path class="relationship" d="M1042 806 C1100 803 1180 799 1242 795"/>
+
+  <g filter="url(#soft-shadow)">
+    <rect x="673" y="181" width="148" height="44" rx="14" fill="#FFFFFF" stroke="#586570" stroke-width="3"/>
+    <text class="relationship-label" x="747" y="210">SUBMITTED</text>
+
+    <rect x="876" y="311" width="95" height="44" rx="14" fill="#FFFFFF" stroke="#586570" stroke-width="3"/>
+    <text class="relationship-label" x="923" y="340">ABOUT</text>
+
+    <rect x="1040" y="650" width="161" height="44" rx="14" fill="#FFFFFF" stroke="#586570" stroke-width="3"/>
+    <text class="relationship-label" x="1120" y="679">DECIDED_BY</text>
+
+    <rect x="585" y="646" width="214" height="44" rx="14" fill="#FFFFFF" stroke="#586570" stroke-width="3"/>
+    <text class="relationship-label" x="692" y="675">ESCALATED_FROM</text>
+
+    <rect x="645" y="781" width="188" height="44" rx="14" fill="#FFFFFF" stroke="#586570" stroke-width="3"/>
+    <text class="relationship-label" x="739" y="810">EXCEPTION_TO</text>
+
+    <rect x="1062" y="778" width="161" height="44" rx="14" fill="#FFFFFF" stroke="#586570" stroke-width="3"/>
+    <text class="relationship-label" x="1142" y="807">GRANTED_BY</text>
+  </g>
+
+  <!-- Decision node, the hub -->
+  <g aria-label="Decision node" filter="url(#soft-shadow)">
+    <circle cx="900" cy="530" r="145" fill="#168AAD"/>
+    <path d="M836 424 H912 L944 456 V548 H836 Z" fill="#EAFBFD"/>
+    <path d="M912 424 V457 H944" fill="none" stroke="#168AAD" stroke-width="7" stroke-linejoin="round"/>
+    <path d="M856 480 H922 M856 502 H922 M856 524 H898" stroke="#168AAD" stroke-width="7" stroke-linecap="round"/>
+    <rect x="812" y="556" width="176" height="44" rx="22" fill="#0B668E"/>
+    <text class="node-label-hub" x="900" y="586">DECISION</text>
+  </g>
+
+  <!-- Company node -->
+  <g aria-label="Company node" filter="url(#soft-shadow)">
+    <circle cx="570" cy="215" r="76" fill="#77C8D0"/>
+    <path d="M530 236 H610 V190 L588 202 V190 L566 202 V190 L544 202 V170 H530 Z" fill="#EAFBFD"/>
+    <g fill="#77C8D0">
+      <rect x="538" y="212" width="12" height="14" rx="2"/>
+      <rect x="560" y="212" width="12" height="14" rx="2"/>
+      <rect x="582" y="212" width="12" height="14" rx="2"/>
+    </g>
+    <rect x="498" y="242" width="144" height="36" rx="18" fill="#0B668E"/>
+    <text class="node-label" x="570" y="267">COMPANY</text>
+  </g>
+
+  <!-- LoanApplication node -->
+  <g aria-label="Loan application node" filter="url(#soft-shadow)">
+    <circle cx="940" cy="190" r="82" fill="#57A7B2"/>
+    <path d="M904 131 H964 L984 151 V223 H904 Z" fill="#FFFFFF"/>
+    <path d="M964 131 V152 H984" fill="none" stroke="#57A7B2" stroke-width="6" stroke-linejoin="round"/>
+    <text x="944" y="189" font-size="40" font-weight="700" fill="#57A7B2" text-anchor="middle">$</text>
+    <path d="M918 203 H968 M918 217 H952" stroke="#57A7B2" stroke-width="6" stroke-linecap="round"/>
+    <rect x="826" y="229" width="229" height="38" rx="19" fill="#0B668E"/>
+    <text class="node-label" x="940" y="254">LOAN APPLICATION</text>
+  </g>
+
+  <!-- Earlier Decision node -->
+  <g aria-label="Earlier decision node" filter="url(#soft-shadow)">
+    <circle cx="500" cy="795" r="90" fill="#2D6A8A"/>
+    <path d="M462 725 H522 L542 745 V831 H462 Z" fill="#EAFBFD"/>
+    <path d="M522 725 V746 H542" fill="none" stroke="#2D6A8A" stroke-width="6" stroke-linejoin="round"/>
+    <path d="M478 765 H530 M478 785 H530 M478 805 H512" stroke="#2D6A8A" stroke-width="6" stroke-linecap="round"/>
+    <rect x="428" y="837" width="144" height="38" rx="19" fill="#0B668E"/>
+    <text class="node-label" x="500" y="862">DECISION</text>
+  </g>
+  <text class="caption" x="398" y="750">D-1123-SEED-2</text>
+  <text class="caption" x="398" y="774">DENIED, 6 months ago</text>
+
+  <!-- Underwriter node -->
+  <g aria-label="Underwriter node" filter="url(#soft-shadow)">
+    <circle cx="1340" cy="790" r="88" fill="#2D6A8A"/>
+    <circle cx="1340" cy="750" r="26" fill="#EAFBFD"/>
+    <path d="M1294 822 C1294 794 1316 782 1340 782 C1364 782 1386 794 1386 822 Z" fill="#EAFBFD"/>
+    <rect x="1236" y="826" width="208" height="38" rx="19" fill="#0B668E"/>
+    <text class="node-label" x="1340" y="851">UNDERWRITER</text>
+  </g>
+
+  <!-- Exception node -->
+  <g aria-label="Exception node" filter="url(#soft-shadow)">
+    <circle cx="960" cy="810" r="82" fill="#77C8D0"/>
+    <path d="M922 748 H986 L1006 768 V838 H922 Z" fill="#FFFFFF"/>
+    <path d="M986 748 V769 H1006" fill="none" stroke="#77C8D0" stroke-width="6" stroke-linejoin="round"/>
+    <path d="M938 788 H980 M938 804 H966" stroke="#77C8D0" stroke-width="6" stroke-linecap="round"/>
+    <path d="M976 742 H1000 V782 L988 772 L976 782 Z" fill="#0B668E"/>
+    <rect x="890" y="848" width="140" height="38" rx="19" fill="#0B668E"/>
+    <text class="node-label" x="960" y="873">EXCEPTION</text>
+  </g>
+
+  <!-- Properties on nodes -->
+  <g aria-label="Company node properties">
+    <path class="leader" d="M566 291 C566 300 568 306 570 313"/>
+    <rect x="415" y="315" width="325" height="142" rx="16" fill="#F4FAFB" stroke="#B9DCE1" stroke-width="2"/>
+    <text class="property-label" x="439" y="343">Properties on a node</text>
+    <text class="property-copy" x="439" y="369">companyId: "C-1123"</text>
+    <text class="property-copy" x="439" y="393">name: "Summit Ironworks"</text>
+    <text class="property-copy" x="439" y="417">creditRiskScore: 78</text>
+    <text class="property-copy" x="439" y="441">annualIncome: 3000000</text>
+  </g>
+
+  <g aria-label="Decision node properties">
+    <path class="leader" d="M762 583 C660 592 500 600 398 604"/>
+    <rect x="60" y="510" width="335" height="200" rx="16" fill="#F4FAFB" stroke="#B9DCE1" stroke-width="2"/>
+    <text class="property-label" x="84" y="538">Properties on a node</text>
+    <text class="property-copy" x="84" y="565">decisionId: "D-a1f3c204"</text>
+    <text class="property-copy" x="84" y="589">outcome: "APPROVED"</text>
+    <text class="property-copy" x="84" y="613">confidence: "BORDERLINE"</text>
+    <text class="property-copy" x="84" y="637">decidedAt: datetime</text>
+    <text class="property-copy" x="84" y="661">reason: the one-line verdict</text>
+    <text class="property-copy" x="84" y="685">explanation: letter text</text>
+  </g>
+
+  <!-- Properties on a relationship -->
+  <g aria-label="Properties on the DECIDED BY relationship">
+    <path class="leader" d="M1252 598 C1228 616 1192 636 1164 647"/>
+    <rect x="1180" y="460" width="340" height="135" rx="16" fill="#F4FAFB" stroke="#B9DCE1" stroke-width="2"/>
+    <text class="property-label" x="1204" y="488">Properties on a relationship</text>
+    <text class="property-copy-sm" x="1204" y="512">on DECIDED_BY</text>
+    <text class="property-copy" x="1204" y="542">disposition: how this reader</text>
+    <text class="property-copy" x="1204" y="566">weighed a file that day</text>
+  </g>
+
+</svg>

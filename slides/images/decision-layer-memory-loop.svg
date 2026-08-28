@@ -1,0 +1,136 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1600 900" role="img" aria-labelledby="title description" font-family="Arial, Helvetica, sans-serif">
+  <title id="title">The Decision Layer Is the Memory Loop</title>
+  <desc id="description">Three agent types, Loan Agent, Portfolio Risk Agent, and Service Agent, all call through a single Context-Aware Advisor. The advisor calls a Model, and also resolves context from a Neo4j Context Graph before that call and records the resulting decision back to the graph after it. The graph holds long-term, short-term, and reasoning memory. A looping arrow labeled Reuse shows the graph feeding the strengthened trace back to the agents for the next request, making the whole thing a continuous loop rather than a one-shot pipeline.</desc>
+
+  <defs>
+    <filter id="soft-shadow" x="-20%" y="-20%" width="140%" height="150%">
+      <feDropShadow dx="0" dy="6" stdDeviation="10" flood-color="#183142" flood-opacity="0.14"/>
+    </filter>
+    <marker id="arrow" markerWidth="12" markerHeight="12" refX="10" refY="6" orient="auto" markerUnits="userSpaceOnUse">
+      <path d="M0,0 L12,6 L0,12 Z" fill="#586570"/>
+    </marker>
+    <style>
+      .heading { fill: #17212B; font-size: 50px; font-weight: 700; }
+      .subtitle { fill: #53616D; font-size: 24px; }
+      .legend-title { fill: #0B668E; font-size: 30px; font-weight: 700; }
+      .legend-copy { fill: #53616D; font-size: 17px; }
+      .relationship { fill: none; stroke: #586570; stroke-width: 8; marker-end: url(#arrow); }
+      .relationship-label { fill: #394651; font-size: 21px; font-weight: 700; text-anchor: middle; }
+      .node-label { fill: #FFFFFF; font-size: 20px; font-weight: 700; text-anchor: middle; letter-spacing: 1px; }
+      .node-label-hub { fill: #FFFFFF; font-size: 23px; font-weight: 700; text-anchor: middle; letter-spacing: 1px; }
+      .property-label { fill: #0B668E; font-size: 19px; font-weight: 700; }
+      .property-copy { fill: #53616D; font-size: 18px; }
+      .property-copy-sm { fill: #53616D; font-size: 17px; }
+      .caption { fill: #53616D; font-size: 17px; text-anchor: end; }
+      .leader { fill: none; stroke: #8A98A4; stroke-width: 2.5; stroke-dasharray: 5 6; }
+    </style>
+  </defs>
+
+  <rect width="1600" height="900" fill="#FFFFFF"/>
+  <path d="M1230 0 H1600 V235 C1510 205 1455 140 1395 82 C1340 30 1280 20 1230 0 Z" fill="#0B668E"/>
+  <path d="M1410 0 H1600 V94 C1536 62 1474 34 1410 0 Z" fill="#57A7B2" opacity="0.75"/>
+  <path d="M0 900 V820 C115 790 205 800 298 850 C333 869 369 885 410 900 Z" fill="#0B668E"/>
+
+  <text class="heading" x="66" y="78">The Decision Layer Is the Memory Loop</text>
+  <text class="subtitle" x="68" y="122">Agents call one advisor. The advisor resolves, records, and reuses context in Neo4j.</text>
+
+  <g aria-label="Legend">
+    <circle cx="88" cy="190" r="12" fill="#0B668E"/>
+    <text class="legend-title" x="118" y="199">Resolve</text>
+    <text class="legend-copy" x="118" y="227">Look up the context that</text>
+    <text class="legend-copy" x="118" y="249">governs this request.</text>
+
+    <circle cx="88" cy="300" r="12" fill="#0B668E"/>
+    <text class="legend-title" x="118" y="309">Record</text>
+    <text class="legend-copy" x="118" y="337">Write the decision and its</text>
+    <text class="legend-copy" x="118" y="359">authorization to the graph.</text>
+
+    <circle cx="88" cy="410" r="12" fill="#0B668E"/>
+    <text class="legend-title" x="118" y="419">Reuse</text>
+    <text class="legend-copy" x="118" y="447">The next call finds it as</text>
+    <text class="legend-copy" x="118" y="469">precedent, already proven.</text>
+  </g>
+
+  <!-- Relationships are drawn first so they stay behind the boxes. -->
+  <path class="relationship" d="M810 182 C860 210 890 240 928 273"/>
+  <path class="relationship" d="M810 302 C860 308 880 314 928 319"/>
+  <path class="relationship" d="M810 422 C860 396 890 380 928 366"/>
+  <path class="relationship" d="M1310 320 L1418 320"/>
+  <path class="relationship" d="M1020 520 L1020 399"/>
+  <path class="relationship" d="M1220 397 L1220 518"/>
+  <path class="relationship" d="M700 670 C500 680 400 560 400 420 C400 290 430 210 478 183"/>
+
+  <g filter="url(#soft-shadow)">
+    <rect x="1335" y="298" width="90" height="44" rx="14" fill="#FFFFFF" stroke="#586570" stroke-width="3"/>
+    <text class="relationship-label" x="1380" y="326">CALLS</text>
+
+    <rect x="950" y="436" width="140" height="44" rx="14" fill="#FFFFFF" stroke="#586570" stroke-width="3"/>
+    <text class="relationship-label" x="1020" y="464">RESOLVE</text>
+
+    <rect x="1150" y="436" width="140" height="44" rx="14" fill="#FFFFFF" stroke="#586570" stroke-width="3"/>
+    <text class="relationship-label" x="1220" y="464">RECORD</text>
+
+    <rect x="330" y="398" width="140" height="44" rx="14" fill="#FFFFFF" stroke="#586570" stroke-width="3"/>
+    <text class="relationship-label" x="400" y="426">REUSE</text>
+  </g>
+
+  <!-- Agent callers -->
+  <g aria-label="Loan Agent" filter="url(#soft-shadow)">
+    <rect x="480" y="150" width="330" height="64" rx="32" fill="#77C8D0"/>
+    <text class="node-label" x="645" y="188">LOAN AGENT</text>
+  </g>
+  <g aria-label="Portfolio Risk Agent" filter="url(#soft-shadow)">
+    <rect x="480" y="270" width="330" height="64" rx="32" fill="#57A7B2"/>
+    <text class="node-label" x="645" y="308">PORTFOLIO RISK AGENT</text>
+  </g>
+  <g aria-label="Service Agent" filter="url(#soft-shadow)">
+    <rect x="480" y="390" width="330" height="64" rx="32" fill="#77C8D0"/>
+    <text class="node-label" x="645" y="428">SERVICE AGENT</text>
+  </g>
+
+  <!-- The single seam every agent calls through -->
+  <g aria-label="Context-Aware Advisor" filter="url(#soft-shadow)">
+    <rect x="930" y="245" width="380" height="150" rx="24" fill="#168AAD"/>
+    <text class="node-label-hub" x="1120" y="328">CONTEXT-AWARE ADVISOR</text>
+  </g>
+
+  <!-- Model -->
+  <g aria-label="Model" filter="url(#soft-shadow)">
+    <rect x="1420" y="275" width="150" height="90" rx="18" fill="#2D6A8A"/>
+    <text class="node-label" x="1495" y="326">MODEL</text>
+  </g>
+
+  <!-- Neo4j Context Graph -->
+  <g aria-label="Neo4j Context Graph" filter="url(#soft-shadow)">
+    <rect x="700" y="520" width="760" height="280" rx="20" fill="#F4FAFB" stroke="#0B668E" stroke-width="3"/>
+    <rect x="703" y="523" width="754" height="54" rx="17" fill="#0B668E"/>
+    <text class="node-label-hub" x="1080" y="558">NEO4J CONTEXT GRAPH</text>
+
+    <rect x="730" y="600" width="220" height="150" rx="16" fill="#FFFFFF" stroke="#57A7B2" stroke-width="2"/>
+    <text class="property-label" x="750" y="632">LONG-TERM</text>
+    <text class="property-copy-sm" x="750" y="660">companies</text>
+    <text class="property-copy-sm" x="750" y="684">policies</text>
+
+    <rect x="970" y="600" width="220" height="150" rx="16" fill="#FFFFFF" stroke="#57A7B2" stroke-width="2"/>
+    <text class="property-label" x="990" y="632">SHORT-TERM</text>
+    <text class="property-copy-sm" x="990" y="660">conversation</text>
+    <text class="property-copy-sm" x="990" y="684">session state</text>
+
+    <rect x="1210" y="600" width="220" height="150" rx="16" fill="#FFFFFF" stroke="#57A7B2" stroke-width="2"/>
+    <text class="property-label" x="1230" y="632">REASONING</text>
+    <text class="property-copy-sm" x="1230" y="660">decision traces</text>
+    <text class="property-copy-sm" x="1230" y="684">precedent</text>
+  </g>
+
+  <!-- Annotation callout -->
+  <g aria-label="Annotation about capability registration">
+    <path class="leader" d="M370 600 C420 520 450 460 478 412"/>
+    <rect x="90" y="560" width="280" height="170" rx="16" fill="#F4FAFB" stroke="#B9DCE1" stroke-width="2"/>
+    <text class="property-label" x="114" y="588">One advisor, many callers</text>
+    <text class="property-copy" x="114" y="616">Any agent can register the</text>
+    <text class="property-copy" x="114" y="640">read capability, the write</text>
+    <text class="property-copy" x="114" y="664">capability, or both.</text>
+    <text class="property-copy" x="114" y="688">No shared prompt or bus.</text>
+  </g>
+
+</svg>

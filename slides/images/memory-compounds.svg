@@ -1,0 +1,182 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1600 900" role="img" aria-labelledby="title description" font-family="Arial, Helvetica, sans-serif">
+  <title id="title">Memory Lets the System Compound</title>
+  <desc id="description">Two stacked pipelines, Query N on top and Query N+1 below. Each pipeline reads graph context, produces a model decision, and writes a structured trace. The structured trace from Query N flows down into a persistent Neo4j context graph, which becomes the enriched graph context that Query N+1 reads, so the second pipeline starts from what the first one decided. An annotation notes that because this state lives in the graph, work can span many sessions and many agents, not just one open conversation.</desc>
+
+  <defs>
+    <filter id="soft-shadow" x="-20%" y="-20%" width="140%" height="150%">
+      <feDropShadow dx="0" dy="6" stdDeviation="10" flood-color="#183142" flood-opacity="0.14"/>
+    </filter>
+    <marker id="arrow" markerWidth="12" markerHeight="12" refX="10" refY="6" orient="auto" markerUnits="userSpaceOnUse">
+      <path d="M0,0 L12,6 L0,12 Z" fill="#586570"/>
+    </marker>
+    <style>
+      .heading { fill: #17212B; font-size: 50px; font-weight: 700; }
+      .subtitle { fill: #53616D; font-size: 24px; }
+      .legend-title { fill: #0B668E; font-size: 30px; font-weight: 700; }
+      .legend-copy { fill: #53616D; font-size: 17px; }
+      .relationship { fill: none; stroke: #586570; stroke-width: 8; marker-end: url(#arrow); }
+      .relationship-label { fill: #394651; font-size: 21px; font-weight: 700; text-anchor: middle; }
+      .node-label { fill: #FFFFFF; font-size: 20px; font-weight: 700; text-anchor: middle; letter-spacing: 1px; }
+      .node-label-hub { fill: #FFFFFF; font-size: 23px; font-weight: 700; text-anchor: middle; letter-spacing: 1px; }
+      .property-label { fill: #0B668E; font-size: 19px; font-weight: 700; }
+      .property-copy { fill: #53616D; font-size: 18px; }
+      .property-copy-sm { fill: #53616D; font-size: 17px; }
+      .caption { fill: #53616D; font-size: 17px; text-anchor: end; }
+      .leader { fill: none; stroke: #8A98A4; stroke-width: 2.5; stroke-dasharray: 5 6; }
+    </style>
+  </defs>
+
+  <rect width="1600" height="900" fill="#FFFFFF"/>
+  <path d="M1230 0 H1600 V235 C1510 205 1455 140 1395 82 C1340 30 1280 20 1230 0 Z" fill="#0B668E"/>
+  <path d="M1410 0 H1600 V94 C1536 62 1474 34 1410 0 Z" fill="#57A7B2" opacity="0.75"/>
+  <path d="M0 900 V820 C115 790 205 800 298 850 C333 869 369 885 410 900 Z" fill="#0B668E"/>
+
+  <text class="heading" x="66" y="78">Memory Lets the System Compound</text>
+  <text class="subtitle" x="68" y="122">Each decision becomes graph context the next query starts from.</text>
+
+  <g aria-label="Legend">
+    <circle cx="88" cy="190" r="12" fill="#0B668E"/>
+    <text class="legend-title" x="118" y="199">Chat memory</text>
+    <text class="legend-copy" x="118" y="227">Stored inside one</text>
+    <text class="legend-copy" x="118" y="249">conversation, then gone.</text>
+
+    <circle cx="88" cy="300" r="12" fill="#0B668E"/>
+    <text class="legend-title" x="118" y="309">Decision memory</text>
+    <text class="legend-copy" x="118" y="337">A structured trace,</text>
+    <text class="legend-copy" x="118" y="359">queryable, becomes precedent.</text>
+
+    <circle cx="88" cy="410" r="12" fill="#0B668E"/>
+    <text class="legend-title" x="118" y="419">Compounding</text>
+    <text class="legend-copy" x="118" y="447">Query N+1 starts from</text>
+    <text class="legend-copy" x="118" y="469">what Query N decided.</text>
+  </g>
+
+  <!-- Flow arrows are drawn first so they stay behind the boxes. -->
+  <path class="relationship" d="M640 295 C665 292 705 292 730 295"/>
+  <path class="relationship" d="M950 295 C975 292 1015 292 1040 295"/>
+  <path class="relationship" d="M640 685 C665 682 705 682 730 685"/>
+  <path class="relationship" d="M950 685 C975 682 1015 682 1040 685"/>
+  <path class="relationship" d="M1140 365 C1140 430 1140 470 1140 500 C 950 500 800 498 700 500 C 630 501 560 540 520 613"/>
+
+  <g filter="url(#soft-shadow)">
+    <rect x="645" y="272" width="80" height="40" rx="12" fill="#FFFFFF" stroke="#586570" stroke-width="3"/>
+    <text class="relationship-label" x="685" y="298">READS</text>
+
+    <rect x="955" y="272" width="80" height="40" rx="12" fill="#FFFFFF" stroke="#586570" stroke-width="3"/>
+    <text class="relationship-label" x="995" y="298">WRITES</text>
+
+    <rect x="645" y="662" width="80" height="40" rx="12" fill="#FFFFFF" stroke="#586570" stroke-width="3"/>
+    <text class="relationship-label" x="685" y="688">READS</text>
+
+    <rect x="955" y="662" width="80" height="40" rx="12" fill="#FFFFFF" stroke="#586570" stroke-width="3"/>
+    <text class="relationship-label" x="995" y="688">WRITES</text>
+
+    <rect x="595" y="515" width="210" height="42" rx="14" fill="#FFFFFF" stroke="#586570" stroke-width="3"/>
+    <text class="relationship-label" x="700" y="542">FEEDS FORWARD</text>
+  </g>
+
+  <!-- QUERY N pill -->
+  <g filter="url(#soft-shadow)">
+    <rect x="765" y="155" width="150" height="36" rx="18" fill="#0B668E"/>
+    <text class="node-label" x="840" y="179">QUERY N</text>
+  </g>
+
+  <!-- Box 1: Graph Context -->
+  <g aria-label="Graph context box" filter="url(#soft-shadow)">
+    <rect x="440" y="225" width="200" height="140" rx="24" fill="#77C8D0"/>
+    <path d="M518 285 L565 285 M518 285 L541 250 M565 285 L541 250" fill="none" stroke="#FFFFFF" stroke-width="5" stroke-linecap="round"/>
+    <circle cx="518" cy="285" r="9" fill="#FFFFFF"/>
+    <circle cx="565" cy="285" r="9" fill="#FFFFFF"/>
+    <circle cx="541" cy="250" r="9" fill="#FFFFFF"/>
+    <rect x="430" y="312" width="220" height="40" rx="20" fill="#0B668E"/>
+    <text class="node-label" x="540" y="338">GRAPH CONTEXT</text>
+  </g>
+
+  <!-- Box 2: Model Decision (hub) -->
+  <g aria-label="Model decision box" filter="url(#soft-shadow)">
+    <rect x="730" y="208" width="220" height="175" rx="28" fill="#168AAD"/>
+    <path d="M815 235 H860 L880 255 V300 H815 Z" fill="#EAFBFD"/>
+    <path d="M860 235 V256 H880" fill="none" stroke="#168AAD" stroke-width="6" stroke-linejoin="round"/>
+    <path d="M827 270 H868 M827 283 H868 M827 296 H850" stroke="#168AAD" stroke-width="6" stroke-linecap="round"/>
+    <rect x="718" y="316" width="245" height="46" rx="23" fill="#0B668E"/>
+    <text class="node-label-hub" x="840" y="347">MODEL DECISION</text>
+  </g>
+
+  <!-- Box 3: Structured Trace -->
+  <g aria-label="Structured trace box" filter="url(#soft-shadow)">
+    <rect x="1040" y="225" width="200" height="140" rx="24" fill="#2D6A8A"/>
+    <path d="M1110 240 H1155 L1175 258 V295 H1110 Z" fill="#FFFFFF"/>
+    <path d="M1155 240 V259 H1175" fill="none" stroke="#2D6A8A" stroke-width="6" stroke-linejoin="round"/>
+    <path d="M1122 270 H1162 M1122 283 H1150" stroke="#2D6A8A" stroke-width="6" stroke-linecap="round"/>
+    <rect x="1040" y="298" width="200" height="64" rx="22" fill="#0B668E"/>
+    <text class="node-label" x="1140" y="320">STRUCTURED</text>
+    <text class="node-label" x="1140" y="346">TRACE</text>
+  </g>
+
+  <!-- Neo4j context graph store -->
+  <g aria-label="Neo4j context graph store" filter="url(#soft-shadow)">
+    <ellipse cx="1140" cy="420" rx="75" ry="18" fill="#77C8D0"/>
+    <rect x="1065" y="420" width="150" height="70" fill="#168AAD"/>
+    <ellipse cx="1140" cy="490" rx="75" ry="18" fill="#0B668E"/>
+    <path d="M1110 455 L1170 455 M1110 455 L1140 438 M1170 455 L1140 438" fill="none" stroke="#FFFFFF" stroke-width="3"/>
+    <circle cx="1110" cy="455" r="6" fill="#FFFFFF"/>
+    <circle cx="1170" cy="455" r="6" fill="#FFFFFF"/>
+    <circle cx="1140" cy="438" r="6" fill="#FFFFFF"/>
+    <rect x="1070" y="500" width="140" height="38" rx="19" fill="#0B668E"/>
+    <text class="node-label" x="1140" y="525">NEO4J</text>
+  </g>
+  <text class="property-copy-sm" x="1030" y="552">Persistent context graph</text>
+
+  <!-- QUERY N+1 pill -->
+  <g filter="url(#soft-shadow)">
+    <rect x="755" y="545" width="170" height="38" rx="19" fill="#0B668E"/>
+    <text class="node-label" x="840" y="570">QUERY N+1</text>
+  </g>
+
+  <!-- Box D: Enriched Graph Context -->
+  <g aria-label="Enriched graph context box" filter="url(#soft-shadow)">
+    <rect x="400" y="615" width="240" height="140" rx="24" fill="#57A7B2"/>
+    <path d="M497 670 L543 670 M497 670 L520 635 M543 670 L520 635" fill="none" stroke="#FFFFFF" stroke-width="5" stroke-linecap="round"/>
+    <circle cx="497" cy="670" r="9" fill="#FFFFFF"/>
+    <circle cx="543" cy="670" r="9" fill="#FFFFFF"/>
+    <circle cx="520" cy="635" r="9" fill="#FFFFFF"/>
+    <path d="M543 670 L558 655" fill="none" stroke="#FFFFFF" stroke-width="3" stroke-dasharray="4 4"/>
+    <circle cx="558" cy="655" r="9" fill="#EAFBFD" stroke="#0B668E" stroke-width="3"/>
+    <rect x="410" y="684" width="220" height="64" rx="22" fill="#0B668E"/>
+    <text class="node-label" x="520" y="706">ENRICHED</text>
+    <text class="node-label" x="520" y="732">GRAPH CONTEXT</text>
+  </g>
+  <text class="caption" x="370" y="650">includes the decision</text>
+  <text class="caption" x="370" y="674">written by Query N</text>
+
+  <!-- Box E: Model Decision (hub) -->
+  <g aria-label="Model decision box, second query" filter="url(#soft-shadow)">
+    <rect x="730" y="598" width="220" height="175" rx="28" fill="#168AAD"/>
+    <path d="M815 625 H860 L880 645 V690 H815 Z" fill="#EAFBFD"/>
+    <path d="M860 625 V646 H880" fill="none" stroke="#168AAD" stroke-width="6" stroke-linejoin="round"/>
+    <path d="M827 660 H868 M827 673 H868 M827 686 H850" stroke="#168AAD" stroke-width="6" stroke-linecap="round"/>
+    <rect x="718" y="706" width="245" height="46" rx="23" fill="#0B668E"/>
+    <text class="node-label-hub" x="840" y="737">MODEL DECISION</text>
+  </g>
+
+  <!-- Box F: Structured Trace, second query -->
+  <g aria-label="Structured trace box, second query" filter="url(#soft-shadow)">
+    <rect x="1040" y="615" width="200" height="140" rx="24" fill="#2D6A8A"/>
+    <path d="M1110 630 H1155 L1175 648 V685 H1110 Z" fill="#FFFFFF"/>
+    <path d="M1155 630 V649 H1175" fill="none" stroke="#2D6A8A" stroke-width="6" stroke-linejoin="round"/>
+    <path d="M1122 660 H1162 M1122 673 H1150" stroke="#2D6A8A" stroke-width="6" stroke-linecap="round"/>
+    <rect x="1040" y="688" width="200" height="64" rx="22" fill="#0B668E"/>
+    <text class="node-label" x="1140" y="710">STRUCTURED</text>
+    <text class="node-label" x="1140" y="736">TRACE</text>
+  </g>
+
+  <!-- Annotation: long-running workflows -->
+  <path class="leader" d="M1240 685 C1248 685 1254 685 1260 685"/>
+  <rect x="1260" y="600" width="330" height="220" rx="16" fill="#F4FAFB" stroke="#B9DCE1" stroke-width="2"/>
+  <text class="property-label" x="1284" y="636">Long-running workflows</text>
+  <text class="property-copy" x="1284" y="666">State lives in the graph,</text>
+  <text class="property-copy" x="1284" y="690">so work spans many sessions</text>
+  <text class="property-copy" x="1284" y="714">and many agents, not just</text>
+  <text class="property-copy" x="1284" y="738">one open conversation.</text>
+
+</svg>

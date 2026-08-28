@@ -1,0 +1,132 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1600 900" role="img" aria-labelledby="title description" font-family="Arial, Helvetica, sans-serif">
+  <title id="title">Advisor Order Defines the Lifecycle</title>
+  <desc id="description">A concentric diagram showing Spring AI advisors nested around a model call, like shells of an onion, rather than a flat left-to-right pipeline. From outermost to innermost: MessageChatMemoryAdvisor, PrecedentAdvisor, DecisionTraceAdvisor, ToolCallingAdvisor, and a MODEL hub at the center. A small loop icon inside the ToolCallingAdvisor shell shows that it can call the model more than once before returning. Callouts note that PrecedentAdvisor runs at ToolCallingAdvisor.DEFAULT_ORDER minus 2 and DecisionTraceAdvisor runs at ToolCallingAdvisor.DEFAULT_ORDER minus 1, so both execute exactly once per turn, outside the tool-calling loop. Small arrows at the bottom show a request entering the outermost shell and a response leaving it.</desc>
+
+  <defs>
+    <filter id="soft-shadow" x="-20%" y="-20%" width="140%" height="150%">
+      <feDropShadow dx="0" dy="6" stdDeviation="10" flood-color="#183142" flood-opacity="0.14"/>
+    </filter>
+    <marker id="arrow" markerWidth="12" markerHeight="12" refX="10" refY="6" orient="auto" markerUnits="userSpaceOnUse">
+      <path d="M0,0 L12,6 L0,12 Z" fill="#586570"/>
+    </marker>
+    <style>
+      .heading { fill: #17212B; font-size: 50px; font-weight: 700; }
+      .subtitle { fill: #53616D; font-size: 24px; }
+      .legend-title { fill: #0B668E; font-size: 30px; font-weight: 700; }
+      .legend-copy { fill: #53616D; font-size: 17px; }
+      .relationship { fill: none; stroke: #586570; stroke-width: 8; marker-end: url(#arrow); }
+      .relationship-label { fill: #394651; font-size: 21px; font-weight: 700; text-anchor: middle; }
+      .node-label { fill: #FFFFFF; font-size: 20px; font-weight: 700; text-anchor: middle; letter-spacing: 1px; }
+      .node-label-hub { fill: #FFFFFF; font-size: 23px; font-weight: 700; text-anchor: middle; letter-spacing: 1px; }
+      .property-label { fill: #0B668E; font-size: 19px; font-weight: 700; }
+      .property-copy { fill: #53616D; font-size: 18px; }
+      .property-copy-sm { fill: #53616D; font-size: 17px; }
+      .caption { fill: #53616D; font-size: 17px; text-anchor: end; }
+      .leader { fill: none; stroke: #8A98A4; stroke-width: 2.5; stroke-dasharray: 5 6; }
+    </style>
+  </defs>
+
+  <rect width="1600" height="900" fill="#FFFFFF"/>
+  <path d="M1230 0 H1600 V235 C1510 205 1455 140 1395 82 C1340 30 1280 20 1230 0 Z" fill="#0B668E"/>
+  <path d="M1410 0 H1600 V94 C1536 62 1474 34 1410 0 Z" fill="#57A7B2" opacity="0.75"/>
+  <path d="M0 900 V820 C115 790 205 800 298 850 C333 869 369 885 410 900 Z" fill="#0B668E"/>
+
+  <text class="heading" x="66" y="78">Advisor Order Defines the Lifecycle</text>
+  <text class="subtitle" x="68" y="122">Memory wraps outermost. Decision advisors run once per turn, outside the tool loop.</text>
+
+  <g aria-label="Legend">
+    <circle cx="88" cy="190" r="12" fill="#0B668E"/>
+    <text class="legend-title" x="118" y="199">Wraps</text>
+    <text class="legend-copy" x="118" y="227">An advisor sees the request</text>
+    <text class="legend-copy" x="118" y="249">going in, response coming out.</text>
+
+    <circle cx="88" cy="300" r="12" fill="#0B668E"/>
+    <text class="legend-title" x="118" y="309">Order</text>
+    <text class="legend-copy" x="118" y="337">Numeric order decides what's</text>
+    <text class="legend-copy" x="118" y="359">outside vs. inside the tool loop.</text>
+
+    <circle cx="88" cy="410" r="12" fill="#0B668E"/>
+    <text class="legend-title" x="118" y="419">Once per turn</text>
+    <text class="legend-copy" x="118" y="447">Decision advisors don't repeat</text>
+    <text class="legend-copy" x="118" y="469">across tool round-trips.</text>
+  </g>
+
+  <!-- Concentric advisor shells, outermost to innermost -->
+  <g aria-label="MessageChatMemoryAdvisor shell" filter="url(#soft-shadow)">
+    <rect x="580" y="245" width="860" height="600" rx="48" fill="#77C8D0"/>
+  </g>
+  <g aria-label="PrecedentAdvisor shell" filter="url(#soft-shadow)">
+    <rect x="670" y="310" width="680" height="470" rx="40" fill="#57A7B2"/>
+  </g>
+  <g aria-label="DecisionTraceAdvisor shell" filter="url(#soft-shadow)">
+    <rect x="760" y="375" width="500" height="340" rx="32" fill="#2D6A8A"/>
+  </g>
+  <g aria-label="ToolCallingAdvisor shell" filter="url(#soft-shadow)">
+    <rect x="850" y="440" width="320" height="210" rx="24" fill="#168AAD"/>
+  </g>
+
+  <!-- Loop icon: ToolCallingAdvisor may call the model more than once -->
+  <g aria-label="Tool loop indicator">
+    <circle cx="1130" cy="600" r="22" fill="#FFFFFF" opacity="0.92"/>
+    <path d="M1121,589 C1109,591 1108,610 1121,614 C1129,616 1137,613 1140,606" fill="none" stroke="#586570" stroke-width="4" marker-end="url(#arrow)"/>
+  </g>
+  <text class="caption" x="1100" y="580">may iterate before returning</text>
+
+  <!-- Shell label pills, straddling the top edge of each shell -->
+  <g filter="url(#soft-shadow)">
+    <rect x="830" y="224" width="360" height="42" rx="21" fill="#0B668E"/>
+    <text class="node-label" x="1010" y="251">MessageChatMemoryAdvisor</text>
+
+    <rect x="875" y="289" width="270" height="42" rx="21" fill="#0B668E"/>
+    <text class="node-label" x="1010" y="316">PrecedentAdvisor</text>
+
+    <rect x="850" y="354" width="320" height="42" rx="21" fill="#0B668E"/>
+    <text class="node-label" x="1010" y="381">DecisionTraceAdvisor</text>
+
+    <rect x="860" y="419" width="300" height="42" rx="21" fill="#0B668E"/>
+    <text class="node-label" x="1010" y="446">ToolCallingAdvisor</text>
+  </g>
+
+  <!-- Model hub -->
+  <g aria-label="Model hub" filter="url(#soft-shadow)">
+    <circle cx="1010" cy="545" r="80" fill="#0B668E"/>
+    <rect x="985" y="478" width="50" height="46" rx="8" fill="none" stroke="#EAFBFD" stroke-width="5"/>
+    <rect x="997" y="490" width="26" height="22" rx="4" fill="#EAFBFD"/>
+    <path d="M995 478 V466 M1025 478 V466 M995 524 V536 M1025 524 V536 M985 494 H973 M985 508 H973 M1035 494 H1047 M1035 508 H1047" stroke="#EAFBFD" stroke-width="5" stroke-linecap="round"/>
+    <text class="node-label-hub" x="1010" y="562">MODEL</text>
+  </g>
+
+  <!-- Request in / response out -->
+  <path d="M620 853 C 632 849 642 847 650 845" fill="none" stroke="#586570" stroke-width="4" marker-end="url(#arrow)"/>
+  <g filter="url(#soft-shadow)">
+    <rect x="555" y="855" width="130" height="38" rx="13" fill="#FFFFFF" stroke="#586570" stroke-width="3"/>
+    <text class="relationship-label" x="620" y="880">request</text>
+  </g>
+
+  <path d="M1370 845 C 1382 848 1392 850 1400 853" fill="none" stroke="#586570" stroke-width="4" marker-end="url(#arrow)"/>
+  <g filter="url(#soft-shadow)">
+    <rect x="1345" y="855" width="140" height="38" rx="13" fill="#FFFFFF" stroke="#586570" stroke-width="3"/>
+    <text class="relationship-label" x="1415" y="880">response</text>
+  </g>
+
+  <!-- Annotation: PrecedentAdvisor order -->
+  <g aria-label="PrecedentAdvisor order annotation">
+    <path class="leader" d="M484 560 C 560 548 620 545 670 540"/>
+    <rect x="54" y="520" width="430" height="118" rx="16" fill="#F4FAFB" stroke="#B9DCE1" stroke-width="2"/>
+    <text class="property-label" x="78" y="548">PrecedentAdvisor</text>
+    <text class="property-copy" x="78" y="574">order = DEFAULT_ORDER &#8722; 2</text>
+    <text class="property-copy-sm" x="78" y="598">assembles graph context first,</text>
+    <text class="property-copy-sm" x="78" y="619">once per turn &#8212; outside the tool loop</text>
+  </g>
+
+  <!-- Annotation: DecisionTraceAdvisor order -->
+  <g aria-label="DecisionTraceAdvisor order annotation">
+    <path class="leader" d="M484 700 C 590 660 690 620 760 592"/>
+    <rect x="54" y="660" width="430" height="118" rx="16" fill="#F4FAFB" stroke="#B9DCE1" stroke-width="2"/>
+    <text class="property-label" x="78" y="688">DecisionTraceAdvisor</text>
+    <text class="property-copy" x="78" y="714">order = DEFAULT_ORDER &#8722; 1</text>
+    <text class="property-copy-sm" x="78" y="738">records the decision once</text>
+    <text class="property-copy-sm" x="78" y="759">per turn &#8212; outside the tool loop</text>
+  </g>
+
+</svg>

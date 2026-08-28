@@ -1,0 +1,168 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1600 900" role="img" aria-labelledby="title description" font-family="Arial, Helvetica, sans-serif">
+  <title id="title">Lighter Agents Run on a Shared Decision Layer</title>
+  <desc id="description">Four small Spring AI agent boxes, Loan Agent, Portfolio Risk Agent, Service Agent, and a dashed-outline New Agent, sit above a Context-Aware Advisor Layer band showing its Resolve, Record, Reuse steps. The advisor layer connects downward into a large Decision Layer container holding the Neo4j Context Graph, divided into three columns: Long-Term memory for companies and policy, Short-Term memory for conversation, and Reasoning for decision traces. A subtler upward arrow shows agents reading back out of the graph through the advisor layer. A callout explains that this shared graph is the only channel the agents need, with no handoff, shared prompt, or message bus between them.</desc>
+
+  <defs>
+    <filter id="soft-shadow" x="-20%" y="-20%" width="140%" height="150%">
+      <feDropShadow dx="0" dy="6" stdDeviation="10" flood-color="#183142" flood-opacity="0.14"/>
+    </filter>
+    <marker id="arrow" markerWidth="12" markerHeight="12" refX="10" refY="6" orient="auto" markerUnits="userSpaceOnUse">
+      <path d="M0,0 L12,6 L0,12 Z" fill="#586570"/>
+    </marker>
+    <clipPath id="decision-clip">
+      <rect x="80" y="600" width="1480" height="260" rx="24"/>
+    </clipPath>
+    <style>
+      .heading { fill: #17212B; font-size: 50px; font-weight: 700; }
+      .subtitle { fill: #53616D; font-size: 24px; }
+      .legend-title { fill: #0B668E; font-size: 30px; font-weight: 700; }
+      .legend-copy { fill: #53616D; font-size: 17px; }
+      .relationship { fill: none; stroke: #586570; stroke-width: 8; marker-end: url(#arrow); }
+      .relationship-label { fill: #394651; font-size: 21px; font-weight: 700; text-anchor: middle; }
+      .node-label { fill: #FFFFFF; font-size: 20px; font-weight: 700; text-anchor: middle; letter-spacing: 1px; }
+      .node-label-hub { fill: #FFFFFF; font-size: 23px; font-weight: 700; text-anchor: middle; letter-spacing: 1px; }
+      .property-label { fill: #0B668E; font-size: 19px; font-weight: 700; }
+      .property-copy { fill: #53616D; font-size: 18px; }
+      .property-copy-sm { fill: #53616D; font-size: 17px; }
+      .caption { fill: #53616D; font-size: 17px; text-anchor: end; }
+      .leader { fill: none; stroke: #8A98A4; stroke-width: 2.5; stroke-dasharray: 5 6; }
+      .band-heading { fill: #FFFFFF; font-size: 28px; font-weight: 700; text-anchor: middle; letter-spacing: 1px; }
+      .layer-heading { fill: #FFFFFF; font-size: 32px; font-weight: 700; letter-spacing: 1px; }
+      .layer-subheading { fill: #EAFBFD; font-size: 18px; font-weight: 700; letter-spacing: 1.5px; }
+      .return-flow { fill: none; stroke: #8A98A4; stroke-width: 4; stroke-dasharray: 4 6; marker-end: url(#arrow); }
+    </style>
+  </defs>
+
+  <rect width="1600" height="900" fill="#FFFFFF"/>
+  <path d="M1230 0 H1600 V235 C1510 205 1455 140 1395 82 C1340 30 1280 20 1230 0 Z" fill="#0B668E"/>
+  <path d="M1410 0 H1600 V94 C1536 62 1474 34 1410 0 Z" fill="#57A7B2" opacity="0.75"/>
+  <path d="M0 900 V820 C115 790 205 800 298 850 C333 869 369 885 410 900 Z" fill="#0B668E"/>
+
+  <text class="heading" x="66" y="78">Lighter Agents Run on a Shared Decision Layer</text>
+  <text class="subtitle" x="68" y="122">Specialized agents resolve, record, and reuse one Neo4j context graph.</text>
+
+  <g aria-label="Legend">
+    <circle cx="88" cy="190" r="12" fill="#0B668E"/>
+    <text class="legend-title" x="118" y="199">Lighter agents</text>
+    <text class="legend-copy" x="118" y="227">Small and single-purpose.</text>
+    <text class="legend-copy" x="118" y="249">No embedded business logic.</text>
+
+    <circle cx="88" cy="300" r="12" fill="#0B668E"/>
+    <text class="legend-title" x="118" y="309">Advisor layer</text>
+    <text class="legend-copy" x="118" y="337">Resolves, records, reuses.</text>
+    <text class="legend-copy" x="118" y="359">Runs at request time.</text>
+
+    <circle cx="88" cy="410" r="12" fill="#0B668E"/>
+    <text class="legend-title" x="118" y="419">Decision layer</text>
+    <text class="legend-copy" x="118" y="447">Shared, persistent graph.</text>
+    <text class="legend-copy" x="118" y="469">One source of truth.</text>
+  </g>
+
+  <!-- Callout: shared multi-agent memory -->
+  <g aria-label="Shared multi-agent memory callout">
+    <path class="leader" d="M300 590 C300 594 300 597 300 600"/>
+    <rect x="60" y="490" width="400" height="100" rx="16" fill="#F4FAFB" stroke="#B9DCE1" stroke-width="2"/>
+    <text class="property-label" x="84" y="520">Shared multi-agent memory</text>
+    <text class="property-copy" x="84" y="548">No handoff, no shared prompt.</text>
+    <text class="property-copy" x="84" y="572">No message bus. Just the graph.</text>
+  </g>
+
+  <!-- Lines converging from agents into the advisor layer -->
+  <path class="relationship" d="M615 340 C650 375 720 395 790 410"/>
+  <path class="relationship" d="M875 340 C890 375 910 395 930 410"/>
+  <path class="relationship" d="M1135 340 C1110 375 1090 395 1070 410"/>
+  <path class="relationship" d="M1395 340 C1350 375 1280 395 1210 410"/>
+
+  <!-- Agent boxes: small, uniform, minimal detail -->
+  <g aria-label="Loan Agent" filter="url(#soft-shadow)">
+    <rect x="500" y="210" width="230" height="120" rx="20" fill="#77C8D0"/>
+    <rect x="593" y="224" width="44" height="34" rx="8" fill="#EAFBFD"/>
+    <path d="M603 238 H627 M603 250 H619" stroke="#77C8D0" stroke-width="5" stroke-linecap="round"/>
+    <rect x="515" y="300" width="200" height="40" rx="20" fill="#0B668E"/>
+    <text class="node-label" x="615" y="326">LOAN AGENT</text>
+  </g>
+
+  <g aria-label="Portfolio Risk Agent" filter="url(#soft-shadow)">
+    <rect x="760" y="210" width="230" height="120" rx="20" fill="#77C8D0"/>
+    <rect x="853" y="224" width="44" height="34" rx="8" fill="#EAFBFD"/>
+    <path d="M863 238 H887 M863 250 H879" stroke="#77C8D0" stroke-width="5" stroke-linecap="round"/>
+    <rect x="775" y="280" width="200" height="60" rx="20" fill="#0B668E"/>
+    <text class="node-label" x="875" y="304">PORTFOLIO</text>
+    <text class="node-label" x="875" y="328">RISK AGENT</text>
+  </g>
+
+  <g aria-label="Service Agent" filter="url(#soft-shadow)">
+    <rect x="1020" y="210" width="230" height="120" rx="20" fill="#77C8D0"/>
+    <rect x="1113" y="224" width="44" height="34" rx="8" fill="#EAFBFD"/>
+    <path d="M1123 238 H1147 M1123 250 H1139" stroke="#77C8D0" stroke-width="5" stroke-linecap="round"/>
+    <rect x="1035" y="300" width="200" height="40" rx="20" fill="#0B668E"/>
+    <text class="node-label" x="1135" y="326">SERVICE AGENT</text>
+  </g>
+
+  <g aria-label="New Agent, an extensibility placeholder" filter="url(#soft-shadow)">
+    <rect x="1280" y="210" width="230" height="120" rx="20" fill="none" stroke="#8A98A4" stroke-width="3" stroke-dasharray="8 6"/>
+    <rect x="1373" y="224" width="44" height="34" rx="8" fill="none" stroke="#8A98A4" stroke-width="3" stroke-dasharray="6 5"/>
+    <rect x="1295" y="300" width="200" height="40" rx="20" fill="#0B668E"/>
+    <text class="node-label" x="1395" y="326">NEW AGENT</text>
+  </g>
+
+  <!-- Advisor layer band -->
+  <g aria-label="Context-Aware Advisor Layer" filter="url(#soft-shadow)">
+    <rect x="480" y="410" width="1080" height="140" rx="28" fill="#57A7B2"/>
+    <text class="band-heading" x="1020" y="452">CONTEXT-AWARE ADVISOR LAYER</text>
+
+    <rect x="760" y="490" width="140" height="40" rx="14" fill="#FFFFFF" stroke="#586570" stroke-width="3"/>
+    <text class="relationship-label" x="830" y="516">RESOLVE</text>
+    <path class="relationship" d="M900 510 H950"/>
+
+    <rect x="950" y="490" width="140" height="40" rx="14" fill="#FFFFFF" stroke="#586570" stroke-width="3"/>
+    <text class="relationship-label" x="1020" y="516">RECORD</text>
+    <path class="relationship" d="M1090 510 H1140"/>
+
+    <rect x="1140" y="490" width="140" height="40" rx="14" fill="#FFFFFF" stroke="#586570" stroke-width="3"/>
+    <text class="relationship-label" x="1210" y="516">REUSE</text>
+  </g>
+
+  <!-- Arrows between advisor layer and decision layer -->
+  <path class="relationship" d="M1020 550 L1020 597"/>
+  <path class="return-flow" d="M880 598 L880 553"/>
+
+  <!-- Decision Layer: the shared, persistent substrate -->
+  <g aria-label="Decision Layer container" filter="url(#soft-shadow)">
+    <rect x="80" y="600" width="1480" height="260" rx="24" fill="#F4FAFB" stroke="#0B668E" stroke-width="4"/>
+  </g>
+  <rect x="80" y="600" width="1480" height="72" fill="#0B668E" clip-path="url(#decision-clip)"/>
+  <text class="layer-heading" x="112" y="636">DECISION LAYER</text>
+  <text class="layer-subheading" x="112" y="661">NEO4J CONTEXT GRAPH</text>
+  <g aria-label="Graph icon" fill="none" stroke="#EAFBFD" stroke-width="3">
+    <circle cx="1430" cy="622" r="8" fill="#EAFBFD" stroke="none"/>
+    <circle cx="1480" cy="648" r="8" fill="#EAFBFD" stroke="none"/>
+    <circle cx="1418" cy="656" r="8" fill="#EAFBFD" stroke="none"/>
+    <path d="M1430 622 L1480 648 M1430 622 L1418 656 M1480 648 L1418 656"/>
+  </g>
+
+  <line class="divider" x1="580" y1="700" x2="580" y2="840"/>
+  <line class="divider" x1="1060" y1="700" x2="1060" y2="840"/>
+
+  <g aria-label="Long-term memory column">
+    <rect x="220" y="700" width="240" height="46" rx="23" fill="#168AAD"/>
+    <text class="node-label" x="340" y="730">LONG-TERM</text>
+    <text class="property-copy" x="340" y="776" text-anchor="middle">Companies, policy</text>
+    <text class="property-copy" x="340" y="804" text-anchor="middle">Persists across sessions</text>
+  </g>
+
+  <g aria-label="Short-term memory column">
+    <rect x="700" y="700" width="240" height="46" rx="23" fill="#168AAD"/>
+    <text class="node-label" x="820" y="730">SHORT-TERM</text>
+    <text class="property-copy" x="820" y="776" text-anchor="middle">Conversation</text>
+    <text class="property-copy" x="820" y="804" text-anchor="middle">Scoped to this session</text>
+  </g>
+
+  <g aria-label="Reasoning memory column">
+    <rect x="1180" y="700" width="240" height="46" rx="23" fill="#168AAD"/>
+    <text class="node-label" x="1300" y="730">REASONING</text>
+    <text class="property-copy" x="1300" y="776" text-anchor="middle">Decision traces</text>
+    <text class="property-copy" x="1300" y="804" text-anchor="middle">Why past calls were made</text>
+  </g>
+
+</svg>
