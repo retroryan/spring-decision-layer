@@ -5,7 +5,13 @@ import java.util.Map;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.autoconfigure.ImportAutoConfiguration;
+import org.springframework.boot.jackson.autoconfigure.JacksonAutoConfiguration;
+import org.springframework.boot.test.context.SpringBootTest;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -15,23 +21,34 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
  * outcome, because nothing here produces one any more: what the engine does is say where a
  * number sits against its threshold, and who that ought to persuade is the underwriter's problem.
  *
- * The companies and thresholds are read out of seed.json, the same file the graph is seeded
- * from, rather than copied into constants here, so editing the fixture cannot leave these tests
- * green and their assertions wrong. Nothing here touches Neo4j: the engine takes the company,
- * the prior denial count, and the policies as arguments, which is what lets the whole rule set
- * be tested without any storage at all.
+ * The companies and thresholds are read out of seed.json, the same file the graph is seeded from,
+ * rather than copied into constants here, so editing the fixture cannot leave these tests green
+ * and their assertions wrong. The fixture arrives as the {@link Seed} bean from {@link SeedConfig},
+ * parsed by the {@link JsonMapper} Boot autoconfigures, which is the same bean the app seeds from;
+ * the context is scoped to exactly that, so no Neo4j and no model layer load. Nothing here touches
+ * Neo4j: the engine takes the company, the prior denial count, and the policies as arguments, which
+ * is what lets the whole rule set be tested without any storage at all.
  */
+@SpringBootTest(classes = SeedConfig.class)
+@ImportAutoConfiguration(JacksonAutoConfiguration.class)
 class PolicyEngineTests {
-
-	private static final Seed SEED = Seed.load();
-
-	private static final Map<String, Policy> POLICIES = SEED.policies()
-		.stream()
-		.collect(Collectors.toMap(Policy::key, Function.identity()));
 
 	private static final long AMOUNT = 250_000;
 
+	/** The seed fixture as the app loads it: the {@link SeedConfig} bean, parsed by Boot's mapper. */
+	@Autowired
+	private Seed seed;
+
+	private Map<String, Policy> policies;
+
 	private final PolicyEngine engine = new PolicyEngine();
+
+	@BeforeEach
+	void indexPolicies() {
+		this.policies = this.seed.policies()
+			.stream()
+			.collect(Collectors.toMap(Policy::key, Function.identity()));
+	}
 
 	@Test
 	void measuresEveryPolicyOnEveryFile() {
@@ -130,7 +147,7 @@ class PolicyEngineTests {
 	@Test
 	void namesAPolicyThatWentMissingFromTheGraph() {
 		Map<String, Policy> incomplete = Map.of(PolicyEngine.MINIMUM_CREDIT_SCORE,
-				POLICIES.get(PolicyEngine.MINIMUM_CREDIT_SCORE));
+				this.policies.get(PolicyEngine.MINIMUM_CREDIT_SCORE));
 
 		assertThatThrownBy(() -> this.engine.measure(company("C-1077"), AMOUNT, 0, incomplete))
 			.isInstanceOf(IllegalStateException.class)
@@ -138,7 +155,7 @@ class PolicyEngineTests {
 	}
 
 	private List<PolicyResult> measure(String companyId, long requestedAmount, long priorDenials) {
-		return this.engine.measure(company(companyId), requestedAmount, priorDenials, POLICIES);
+		return this.engine.measure(company(companyId), requestedAmount, priorDenials, this.policies);
 	}
 
 	/** What the model is shown as below the line, and the only keys its verdict may name. */
@@ -148,8 +165,8 @@ class PolicyEngineTests {
 			.toList();
 	}
 
-	private static Company company(String companyId) {
-		return SEED.companies()
+	private Company company(String companyId) {
+		return this.seed.companies()
 			.stream()
 			.filter(company -> company.companyId().equals(companyId))
 			.findFirst()

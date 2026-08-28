@@ -148,11 +148,18 @@ class GraphSeeder implements CommandLineRunner {
 
 	private final Driver driver;
 
+	/**
+	 * Read once from the classpath as a bean rather than re-read on every {@link #run}. The parsing
+	 * lives in {@link Seed#load()} and is wired up as a bean in {@link Application}.
+	 */
+	private final Seed seed;
+
 	/** The database {@link LoanGraph} names, so the seed lands where the demo reads it. */
 	private final QueryConfig config;
 
-	GraphSeeder(Driver driver, @Value("${loan.neo4j.database:}") String database) {
+	GraphSeeder(Driver driver, Seed seed, @Value("${loan.neo4j.database:}") String database) {
 		this.driver = driver;
+		this.seed = seed;
 		QueryConfig.Builder builder = QueryConfig.builder();
 		if (StringUtils.hasText(database)) {
 			builder.withDatabase(database);
@@ -162,7 +169,7 @@ class GraphSeeder implements CommandLineRunner {
 
 	@Override
 	public void run(String... args) {
-		Seed seed = Seed.load();
+		Seed seed = this.seed;
 
 		CONSTRAINTS.forEach(constraint -> run(constraint, Map.of()));
 

@@ -3,7 +3,8 @@
 #
 # Runs ./run.sh once per case below, across all four companies, to exercise every policy's
 # above/below-the-line branch and the Repeat Denial Escalation history mechanic. Each case is a
-# real Spring Boot start, a real Anthropic call, and a real write to the Neo4j graph configured
+# real Spring Boot start, a real model call over the OpenAI-compatible Bedrock endpoint, and a
+# real write to the Neo4j graph configured
 # in .env, so this costs model credits and takes real wall-clock time (mvnw start included).
 # Every run's console output streams live as it happens (and is also saved), with the headings
 # DecisionConsole already prints -- On duty for this run, Policies, as measured, and so on --
@@ -75,14 +76,14 @@ tier_level() {
 SELECTED_LEVEL=$(tier_level "$TIER")
 
 if [ ! -f .env ]; then
-	echo "No .env found. Copy .env.example to .env, then add your ANTHROPIC_API_KEY and"
+	echo "No .env found. Copy .env.example to .env, then add your AWS_BEARER_TOKEN_BEDROCK and"
 	echo "the connection details for a Neo4j instance."
 	exit 1
 fi
 
 set -a && source .env && set +a
 
-for required in ANTHROPIC_API_KEY NEO4J_URI NEO4J_PASSWORD; do
+for required in AWS_BEARER_TOKEN_BEDROCK NEO4J_URI NEO4J_PASSWORD; do
 	if [ -z "${!required:-}" ]; then
 		echo "$required is not set in .env. See .env.example."
 		exit 1

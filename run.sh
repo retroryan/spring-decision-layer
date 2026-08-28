@@ -6,33 +6,33 @@
 set -euo pipefail
 cd "$(dirname "$0")"
 
-if [ ! -f .env ]; then
-	echo "No .env found. Copy .env.example to .env, then add your ANTHROPIC_API_KEY and"
-	echo "the connection details for a Neo4j instance."
+# The environment is the source of truth. A .env is sourced if present, purely as a convenience,
+# but nothing here requires the file. spring-boot:test-run starts its own throwaway Neo4j via
+# Testcontainers (Docker must be running), so the only thing that has to be set is the Bedrock
+# token for the model call.
+if [ -f .env ]; then
+	set -a && source .env && set +a
+fi
+
+if [ -z "${AWS_BEARER_TOKEN_BEDROCK:-}" ]; then
+	echo "AWS_BEARER_TOKEN_BEDROCK is not set. Export it in your shell, or put it in a .env file."
 	exit 1
 fi
 
-set -a && source .env && set +a
-
-# Checked here rather than in Java, because an unset NEO4J_URI fails during Spring's own
-# startup with a stack trace that says nothing about the missing setting.
-for required in ANTHROPIC_API_KEY NEO4J_URI NEO4J_PASSWORD; do
-	if [ -z "${!required:-}" ]; then
-		echo "$required is not set in .env. See .env.example."
-		exit 1
-	fi
-done
-
-# A JVM system property rather than an application argument: Application reads its arguments
-# positionally, so an extra --loan.seed.enabled=false would be taken for the company id.
-jvm=""
+# run.sh always runs a single command and exits, so it forces the shell non-interactive. (Bare
+# `./mvnw spring-boot:test-run` leaves it interactive and opens a REPL instead.) These go through
+# the environment using Spring's relaxed binding, so they reach the app whether or not the
+# spring-boot plugin forks a JVM, and are not read as part of the decide command built below.
+export SPRING_SHELL_INTERACTIVE_ENABLED=false
 if [ "${1:-}" = "--no-seed" ]; then
 	shift
-	jvm="-Dspring-boot.run.jvmArguments=-Dloan.seed.enabled=false"
+	export LOAN_SEED_ENABLED=false
 fi
 
-if [ "$#" -gt 0 ]; then
-	./mvnw -q ${jvm:+"$jvm"} spring-boot:run -Dspring-boot.run.arguments="$*"
-else
-	./mvnw -q ${jvm:+"$jvm"} spring-boot:run
-fi
+# The decision is a Spring Shell command, invoked with positional arguments: "decide C-1042 250000".
+# Both default, so ./run.sh with no arguments still decides C-1042 at $250,000.
+cmd="decide"
+if [ "$#" -gt 0 ]; then cmd="$cmd $1"; fi
+if [ "$#" -gt 1 ]; then cmd="$cmd $2"; fi
+
+./mvnw -q spring-boot:test-run -Dspring-boot.run.arguments="$cmd"
