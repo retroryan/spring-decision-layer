@@ -1,0 +1,129 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1600 900" role="img" aria-labelledby="title description" font-family="Arial, Helvetica, sans-serif">
+  <title id="title">Walking the Graph from Company to Authorization</title>
+  <desc id="description">A graph traversal drawn as connected nodes. A chip labelled Current query points down into a spine of three nodes running left to right: Company, then LoanApplication reached by a SUBMITTED relationship, then a larger emphasized Decision node reached by an ABOUT relationship. From the Decision node three labelled branches fan out to the right, each contributing one piece of the explanation. The first branch runs forward from Decision to a Policy node along APPLIED_POLICY, and is annotated as naming the rule that authorized the decision and carrying the numbers that were measured. The second branch is drawn in reverse, with its arrow pointing from an Exception node back into Decision along EXCEPTION_TO, annotated as followed backward to find the exception that set the denial aside. The third branch is also reversed, pointing from a Later decisions node back into Decision along ESCALATED_FROM, annotated as followed backward to find every later decision the denial drove. A legend at lower left explains that a reversed arrow means the edge is followed backward from the target, and a caption states that one traversal returns the authority, the modification, and the lineage together.</desc>
+
+  <defs>
+    <filter id="soft-shadow" x="-20%" y="-20%" width="140%" height="150%">
+      <feDropShadow dx="0" dy="6" stdDeviation="10" flood-color="#183142" flood-opacity="0.14"/>
+    </filter>
+    <marker id="arrow" markerWidth="12" markerHeight="12" refX="10" refY="6" orient="auto" markerUnits="userSpaceOnUse">
+      <path d="M0,0 L12,6 L0,12 Z" fill="#586570"/>
+    </marker>
+    <marker id="arrow-teal" markerWidth="12" markerHeight="12" refX="10" refY="6" orient="auto" markerUnits="userSpaceOnUse">
+      <path d="M0,0 L12,6 L0,12 Z" fill="#57A7B2"/>
+    </marker>
+    <style>
+      .heading { fill: #17212B; font-size: 50px; font-weight: 700; }
+      .subtitle { fill: #53616D; font-size: 24px; }
+      .node-label { fill: #FFFFFF; font-size: 21px; font-weight: 700; text-anchor: middle; letter-spacing: 1px; }
+      .node-label-hub { fill: #FFFFFF; font-size: 25px; font-weight: 700; text-anchor: middle; letter-spacing: 1px; }
+      .relationship { fill: none; stroke: #586570; stroke-width: 7; marker-end: url(#arrow); }
+      .relationship-back { fill: none; stroke: #57A7B2; stroke-width: 7; marker-end: url(#arrow-teal); }
+      .rel-chip-label { fill: #394651; font-size: 19px; font-weight: 700; text-anchor: middle; }
+      .annot-title { fill: #0B668E; font-size: 20px; font-weight: 700; }
+      .annot-copy { fill: #53616D; font-size: 18px; }
+      .legend-title { fill: #0B668E; font-size: 24px; font-weight: 700; }
+      .legend-copy { fill: #53616D; font-size: 18px; }
+      .caption { fill: #53616D; font-size: 22px; }
+      .query-label { fill: #FFFFFF; font-size: 22px; font-weight: 700; text-anchor: middle; letter-spacing: 1px; }
+    </style>
+  </defs>
+
+  <rect width="1600" height="900" fill="#FFFFFF"/>
+  <path d="M1230 0 H1600 V235 C1510 205 1455 140 1395 82 C1340 30 1280 20 1230 0 Z" fill="#0B668E"/>
+  <path d="M1410 0 H1600 V94 C1536 62 1474 34 1410 0 Z" fill="#57A7B2" opacity="0.75"/>
+  <path d="M0 900 V820 C115 790 205 800 298 850 C333 869 369 885 410 900 Z" fill="#0B668E"/>
+
+  <text class="heading" x="66" y="78">Walking the Graph to Authorization</text>
+  <text class="subtitle" x="68" y="122">Each hop adds a piece of the explanation.</text>
+
+  <!-- Current query chip -->
+  <g filter="url(#soft-shadow)">
+    <rect x="85" y="186" width="250" height="58" rx="20" fill="#17212B"/>
+    <text class="query-label" x="210" y="223">Current query</text>
+  </g>
+  <path class="relationship" d="M210 250 V 306"/>
+
+  <!-- Spine: Company -> LoanApplication -> Decision -->
+  <g filter="url(#soft-shadow)">
+    <circle cx="210" cy="380" r="64" fill="#0B668E"/>
+    <circle cx="470" cy="380" r="64" fill="#0B668E"/>
+    <circle cx="760" cy="380" r="86" fill="#17212B"/>
+  </g>
+  <text class="node-label" x="210" y="388">Company</text>
+  <text class="node-label" x="470" y="376">Loan</text>
+  <text class="node-label" x="470" y="400">Application</text>
+  <text class="node-label-hub" x="760" y="390">Decision</text>
+
+  <path class="relationship" d="M278 380 H 396"/>
+  <g filter="url(#soft-shadow)">
+    <rect x="278" y="322" width="128" height="36" rx="13" fill="#FFFFFF" stroke="#586570" stroke-width="2.5"/>
+  </g>
+  <text class="rel-chip-label" x="342" y="347">SUBMITTED</text>
+
+  <path class="relationship" d="M538 380 H 664"/>
+  <g filter="url(#soft-shadow)">
+    <rect x="546" y="322" width="106" height="36" rx="13" fill="#FFFFFF" stroke="#586570" stroke-width="2.5"/>
+  </g>
+  <text class="rel-chip-label" x="599" y="347">ABOUT</text>
+
+  <!-- Branch 1: APPLIED_POLICY, forward -->
+  <path class="relationship" d="M828 337 C 920 268 1000 222 1078 202"/>
+  <g filter="url(#soft-shadow)">
+    <rect x="866" y="232" width="192" height="36" rx="13" fill="#FFFFFF" stroke="#586570" stroke-width="2.5"/>
+  </g>
+  <text class="rel-chip-label" x="962" y="257">APPLIED_POLICY</text>
+  <g filter="url(#soft-shadow)">
+    <circle cx="1150" cy="188" r="66" fill="#0B668E"/>
+  </g>
+  <text class="node-label" x="1150" y="196">Policy</text>
+  <text class="annot-title" x="1240" y="150">Authority</text>
+  <text class="annot-copy" x="1240" y="178">Names the rule that</text>
+  <text class="annot-copy" x="1240" y="202">authorized the decision,</text>
+  <text class="annot-copy" x="1240" y="226">and carries the numbers</text>
+  <text class="annot-copy" x="1240" y="250">that were measured.</text>
+
+  <!-- Branch 2: EXCEPTION_TO, reversed -->
+  <path class="relationship-back" d="M1080 412 C 1000 405 920 398 852 392"/>
+  <g filter="url(#soft-shadow)">
+    <rect x="878" y="424" width="180" height="36" rx="13" fill="#FFFFFF" stroke="#57A7B2" stroke-width="2.5"/>
+  </g>
+  <text class="rel-chip-label" x="968" y="449">EXCEPTION_TO</text>
+  <g filter="url(#soft-shadow)">
+    <circle cx="1150" cy="420" r="66" fill="#57A7B2"/>
+  </g>
+  <text class="node-label" x="1150" y="428">Exception</text>
+  <text class="annot-title" x="1240" y="382">Modification</text>
+  <text class="annot-copy" x="1240" y="410">Followed backward to</text>
+  <text class="annot-copy" x="1240" y="434">find the exception that</text>
+  <text class="annot-copy" x="1240" y="458">set the denial aside.</text>
+
+  <!-- Branch 3: ESCALATED_FROM, reversed -->
+  <path class="relationship-back" d="M1096 617 C 1000 572 892 492 832 436"/>
+  <g filter="url(#soft-shadow)">
+    <rect x="884" y="556" width="212" height="36" rx="13" fill="#FFFFFF" stroke="#57A7B2" stroke-width="2.5"/>
+  </g>
+  <text class="rel-chip-label" x="990" y="581">ESCALATED_FROM</text>
+  <g filter="url(#soft-shadow)">
+    <circle cx="1150" cy="654" r="66" fill="#57A7B2"/>
+  </g>
+  <text class="node-label" x="1150" y="646">Later</text>
+  <text class="node-label" x="1150" y="670">decisions</text>
+  <text class="annot-title" x="1240" y="616">Lineage</text>
+  <text class="annot-copy" x="1240" y="644">Followed backward to</text>
+  <text class="annot-copy" x="1240" y="668">find every later decision</text>
+  <text class="annot-copy" x="1240" y="692">the denial drove.</text>
+
+  <!-- Legend -->
+  <g aria-label="Legend">
+    <rect x="85" y="556" width="600" height="176" rx="16" fill="#F4FAFB" stroke="#B9DCE1" stroke-width="2"/>
+    <path d="M117 610 H 197" fill="none" stroke="#586570" stroke-width="7" marker-end="url(#arrow)"/>
+    <text class="legend-title" x="222" y="606">Followed forward</text>
+    <text class="legend-copy" x="222" y="632">The edge points the way you travel it.</text>
+    <path d="M197 690 H 117" fill="none" stroke="#57A7B2" stroke-width="7" marker-end="url(#arrow-teal)"/>
+    <text class="legend-title" x="222" y="686">Followed backward</text>
+    <text class="legend-copy" x="222" y="712">The edge points at the decision, not away.</text>
+  </g>
+
+  <text class="caption" x="85" y="800">One traversal returns the authority, the modification, and the lineage together.</text>
+</svg>

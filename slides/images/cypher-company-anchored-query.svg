@@ -1,0 +1,70 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1600 900" role="img" aria-labelledby="title description" font-family="Arial, Helvetica, sans-serif">
+  <title id="title">Start at the Company to Find Relevant Decisions</title>
+  <desc id="description">A code panel holds a five line Cypher query that starts at a Company node, matched by companyId, follows SUBMITTED to a LoanApplication and then ABOUT back to a Decision whose outcome is DENIED, keeps only decisions decided inside a window of windowMonths, and drops any decision that an Exception points to through EXCEPTION_TO, returning the surviving decisions. Below the panel, three cards line up under the query. Ownership: the traversal starts at the company node and reaches its decisions through SUBMITTED and ABOUT. Age: the denial falls inside the window the policy sets. Standing: no exception has set the denial aside. A closing line notes that every test is a relationship in the graph, not a filter over rows.</desc>
+
+  <defs>
+    <style>
+      .heading { fill: #17212B; font-size: 50px; font-weight: 700; }
+      .subtitle { fill: #53616D; font-size: 24px; }
+      .legend-title { fill: #0B668E; font-size: 30px; font-weight: 700; }
+      .legend-copy { fill: #53616D; font-size: 17px; }
+      .code { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: 26px; fill: #17212B; }
+      .kw { fill: #0B668E; font-weight: 700; }
+      .lbl { fill: #00713B; font-weight: 700; }
+      .par { fill: #A64B00; }
+      .leader { fill: none; stroke: #8A98A4; stroke-width: 2.5; stroke-dasharray: 5 6; }
+    </style>
+  </defs>
+
+  <rect width="1600" height="900" fill="#FFFFFF"/>
+  <path d="M1230 0 H1600 V235 C1510 205 1455 140 1395 82 C1340 30 1280 20 1230 0 Z" fill="#0B668E"/>
+  <path d="M1410 0 H1600 V94 C1536 62 1474 34 1410 0 Z" fill="#57A7B2" opacity="0.75"/>
+  <path d="M0 900 V820 C115 790 205 800 298 850 C333 869 369 885 410 900 Z" fill="#0B668E"/>
+
+  <text class="heading" x="66" y="78">Start at the Company to Find Relevant Decisions</text>
+  <text class="subtitle" x="68" y="122">Three tests decide which past denials still count. Each one is a relationship.</text>
+
+  <!-- Cypher panel -->
+  <rect x="66" y="180" width="1300" height="290" rx="14" fill="#F4F7F9" stroke="#D8E0E6" stroke-width="2"/>
+
+  <g class="code" xml:space="preserve" aria-label="Cypher query anchored at the company node">
+    <text x="124" y="233"><tspan class="kw">MATCH</tspan><tspan> (</tspan><tspan class="lbl">:Company</tspan><tspan> {companyId: </tspan><tspan class="par">$companyId</tspan><tspan>})-[</tspan><tspan class="lbl">:SUBMITTED</tspan><tspan>]-&gt;(</tspan><tspan class="lbl">:LoanApplication</tspan><tspan>)</tspan></text>
+    <text x="218" y="277"><tspan>&lt;-[</tspan><tspan class="lbl">:ABOUT</tspan><tspan>]-(d</tspan><tspan class="lbl">:Decision</tspan><tspan> {outcome: </tspan><tspan class="par">'DENIED'</tspan><tspan>})</tspan></text>
+    <text x="124" y="321"><tspan class="kw">WHERE</tspan><tspan> d.decidedAt &gt; datetime() - duration({months: </tspan><tspan class="par">$windowMonths</tspan><tspan>})</tspan></text>
+    <text x="155" y="365"><tspan class="kw">AND NOT EXISTS</tspan><tspan> { (</tspan><tspan class="lbl">:Exception</tspan><tspan>)-[</tspan><tspan class="lbl">:EXCEPTION_TO</tspan><tspan>]-&gt;(d) }</tspan></text>
+    <text x="124" y="409"><tspan class="kw">RETURN</tspan><tspan> d</tspan></text>
+  </g>
+
+  <!-- Leaders from the panel down to each test card -->
+  <path class="leader" d="M276 472 L276 518"/>
+  <path class="leader" d="M716 472 L716 518"/>
+  <path class="leader" d="M1156 472 L1156 518"/>
+
+  <g aria-label="Ownership test">
+    <rect x="66" y="520" width="420" height="190" rx="16" fill="#F4FAFB" stroke="#B9DCE1" stroke-width="2"/>
+    <circle cx="99" cy="563" r="12" fill="#0B668E"/>
+    <text class="legend-title" x="129" y="572">Ownership</text>
+    <text class="legend-copy" x="98" y="614">The traversal starts at the company</text>
+    <text class="legend-copy" x="98" y="640">node and reaches its decisions</text>
+    <text class="legend-copy" x="98" y="666">through SUBMITTED and ABOUT.</text>
+  </g>
+
+  <g aria-label="Age test">
+    <rect x="506" y="520" width="420" height="190" rx="16" fill="#F4FAFB" stroke="#B9DCE1" stroke-width="2"/>
+    <circle cx="539" cy="563" r="12" fill="#0B668E"/>
+    <text class="legend-title" x="569" y="572">Age</text>
+    <text class="legend-copy" x="538" y="614">The denial falls inside the window</text>
+    <text class="legend-copy" x="538" y="640">the policy sets.</text>
+  </g>
+
+  <g aria-label="Standing test">
+    <rect x="946" y="520" width="420" height="190" rx="16" fill="#F4FAFB" stroke="#B9DCE1" stroke-width="2"/>
+    <circle cx="979" cy="563" r="12" fill="#0B668E"/>
+    <text class="legend-title" x="1009" y="572">Standing</text>
+    <text class="legend-copy" x="978" y="614">No exception has set the denial</text>
+    <text class="legend-copy" x="978" y="640">aside.</text>
+  </g>
+
+  <text class="legend-copy" x="68" y="790">Every test is a relationship in the graph, not a filter over rows.</text>
+
+</svg>

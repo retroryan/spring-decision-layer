@@ -1,0 +1,116 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1600 900" role="img" aria-labelledby="title description" font-family="Arial, Helvetica, sans-serif">
+  <title id="title">Smarter Agents with Smarter Context</title>
+  <desc id="description">Two halves feed one agent. On the left, under the label COMMODITY, a muted gray box reads Frontier model, identical for every competitor, drawn as one box on top of a stack of identical dashed copies to show that every competitor calls the same thing. On the right, under the label UNIQUE ENTERPRISE VALUE, a solid Neo4j blue box reads Business context, yours alone, and built by you. A plus sign sits between them, and arrows from both boxes converge downward into a single hub labeled Intelligent enterprise agent, captioned as intelligent as its context. A legend on the left names the three steps of the argument: the capability is a commodity, the context is missing, and the context is the advantage.</desc>
+
+  <defs>
+    <filter id="soft-shadow" x="-20%" y="-20%" width="140%" height="150%">
+      <feDropShadow dx="0" dy="6" stdDeviation="10" flood-color="#183142" flood-opacity="0.14"/>
+    </filter>
+    <marker id="arrow" markerWidth="12" markerHeight="12" refX="10" refY="6" orient="auto" markerUnits="userSpaceOnUse">
+      <path d="M0,0 L12,6 L0,12 Z" fill="#586570"/>
+    </marker>
+    <style>
+      .heading { fill: #17212B; font-size: 50px; font-weight: 700; }
+      .subtitle { fill: #53616D; font-size: 24px; }
+      .legend-title { fill: #0B668E; font-size: 30px; font-weight: 700; }
+      .legend-copy { fill: #53616D; font-size: 17px; }
+      .relationship { fill: none; stroke: #586570; stroke-width: 8; marker-end: url(#arrow); }
+      .relationship-label { fill: #394651; font-size: 21px; font-weight: 700; text-anchor: middle; }
+      .node-label { fill: #FFFFFF; font-size: 20px; font-weight: 700; text-anchor: middle; letter-spacing: 1px; }
+      .node-label-hub { fill: #FFFFFF; font-size: 23px; font-weight: 700; text-anchor: middle; letter-spacing: 1px; }
+      .property-label { fill: #0B668E; font-size: 19px; font-weight: 700; }
+      .property-copy { fill: #53616D; font-size: 18px; }
+      .property-copy-sm { fill: #53616D; font-size: 17px; }
+      .caption { fill: #53616D; font-size: 17px; text-anchor: end; }
+      .leader { fill: none; stroke: #8A98A4; stroke-width: 2.5; stroke-dasharray: 5 6; }
+      .band-heading { fill: #FFFFFF; font-size: 28px; font-weight: 700; text-anchor: middle; letter-spacing: 1px; }
+      .category-label { font-size: 24px; font-weight: 700; text-anchor: middle; letter-spacing: 2px; }
+      .copy-centered { fill: #53616D; font-size: 18px; text-anchor: middle; }
+      .copy-light { fill: #EAFBFD; font-size: 18px; text-anchor: middle; }
+      .hub-caption { fill: #EAFBFD; font-size: 20px; text-anchor: middle; }
+      .takeaway { fill: #17212B; font-size: 20px; font-weight: 700; text-anchor: middle; }
+    </style>
+  </defs>
+
+  <rect width="1600" height="900" fill="#FFFFFF"/>
+  <path d="M1230 0 H1600 V235 C1510 205 1455 140 1395 82 C1340 30 1280 20 1230 0 Z" fill="#0B668E"/>
+  <path d="M1410 0 H1600 V94 C1536 62 1474 34 1410 0 Z" fill="#57A7B2" opacity="0.75"/>
+  <path d="M0 900 V820 C115 790 205 800 298 850 C333 869 369 885 410 900 Z" fill="#0B668E"/>
+
+  <text class="heading" x="66" y="78">Smarter Agents with Smarter Context</text>
+  <text class="subtitle" x="68" y="122">The frontier model is a commodity and identical. The business context around it is yours.</text>
+
+  <g aria-label="Legend">
+    <circle cx="88" cy="190" r="12" fill="#0B668E"/>
+    <text class="legend-title" x="118" y="199">Commodity</text>
+    <text class="legend-copy" x="118" y="227">Every competitor calls the</text>
+    <text class="legend-copy" x="118" y="249">same frontier model.</text>
+
+    <circle cx="88" cy="300" r="12" fill="#0B668E"/>
+    <text class="legend-title" x="118" y="309">Missing context</text>
+    <text class="legend-copy" x="118" y="337">The model knows the world,</text>
+    <text class="legend-copy" x="118" y="359">not your business.</text>
+
+    <circle cx="88" cy="410" r="12" fill="#0B668E"/>
+    <text class="legend-title" x="118" y="419">The advantage</text>
+    <text class="legend-copy" x="118" y="447">The context you capture is</text>
+    <text class="legend-copy" x="118" y="469">the part nobody can buy.</text>
+  </g>
+
+  <!-- Converging arrows are drawn first so they stay behind the boxes. -->
+  <path class="relationship" d="M820 450 C820 540 876 560 950 610"/>
+  <path class="relationship" d="M1280 450 C1280 540 1224 560 1150 610"/>
+
+  <!-- Column labels -->
+  <text class="category-label" x="820" y="212" fill="#8A98A4">COMMODITY</text>
+  <text class="category-label" x="1280" y="212" fill="#0B668E">UNIQUE ENTERPRISE VALUE</text>
+
+  <!-- Commodity side: one box on a stack of identical copies -->
+  <g aria-label="Frontier model, the commodity half">
+    <rect x="588" y="238" width="400" height="180" rx="24" fill="#FFFFFF" stroke="#B6C0C8" stroke-width="3" stroke-dasharray="8 6"/>
+    <rect x="604" y="254" width="400" height="180" rx="24" fill="#FFFFFF" stroke="#B6C0C8" stroke-width="3" stroke-dasharray="8 6"/>
+    <g filter="url(#soft-shadow)">
+      <rect x="620" y="270" width="400" height="180" rx="24" fill="#EDF1F4" stroke="#8A98A4" stroke-width="3"/>
+    </g>
+    <rect x="650" y="296" width="340" height="44" rx="22" fill="#8A98A4"/>
+    <text class="node-label" x="820" y="326">FRONTIER MODEL</text>
+    <text class="copy-centered" x="820" y="378">identical for</text>
+    <text class="copy-centered" x="820" y="406">every competitor</text>
+  </g>
+
+  <!-- Plus: both halves are required -->
+  <g aria-label="Plus sign joining the two halves">
+    <circle cx="1050" cy="360" r="26" fill="#FFFFFF" stroke="#8A98A4" stroke-width="3"/>
+    <path d="M1036 360 H1064 M1050 346 V374" stroke="#53616D" stroke-width="6" stroke-linecap="round"/>
+  </g>
+
+  <!-- Unique enterprise value side -->
+  <g aria-label="Business context, the unique enterprise value half" filter="url(#soft-shadow)">
+    <rect x="1080" y="270" width="400" height="180" rx="24" fill="#168AAD"/>
+    <rect x="1110" y="296" width="340" height="44" rx="22" fill="#0B668E"/>
+    <text class="node-label" x="1280" y="326">BUSINESS CONTEXT</text>
+    <text class="copy-light" x="1280" y="378">yours alone, and</text>
+    <text class="copy-light" x="1280" y="406">built by you</text>
+  </g>
+
+  <!-- The hub both halves converge into -->
+  <g aria-label="Intelligent enterprise agent" filter="url(#soft-shadow)">
+    <rect x="740" y="630" width="620" height="160" rx="28" fill="#0B668E"/>
+    <text class="band-heading" x="1050" y="702">INTELLIGENT ENTERPRISE AGENT</text>
+    <text class="hub-caption" x="1050" y="742">as intelligent as its context</text>
+  </g>
+
+  <!-- Annotation: the improvement lands on the agent, not the model -->
+  <g aria-label="Annotation about where the improvement lands">
+    <path class="leader" d="M460 692 C560 700 640 706 736 710"/>
+    <rect x="60" y="590" width="400" height="150" rx="16" fill="#F4FAFB" stroke="#B9DCE1" stroke-width="2"/>
+    <text class="property-label" x="84" y="626">The model never changes</text>
+    <text class="property-copy" x="84" y="658">What changes is the context</text>
+    <text class="property-copy" x="84" y="682">the agent assembles before</text>
+    <text class="property-copy" x="84" y="706">it calls the model.</text>
+  </g>
+
+  <text class="takeaway" x="1050" y="828">Commodity intelligence is the same for everyone.</text>
+  <text class="takeaway" x="1050" y="858">The business context an enterprise builds around it is the advantage.</text>
+
+</svg>

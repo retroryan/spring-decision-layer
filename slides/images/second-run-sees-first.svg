@@ -1,0 +1,90 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1600 900" role="img" aria-labelledby="title description" font-family="Arial, Helvetica, sans-serif">
+  <title id="title">The Second Run Sees the First Run's Decision</title>
+  <desc id="description">Two mirrored columns run the exact same command. On the left, run one: the agent decides and writes a decision trace. On the right, run two: the agent reads that trace as standing precedent. Both terminal panels hold the identical command, ./run.sh C-1042 250000. A thick curve labelled writes swings down from the left panel into a graph cluster at the bottom center, drawn as a blue hub node with a node and link glyph, two teal satellite nodes, and a pill reading DECISION TRACE IN THE GRAPH. A second curve labelled reads rises from that cluster up into the right panel. A closing line notes that everything else is fixed: company, amount, policies, and underwriter stay the same.</desc>
+
+  <defs>
+    <filter id="soft-shadow" x="-20%" y="-20%" width="140%" height="150%">
+      <feDropShadow dx="0" dy="6" stdDeviation="10" flood-color="#183142" flood-opacity="0.14"/>
+    </filter>
+    <marker id="arrow" markerWidth="12" markerHeight="12" refX="10" refY="6" orient="auto" markerUnits="userSpaceOnUse">
+      <path d="M0,0 L12,6 L0,12 Z" fill="#586570"/>
+    </marker>
+    <style>
+      .heading { fill: #17212B; font-size: 50px; font-weight: 700; }
+      .subtitle { fill: #53616D; font-size: 24px; }
+      .legend-title { fill: #0B668E; font-size: 30px; font-weight: 700; }
+      .legend-copy { fill: #53616D; font-size: 17px; }
+      .relationship { fill: none; stroke: #586570; stroke-width: 8; marker-end: url(#arrow); }
+      .relationship-label { fill: #394651; font-size: 21px; font-weight: 700; text-anchor: middle; }
+      .node-label { fill: #FFFFFF; font-size: 20px; font-weight: 700; text-anchor: middle; letter-spacing: 1px; }
+      .cmd { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: 28px; text-anchor: middle; }
+      .cmd-bin { fill: #0B668E; font-weight: 700; }
+      .cmd-arg { fill: #A64B00; }
+    </style>
+  </defs>
+
+  <rect width="1600" height="900" fill="#FFFFFF"/>
+  <path d="M1230 0 H1600 V235 C1510 205 1455 140 1395 82 C1340 30 1280 20 1230 0 Z" fill="#0B668E"/>
+  <path d="M1410 0 H1600 V94 C1536 62 1474 34 1410 0 Z" fill="#57A7B2" opacity="0.75"/>
+  <path d="M0 900 V820 C115 790 205 800 298 850 C333 869 369 885 410 900 Z" fill="#0B668E"/>
+
+  <text class="heading" x="66" y="78">The Second Run Sees the First Run's Decision</text>
+  <text class="subtitle" x="68" y="122">The command is identical. The graph is not, so the context is not either.</text>
+
+  <!-- Left column: run one -->
+  <g aria-label="Run one">
+    <circle cx="88" cy="249" r="13" fill="#0B668E"/>
+    <text class="legend-title" x="118" y="260">Run one</text>
+    <text class="legend-copy" x="88" y="302" font-size="20">The agent decides and writes a decision trace.</text>
+    <rect x="66" y="332" width="540" height="112" rx="12" fill="#F4F7F9" stroke="#D8E0E6" stroke-width="2"/>
+    <text class="cmd" x="336" y="400" xml:space="preserve"><tspan class="cmd-bin">./run.sh</tspan><tspan class="cmd-arg"> C-1042 250000</tspan></text>
+  </g>
+
+  <!-- Right column: run two -->
+  <g aria-label="Run two">
+    <circle cx="1016" cy="249" r="13" fill="#0B668E"/>
+    <text class="legend-title" x="1046" y="260">Run two</text>
+    <text class="legend-copy" x="1016" y="302" font-size="20">The agent reads that trace as standing precedent.</text>
+    <rect x="994" y="332" width="540" height="112" rx="12" fill="#F4F7F9" stroke="#D8E0E6" stroke-width="2"/>
+    <text class="cmd" x="1264" y="400" xml:space="preserve"><tspan class="cmd-bin">./run.sh</tspan><tspan class="cmd-arg"> C-1042 250000</tspan></text>
+  </g>
+
+  <!-- Writes curve, left panel down into the graph cluster -->
+  <path class="relationship" d="M328 452 C 328 508, 352 552, 420 580 C 520 620, 640 628, 740 624"/>
+  <!-- Reads curve, graph cluster up into the right panel -->
+  <path class="relationship" d="M860 626 C 980 640, 1090 616, 1160 578 C 1220 546, 1244 514, 1256 462"/>
+
+  <!-- Graph cluster -->
+  <g aria-label="Decision trace in the graph">
+    <path d="M800 596 L705 694" stroke="#0B668E" stroke-width="6" fill="none"/>
+    <path d="M800 596 L895 694" stroke="#0B668E" stroke-width="6" fill="none"/>
+    <circle cx="705" cy="694" r="30" fill="#57A7B2"/>
+    <circle cx="895" cy="694" r="30" fill="#57A7B2"/>
+    <circle cx="800" cy="596" r="46" fill="#0B668E"/>
+    <g stroke="#FFFFFF" stroke-width="3.5" fill="none">
+      <path d="M800 579 L781 613"/>
+      <path d="M800 579 L819 613"/>
+      <path d="M781 613 L819 613"/>
+    </g>
+    <g fill="#FFFFFF">
+      <circle cx="800" cy="579" r="7.5"/>
+      <circle cx="781" cy="613" r="7.5"/>
+      <circle cx="819" cy="613" r="7.5"/>
+    </g>
+    <rect x="658" y="744" width="286" height="70" rx="18" fill="#0B668E"/>
+    <text class="node-label" x="801" y="775">DECISION TRACE</text>
+    <text class="node-label" x="801" y="801">IN THE GRAPH</text>
+  </g>
+
+  <!-- Curve labels -->
+  <g filter="url(#soft-shadow)">
+    <rect x="382" y="558" width="120" height="40" rx="14" fill="#FFFFFF" stroke="#D8E0E6" stroke-width="2"/>
+    <text class="relationship-label" x="442" y="586">writes</text>
+
+    <rect x="1102" y="558" width="120" height="40" rx="14" fill="#FFFFFF" stroke="#D8E0E6" stroke-width="2"/>
+    <text class="relationship-label" x="1162" y="586">reads</text>
+  </g>
+
+  <text class="legend-copy" x="470" y="858" font-size="20">Everything else is fixed. Company, amount, policies, and underwriter stay the same.</text>
+
+</svg>

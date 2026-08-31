@@ -1,6 +1,6 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1600 900" role="img" aria-labelledby="title description" font-family="Arial, Helvetica, sans-serif">
-  <title id="title">Anatomy of a Labeled Property Graph</title>
-  <desc id="description">A loan decision graph showing the three parts of a labeled property graph. Nodes: Company, LoanApplication, Decision, Underwriter, Exception, and an earlier Decision. Relationships: Company SUBMITTED LoanApplication, Decision ABOUT LoanApplication, Decision DECIDED_BY Underwriter, Decision ESCALATED_FROM an earlier Decision, Exception EXCEPTION_TO that earlier Decision, and Exception GRANTED_BY Underwriter. Properties: callouts show properties on the Company and Decision nodes, and a disposition property carried on the DECIDED_BY relationship itself.</desc>
+  <title id="title">Anatomy of a Decision Graph</title>
+  <desc id="description">A loan decision graph showing the three parts of a decision graph. Nodes: Company, LoanApplication, Decision, Underwriter, Exception, and an earlier Decision. Relationships: Company SUBMITTED LoanApplication, Decision ABOUT LoanApplication, Decision DECIDED_BY Underwriter, Decision ESCALATED_FROM an earlier Decision, Exception EXCEPTION_TO that earlier Decision, and Exception GRANTED_BY Underwriter. Properties: callouts show properties on the Company and Decision nodes, and a disposition property carried on the DECIDED_BY relationship itself.</desc>
 
   <defs>
     <filter id="soft-shadow" x="-20%" y="-20%" width="140%" height="150%">
@@ -31,7 +31,7 @@
   <path d="M1410 0 H1600 V94 C1536 62 1474 34 1410 0 Z" fill="#57A7B2" opacity="0.75"/>
   <path d="M0 900 V820 C115 790 205 800 298 850 C333 869 369 885 410 900 Z" fill="#0B668E"/>
 
-  <text class="heading" x="66" y="78">Anatomy of a Labeled Property Graph</text>
+  <text class="heading" x="66" y="78">Anatomy of a Decision Graph</text>
   <text class="subtitle" x="68" y="122">A graph stores things, their connections, and the facts that describe them.</text>
 
   <g aria-label="Legend">

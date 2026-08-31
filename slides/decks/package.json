@@ -1,0 +1,19 @@
+{
+  "name": "neo4j-marp-template",
+  "version": "1.0.0",
+  "scripts": {
+    "preview": "node build.mjs --preview",
+    "pdf":     "node build.mjs --pdf",
+    "pptx":    "node build.mjs --pptx",
+    "html":    "node build.mjs --html"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "description": "",
+  "dependencies": {
+    "@marp-team/marp-cli": "^4.2.3",
+    "@mermaid-js/mermaid-cli": "^11.12.0",
+    "highlightjs-cypher": "^1.2.0"
+  }
+}

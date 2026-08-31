@@ -1,0 +1,86 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1600 900" role="img" aria-labelledby="title description" font-family="Arial, Helvetica, sans-serif">
+  <title id="title">Towards Autonomous Agents</title>
+  <desc id="description">Three stages arranged as a compounding loop around a central hub rather than as a straight arrow. At the top sits Capture, described as every decision writing down its outcome and its authorization, with approvals, overrides and exceptions landing in the same record. At the lower right sits Improve, described as each request starting from that record so the next decision has stronger context than the last. At the lower left sits Autonomous, described as the agent acting alone on cases the record already shows how to settle. Solid arrows run clockwise from Capture to Improve and from Improve to Autonomous, and a thicker teal feedback arc labelled every cycle starts from a richer record runs from Autonomous back up to Capture, closing the loop. At the centre, a solid Neo4j blue circle labelled decision record represents the graph; dashed spokes connect it to all three stages, showing that each one both feeds it and draws from it. A caption underneath states that autonomy becomes possible when the agent learns to decide the way your business does.</desc>
+
+  <defs>
+    <filter id="soft-shadow" x="-20%" y="-20%" width="140%" height="150%">
+      <feDropShadow dx="0" dy="6" stdDeviation="10" flood-color="#183142" flood-opacity="0.14"/>
+    </filter>
+    <marker id="arrow" markerWidth="12" markerHeight="12" refX="10" refY="6" orient="auto" markerUnits="userSpaceOnUse">
+      <path d="M0,0 L12,6 L0,12 Z" fill="#586570"/>
+    </marker>
+    <marker id="arrow-teal" markerWidth="14" markerHeight="14" refX="11" refY="7" orient="auto" markerUnits="userSpaceOnUse">
+      <path d="M0,0 L14,7 L0,14 Z" fill="#57A7B2"/>
+    </marker>
+    <style>
+      .heading { fill: #17212B; font-size: 50px; font-weight: 700; }
+      .subtitle { fill: #53616D; font-size: 24px; }
+      .stage-title { fill: #FFFFFF; font-size: 30px; font-weight: 700; text-anchor: middle; letter-spacing: 1px; }
+      .stage-copy { fill: #B9DCE1; font-size: 19px; text-anchor: middle; }
+      .hub-title { fill: #FFFFFF; font-size: 23px; font-weight: 700; text-anchor: middle; letter-spacing: 1px; }
+      .hub-copy { fill: #B9DCE1; font-size: 18px; text-anchor: middle; }
+      .flow { fill: none; stroke: #586570; stroke-width: 7; marker-end: url(#arrow); }
+      .feedback { fill: none; stroke: #57A7B2; stroke-width: 10; marker-end: url(#arrow-teal); }
+      .feedback-label { fill: #0B668E; font-size: 21px; font-weight: 700; text-anchor: middle; }
+      .spoke { fill: none; stroke: #8A98A4; stroke-width: 2.5; stroke-dasharray: 5 6; }
+      .caption { fill: #53616D; font-size: 22px; text-anchor: middle; }
+    </style>
+  </defs>
+
+  <rect width="1600" height="900" fill="#FFFFFF"/>
+  <path d="M1230 0 H1600 V235 C1510 205 1455 140 1395 82 C1340 30 1280 20 1230 0 Z" fill="#0B668E"/>
+  <path d="M1410 0 H1600 V94 C1536 62 1474 34 1410 0 Z" fill="#57A7B2" opacity="0.75"/>
+  <path d="M0 900 V820 C115 790 205 800 298 850 C333 869 369 885 410 900 Z" fill="#0B668E"/>
+
+  <text class="heading" x="66" y="78">Towards Autonomous Agents</text>
+  <text class="subtitle" x="68" y="122">Not a pipeline. A loop that compounds.</text>
+
+  <!-- Dashed spokes from hub to each stage -->
+  <path class="spoke" d="M800 352 V 258"/>
+  <path class="spoke" d="M888 492 L 1085 575"/>
+  <path class="spoke" d="M718 504 L 622 574"/>
+
+  <!-- Feedback arc: Autonomous back up to Capture (drawn under the boxes) -->
+  <path class="feedback" d="M322 618 C 150 480 230 235 606 186"/>
+  <text class="feedback-label" x="452" y="382">every cycle starts</text>
+  <text class="feedback-label" x="452" y="408">from a richer record</text>
+
+  <!-- Capture to Improve -->
+  <path class="flow" d="M988 212 C 1152 238 1258 382 1206 568"/>
+  <!-- Improve to Autonomous -->
+  <path class="flow" d="M1012 660 H 706"/>
+
+  <!-- Hub: the decision record -->
+  <g filter="url(#soft-shadow)">
+    <circle cx="800" cy="450" r="98" fill="#0B668E"/>
+  </g>
+  <text class="hub-title" x="800" y="438">Decision record</text>
+  <text class="hub-copy" x="800" y="468">one graph</text>
+  <text class="hub-copy" x="800" y="492">every agent shares</text>
+
+  <!-- Stage: Capture -->
+  <g filter="url(#soft-shadow)">
+    <rect x="620" y="128" width="360" height="122" rx="24" fill="#17212B"/>
+  </g>
+  <text class="stage-title" x="800" y="172">Capture</text>
+  <text class="stage-copy" x="800" y="203">Every decision writes down its</text>
+  <text class="stage-copy" x="800" y="228">outcome and its authorization.</text>
+
+  <!-- Stage: Improve -->
+  <g filter="url(#soft-shadow)">
+    <rect x="1020" y="580" width="360" height="122" rx="24" fill="#0B668E"/>
+  </g>
+  <text class="stage-title" x="1200" y="624">Improve</text>
+  <text class="stage-copy" x="1200" y="655">Each request starts from that</text>
+  <text class="stage-copy" x="1200" y="680">record, so the next one is stronger.</text>
+
+  <!-- Stage: Autonomous -->
+  <g filter="url(#soft-shadow)">
+    <rect x="330" y="580" width="360" height="122" rx="24" fill="#57A7B2"/>
+  </g>
+  <text class="stage-title" x="510" y="624">Autonomous</text>
+  <text class="stage-copy" x="510" y="655">The agent acts alone on cases the</text>
+  <text class="stage-copy" x="510" y="680">record already shows how to settle.</text>
+
+  <text class="caption" x="800" y="810">Autonomy becomes possible when the agent learns to decide the way your business does.</text>
+</svg>

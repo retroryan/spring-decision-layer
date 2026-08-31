@@ -1,0 +1,136 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1600 900" role="img" aria-labelledby="title description" font-family="Arial, Helvetica, sans-serif">
+  <title id="title">Filter with the Graph, Then Rank by Similarity</title>
+  <desc id="description">A left-to-right funnel in four stages showing a candidate set narrowing before it reaches the model. On the far left, a dense grid of twenty-four small pale chips represents every past decision in the graph. An arrow leads into a teal wedge, narrowing left to right, labelled graph traversal; inside it are the five tests the traversal applies, listed as identity, policy, time, standing and lineage. A second arrow leads out of the narrow end of the wedge to a short stack of six solid blue chips, the eligible decisions that survived the filter. A third arrow leads into a solid blue block labelled vector similarity, which orders what survived. The final arrow leads to a ranked shortlist of four numbered chips, and from there a short arrow into a small circular model hub. Annotations note that traversal comes first and ranking second, that the prompt is smaller because only the decisions this case needs are sent, and that cost is lower because the graph filters before anything reaches the model. A caption underneath states that traversal decides which past decisions can govern this case, and similarity ranks what survives.</desc>
+
+  <defs>
+    <filter id="soft-shadow" x="-20%" y="-20%" width="140%" height="150%">
+      <feDropShadow dx="0" dy="6" stdDeviation="10" flood-color="#183142" flood-opacity="0.14"/>
+    </filter>
+    <marker id="arrow" markerWidth="12" markerHeight="12" refX="10" refY="6" orient="auto" markerUnits="userSpaceOnUse">
+      <path d="M0,0 L12,6 L0,12 Z" fill="#586570"/>
+    </marker>
+    <style>
+      .heading { fill: #17212B; font-size: 50px; font-weight: 700; }
+      .subtitle { fill: #53616D; font-size: 24px; }
+      .stage-title { fill: #0B668E; font-size: 25px; font-weight: 700; text-anchor: middle; }
+      .stage-sub { fill: #8A98A4; font-size: 18px; text-anchor: middle; }
+      .on-teal { fill: #FFFFFF; font-size: 24px; font-weight: 700; text-anchor: middle; }
+      .on-blue { fill: #FFFFFF; font-size: 24px; font-weight: 700; text-anchor: middle; }
+      .on-blue-sub { fill: #B9DCE1; font-size: 18px; text-anchor: middle; }
+      .rank-num { fill: #0B668E; font-size: 20px; font-weight: 700; }
+      .rank-copy { fill: #17212B; font-size: 19px; }
+      .flow { fill: none; stroke: #586570; stroke-width: 7; marker-end: url(#arrow); }
+      .caption { fill: #53616D; font-size: 22px; text-anchor: middle; }
+      .note-title { fill: #0B668E; font-size: 20px; font-weight: 700; }
+      .note-copy { fill: #53616D; font-size: 18px; }
+      .hub-label { fill: #FFFFFF; font-size: 21px; font-weight: 700; text-anchor: middle; letter-spacing: 1px; }
+    </style>
+  </defs>
+
+  <rect width="1600" height="900" fill="#FFFFFF"/>
+  <path d="M1230 0 H1600 V235 C1510 205 1455 140 1395 82 C1340 30 1280 20 1230 0 Z" fill="#0B668E"/>
+  <path d="M1410 0 H1600 V94 C1536 62 1474 34 1410 0 Z" fill="#57A7B2" opacity="0.75"/>
+  <path d="M0 900 V820 C115 790 205 800 298 850 C333 869 369 885 410 900 Z" fill="#0B668E"/>
+
+  <text class="heading" x="66" y="78">Filter with the Graph, Then Rank</text>
+  <text class="subtitle" x="68" y="122">Traversal decides what can govern this case. Similarity orders what survives.</text>
+
+  <!-- Stage A: every past decision -->
+  <text class="stage-title" x="200" y="248">Every past decision</text>
+  <text class="stage-sub" x="200" y="274">the whole graph</text>
+  <g aria-label="Candidate set">
+    <rect x="95" y="300" width="62" height="34" rx="10" fill="#F4FAFB" stroke="#B9DCE1" stroke-width="2"/>
+    <rect x="169" y="300" width="62" height="34" rx="10" fill="#F4FAFB" stroke="#B9DCE1" stroke-width="2"/>
+    <rect x="243" y="300" width="62" height="34" rx="10" fill="#F4FAFB" stroke="#B9DCE1" stroke-width="2"/>
+    <rect x="95" y="346" width="62" height="34" rx="10" fill="#F4FAFB" stroke="#B9DCE1" stroke-width="2"/>
+    <rect x="169" y="346" width="62" height="34" rx="10" fill="#F4FAFB" stroke="#B9DCE1" stroke-width="2"/>
+    <rect x="243" y="346" width="62" height="34" rx="10" fill="#F4FAFB" stroke="#B9DCE1" stroke-width="2"/>
+    <rect x="95" y="392" width="62" height="34" rx="10" fill="#F4FAFB" stroke="#B9DCE1" stroke-width="2"/>
+    <rect x="169" y="392" width="62" height="34" rx="10" fill="#F4FAFB" stroke="#B9DCE1" stroke-width="2"/>
+    <rect x="243" y="392" width="62" height="34" rx="10" fill="#F4FAFB" stroke="#B9DCE1" stroke-width="2"/>
+    <rect x="95" y="438" width="62" height="34" rx="10" fill="#F4FAFB" stroke="#B9DCE1" stroke-width="2"/>
+    <rect x="169" y="438" width="62" height="34" rx="10" fill="#F4FAFB" stroke="#B9DCE1" stroke-width="2"/>
+    <rect x="243" y="438" width="62" height="34" rx="10" fill="#F4FAFB" stroke="#B9DCE1" stroke-width="2"/>
+    <rect x="95" y="484" width="62" height="34" rx="10" fill="#F4FAFB" stroke="#B9DCE1" stroke-width="2"/>
+    <rect x="169" y="484" width="62" height="34" rx="10" fill="#F4FAFB" stroke="#B9DCE1" stroke-width="2"/>
+    <rect x="243" y="484" width="62" height="34" rx="10" fill="#F4FAFB" stroke="#B9DCE1" stroke-width="2"/>
+    <rect x="95" y="530" width="62" height="34" rx="10" fill="#F4FAFB" stroke="#B9DCE1" stroke-width="2"/>
+    <rect x="169" y="530" width="62" height="34" rx="10" fill="#F4FAFB" stroke="#B9DCE1" stroke-width="2"/>
+    <rect x="243" y="530" width="62" height="34" rx="10" fill="#F4FAFB" stroke="#B9DCE1" stroke-width="2"/>
+    <rect x="95" y="576" width="62" height="34" rx="10" fill="#F4FAFB" stroke="#B9DCE1" stroke-width="2"/>
+    <rect x="169" y="576" width="62" height="34" rx="10" fill="#F4FAFB" stroke="#B9DCE1" stroke-width="2"/>
+    <rect x="243" y="576" width="62" height="34" rx="10" fill="#F4FAFB" stroke="#B9DCE1" stroke-width="2"/>
+    <rect x="95" y="622" width="62" height="34" rx="10" fill="#F4FAFB" stroke="#B9DCE1" stroke-width="2"/>
+    <rect x="169" y="622" width="62" height="34" rx="10" fill="#F4FAFB" stroke="#B9DCE1" stroke-width="2"/>
+    <rect x="243" y="622" width="62" height="34" rx="10" fill="#F4FAFB" stroke="#B9DCE1" stroke-width="2"/>  </g>
+  <path class="flow" d="M330 470 H 396"/>
+
+  <!-- Stage B: graph traversal wedge -->
+  <text class="stage-title" x="540" y="248">Graph traversal</text>
+  <text class="stage-sub" x="540" y="274">five tests, all relationships</text>
+  <g filter="url(#soft-shadow)">
+    <path d="M410 300 L 690 384 L 690 556 L 410 640 Z" fill="#57A7B2"/>
+  </g>
+  <text class="on-teal" x="550" y="368" font-size="22">identity</text>
+  <text class="on-teal" x="550" y="404" font-size="22">policy</text>
+  <text class="on-teal" x="550" y="440" font-size="22">time</text>
+  <text class="on-teal" x="550" y="476" font-size="22">standing</text>
+  <text class="on-teal" x="550" y="512" font-size="22">lineage</text>
+  <path class="flow" d="M706 470 H 772"/>
+
+  <!-- Stage C: eligible survivors -->
+  <text class="stage-title" x="866" y="248">Eligible</text>
+  <text class="stage-sub" x="866" y="274">can govern this case</text>
+  <g filter="url(#soft-shadow)">
+    <rect x="786" y="350" width="160" height="40" rx="12" fill="#0B668E"/>
+    <rect x="786" y="400" width="160" height="40" rx="12" fill="#0B668E"/>
+    <rect x="786" y="450" width="160" height="40" rx="12" fill="#0B668E"/>
+    <rect x="786" y="500" width="160" height="40" rx="12" fill="#0B668E"/>
+    <rect x="786" y="550" width="160" height="40" rx="12" fill="#0B668E"/>
+  </g>
+  <path class="flow" d="M962 470 H 1028"/>
+
+  <!-- Stage D: vector similarity -->
+  <text class="stage-title" x="1160" y="248">Vector similarity</text>
+  <text class="stage-sub" x="1160" y="274">ranks the survivors</text>
+  <g filter="url(#soft-shadow)">
+    <rect x="1042" y="332" width="236" height="276" rx="24" fill="#0B668E"/>
+  </g>
+  <text class="on-blue" x="1160" y="452">rank</text>
+  <text class="on-blue-sub" x="1160" y="484">by semantic</text>
+  <text class="on-blue-sub" x="1160" y="508">similarity</text>
+  <path class="flow" d="M1294 470 H 1352"/>
+
+  <!-- Stage E: ranked shortlist -->
+  <text class="stage-title" x="1476" y="248">Grounded</text>
+  <text class="stage-sub" x="1476" y="274">what this case needs</text>
+  <g filter="url(#soft-shadow)">
+    <rect x="1366" y="356" width="200" height="44" rx="12" fill="#EAFBFD" stroke="#0B668E" stroke-width="2.5"/>
+    <rect x="1366" y="412" width="200" height="44" rx="12" fill="#EAFBFD" stroke="#0B668E" stroke-width="2.5"/>
+    <rect x="1366" y="468" width="200" height="44" rx="12" fill="#EAFBFD" stroke="#0B668E" stroke-width="2.5"/>
+    <rect x="1366" y="524" width="200" height="44" rx="12" fill="#EAFBFD" stroke="#0B668E" stroke-width="2.5"/>
+  </g>
+  <text class="rank-num" x="1388" y="385">1</text><text class="rank-copy" x="1416" y="385">decision</text>
+  <text class="rank-num" x="1388" y="441">2</text><text class="rank-copy" x="1416" y="441">decision</text>
+  <text class="rank-num" x="1388" y="497">3</text><text class="rank-copy" x="1416" y="497">decision</text>
+  <text class="rank-num" x="1388" y="553">4</text><text class="rank-copy" x="1416" y="553">decision</text>
+  <path class="flow" d="M1466 584 V 642"/>
+  <g filter="url(#soft-shadow)">
+    <circle cx="1466" cy="710" r="60" fill="#17212B"/>
+  </g>
+  <text class="hub-label" x="1466" y="718">MODEL</text>
+
+  <!-- Notes -->
+  <g aria-label="Notes">
+    <rect x="95" y="700" width="1180" height="110" rx="16" fill="#F4FAFB" stroke="#B9DCE1" stroke-width="2"/>
+    <text class="note-title" x="130" y="736">Traversal first</text>
+    <text class="note-copy" x="130" y="762">The graph filters by company,</text>
+    <text class="note-copy" x="130" y="786">policy, time, standing, lineage.</text>
+    <text class="note-title" x="530" y="736">Smaller prompt</text>
+    <text class="note-copy" x="530" y="762">The agent sends only the</text>
+    <text class="note-copy" x="530" y="786">decisions this case needs.</text>
+    <text class="note-title" x="900" y="736">Lower cost</text>
+    <text class="note-copy" x="900" y="762">The graph filters before</text>
+    <text class="note-copy" x="900" y="786">anything reaches the model.</text>
+  </g>
+</svg>

@@ -37,3 +37,9 @@ test-results/
 
 ### Env ###
 .env
+
+### macOS ###
+.DS_Store
+
+### Temp ###
+tmp/
