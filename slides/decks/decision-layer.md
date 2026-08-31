@@ -105,15 +105,6 @@ straight onto knowledge the business already had. A Decision names the Policy
 it applied. An Exception names the Underwriter who granted it.
 -->
 
----
-
-## What Each Kind of Memory Does
-
-- **Long-term memory**: Enterprise knowledge as nodes. Companies, policies, underwriters, thresholds.
-- **Short-term memory**: Spring AI stores the conversation through `Neo4jChatMemoryRepository`, in the same database.
-- **Reasoning memory**: `Decision` nodes hold what was decided and what authorized it. This is the memory that becomes precedent.
-
-> **One Neo4j instance runs all three. Only reasoning memory changes the next outcome.**
 
 ---
 
@@ -128,15 +119,17 @@ the request, record what was decided, reuse it as precedent.
 
 ---
 
-## What Grounded Context Buys You
+![bg contain](../images/memory-compounds.svg)
 
-| Benefit | What it buys you |
-|---|---|
-| **More accurate answers** | The agent decides on real evidence instead of a guess |
-| **Explainability and governance** | Every decision names the policy and the person behind it |
-| **Persistent context** | Context has a place to live beyond one prompt |
+<!--
+Slide: Each Decision Becomes Context for the Next
 
-> **Each one needs the same thing: a record of how the company decides.**
+The trace is written only after the model decides, and it outlives the
+conversation, so the next request starts from what prior work already proved.
+Run `./run.sh C-1042 250000` twice. The company, amount, policies, and
+underwriter stay fixed. Run one writes the trace. Run two reads it as precedent.
+-->
+
 
 ---
 
@@ -199,17 +192,6 @@ PrecedentAdvisor owns the read path. DecisionTraceAdvisor owns the write path.
 
 ---
 
-![bg contain](../images/memory-compounds.svg)
-
-<!--
-Slide: Each Decision Becomes Context for the Next
-
-The trace is written only after the model decides, and it outlives the
-conversation, so the next request starts from what prior work already proved.
--->
-
----
-
 ## A Log Records, a Graph Connects
 
 | A log can answer | A context graph can answer |
@@ -235,33 +217,6 @@ decisions, and those links are what prove a past decision applies here.
 
 ---
 
-## Start at the Company to Find Relevant Decisions
-
-- **Ownership**: The traversal starts at the company node and reaches its decisions through `SUBMITTED` and `ABOUT`.
-- **Age**: The denial falls inside the window the policy sets.
-- **Standing**: No exception has set the denial aside.
-
-<!--
-The search starts at the company and follows its applications to past
-decisions. Three tests then decide which of those denials still count.
--->
-
----
-
-## One Query Settles All Three Tests
-
-```cypher
-MATCH (:Company {companyId: $companyId})-[:SUBMITTED]->(:LoanApplication)
-      <-[:ABOUT]-(d:Decision {outcome: 'DENIED'})
-WHERE d.decidedAt > datetime() - duration({months: $windowMonths})
-  AND NOT EXISTS { (:Exception)-[:EXCEPTION_TO]->(d) }
-RETURN d
-```
-
-> **The company anchors the search, and every test is a relationship, so one query settles all three.**
-
----
-
 ![bg contain](../images/graph-walk-authorization.svg)
 
 <!--
@@ -271,6 +226,20 @@ Start at one denial and follow its relationships: current query, company,
 application, prior decision, the policy that governed it, the exception that
 modified it, and the later decisions it influenced.
 -->
+
+---
+
+## Cypher Finds Decisions That Still Apply
+
+```cypher
+MATCH (:Company {companyId: $companyId})-[:SUBMITTED]->(:LoanApplication)
+      <-[:ABOUT]-(d:Decision {outcome: 'DENIED'})
+WHERE d.decidedAt > datetime() - duration({months: $windowMonths})
+  AND NOT EXISTS { (:Exception)-[:EXCEPTION_TO]->(d) }
+RETURN d
+```
+
+> **One traversal checks the company, time window, and active standing.**
 
 ---
 
@@ -291,32 +260,9 @@ Slide: Filter with the Graph, Then Rank by Similarity
 
 Traverse identity, policy, time, standing, and lineage; collect the decisions
 that can govern this case; rank that eligible set by semantic similarity; then
-ground the model with the decision path.
+ground the model with the decision path. This keeps the prompt small and avoids
+sending irrelevant decisions to the model.
 -->
-
----
-
-## Traversal First, Ranking Second
-
-- **Traversal first**: The graph filters by company, policy, time, standing, and lineage.
-- **Ranking second**: Vector search orders the decisions that survived the filter.
-- **Smaller prompt**: The agent sends the decisions this case needs.
-- **Lower cost**: The graph filters before anything reaches the model.
-
----
-
-## The Second Run Sees the First Run's Decision
-
-```shell
-./run.sh C-1042 250000
-./run.sh C-1042 250000
-```
-
-- **Run one**: The agent decides and writes a decision trace.
-- **Run two**: The agent reads that trace as standing precedent.
-- **Everything else is fixed**: Company, amount, policies, and underwriter stay the same.
-
-> **The graph changed between the runs, so the context changed with it.**
 
 ---
 
@@ -369,6 +315,31 @@ behind, and it is worth more every quarter it runs.
 
 - **The company learns where its own rules are wrong**: The traces show which policies get overridden in practice, and how often.
 - **The record outlives the model**: Frontier models will keep changing. What the business decided, and why, does not change with them.
+
+---
+
+## What the Decision Layer Delivers
+
+<div class="columns" style="font-size: 24px; gap: 2.4em;">
+<ul style="line-height: 1.55;">
+<li><strong>Accuracy</strong>: Grounds answers in verified evidence.</li>
+<li><strong>Relevance</strong>: Retrieves only the context the task needs.</li>
+<li><strong>Persistence</strong>: Keeps context beyond one prompt.</li>
+<li><strong>Governance</strong>: Links decisions to policy and authority.</li>
+</ul>
+<ul style="line-height: 1.55;">
+<li><strong>Long-running work</strong>: Preserves state across steps and sessions.</li>
+<li><strong>Shared memory</strong>: Lets every agent reuse prior decisions.</li>
+<li><strong>Lower cost</strong>: Filters context before the model call.</li>
+</ul>
+</div>
+
+> **One shared record improves every agent that reads it.**
+
+<!--
+Use this as the closing synthesis. Emphasize governance, shared memory, and
+lower cost because the demo shows those benefits directly.
+-->
 
 ---
 
