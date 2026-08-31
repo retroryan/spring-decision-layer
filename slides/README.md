@@ -8,14 +8,13 @@ First time only — see Requirements below for the one-time `npm install` setup.
 export PATH="/opt/homebrew/opt/node@22/bin:$PATH"   # Node 22, see Requirements below
 
 cd decks
-npm run html -- decision-layer.md --no-densify
-open decision-layer.html
+npm run serve -- decision-layer.md --no-densify
 ```
 
-That builds the deck to `decks/decision-layer.html` and opens it in your default
-browser. Re-run the `npm run html` line and refresh the tab after editing the deck.
-For live-reload while editing, use `npm run preview -- decision-layer.md` instead
-(opens a self-refreshing preview window).
+That prints a `http://localhost:8080/...` URL — open it in a browser to view the
+deck. Re-run the command and refresh the tab after editing the deck (`Ctrl-C` to
+stop the server first). For a self-refreshing preview window instead of a browser
+tab, use `npm run preview -- decision-layer.md`.
 
 Marp deck built on the [Neo4j Marp template](https://github.com/halftermeyer/neo4j-marp-template),
 vendored into `decks/` so the deck builds from a fresh clone.
@@ -46,10 +45,11 @@ npm install
 ## Build
 
 ```bash
-npm run html -- decision-layer.md --no-densify   # fast iteration
-npm run pdf  -- decision-layer.md --no-densify    # PDF
-npm run pptx -- decision-layer.md --no-densify    # PPTX (image-based)
-npm run preview -- decision-layer.md              # live reload
+npm run serve -- decision-layer.md --no-densify   # localhost server, fast iteration
+npm run html  -- decision-layer.md --no-densify   # static .html file
+npm run pdf   -- decision-layer.md --no-densify   # PDF
+npm run pptx  -- decision-layer.md --no-densify   # PPTX (image-based)
+npm run preview -- decision-layer.md              # self-refreshing preview window
 ```
 
 Output lands next to the source: `decks/decision-layer.pdf`, etc. Build artifacts

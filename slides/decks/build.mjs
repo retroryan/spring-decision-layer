@@ -2,7 +2,7 @@
  * build.mjs — Neo4j Marp build pipeline
  *
  * Usage:
- *   node build.mjs [input.md] [--html|--pdf|--pptx|--preview] [--no-densify]
+ *   node build.mjs [input.md] [--html|--pdf|--pptx|--preview|--serve] [--no-densify]
  *
  * Defaults:
  *   input  → all Marp *.md files in this directory
@@ -13,6 +13,7 @@
  *   npm run pdf -- dojo.md              # dojo.md → dojo.pdf
  *   npm run pdf -- dojo.md --no-densify # skip overflow detection
  *   node build.mjs dojo.md --pdf        # same as npm run pdf -- dojo.md
+ *   npm run serve -- dojo.md            # serve dojo.md on http://localhost:8080
  *
  * PDF builds automatically detect overflowing slides and add
  * <!-- _class: dense --> to fix them, then rebuild. Pass --no-densify to skip.
@@ -30,7 +31,7 @@ hljs.registerLanguage('cypher', cypher)
 
 // ── Parse arguments ───────────────────────────────────────────────────────────
 const args        = process.argv.slice(2)
-const FORMAT_FLAGS = ['--pdf', '--pptx', '--html', '--preview']
+const FORMAT_FLAGS = ['--pdf', '--pptx', '--html', '--preview', '--serve']
 const format      = args.find(a => FORMAT_FLAGS.includes(a)) ?? '--html'
 const noDensify   = args.includes('--no-densify')
 const inputArg    = args.find(a => !a.startsWith('--'))
@@ -210,9 +211,36 @@ async function buildFile(inputFile) {
   return result.status ?? 0
 }
 
-// ── Run ───────────────────────────────────────────────────────────────────────
-let exitCode = 0
-for (const f of inputFiles) {
-  exitCode = Math.max(exitCode, await buildFile(f))
+// ── Serve mode ────────────────────────────────────────────────────────────────
+// Runs a single Marp server (instead of per-file builds) so the deck is viewed
+// live in a browser tab rather than built to a static .html file. The server
+// root is one level up from decks/ so that image references like
+// `../images/foo.svg` resolve to slides/images/foo.svg over HTTP.
+async function serve() {
+  for (const f of inputFiles) preprocess(f)
+
+  const decksDir  = resolve(DECKS_DIR)
+  const serveRoot = resolve(decksDir, '..')
+  const decksName = basename(decksDir)
+
+  const urls = inputFiles.map(
+    f => `http://localhost:8080/${decksName}/${basename(f, '.md')}.preview.md`
+  )
+  console.log(`[build] Serving ${serveRoot}`)
+  for (const url of urls) console.log(`[build]   ${url}`)
+  console.log('[build] Ctrl-C to stop. Re-run this command after editing to refresh mermaid/cypher blocks.')
+
+  const result = spawnSync(marp, ['--server', serveRoot], { stdio: 'inherit' })
+  process.exit(result.status ?? 0)
 }
-process.exit(exitCode)
+
+// ── Run ───────────────────────────────────────────────────────────────────────
+if (format === '--serve') {
+  await serve()
+} else {
+  let exitCode = 0
+  for (const f of inputFiles) {
+    exitCode = Math.max(exitCode, await buildFile(f))
+  }
+  process.exit(exitCode)
+}

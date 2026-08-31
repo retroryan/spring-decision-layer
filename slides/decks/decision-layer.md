@@ -46,55 +46,36 @@ only as intelligent as the context it is given.
 
 ---
 
-## Commodity Model, Proprietary Context
+## Data Alone Does Not Explain a Decision
 
-- **The capability is a commodity**: Every competitor calls the same frontier model.
-- **The context is missing**: The model knows the world. It does not know your business.
-- **The context is the advantage**: What you capture about how the business decides is the only part nobody else can buy.
+- **Data**: Tells the agent what is true.
+- **Policy**: Tells the agent what usually happens.
+- **Decision context**: Explains how the policy applies to this case.
 
-> **Commodity intelligence is the same for everyone. The business context an enterprise builds around it is the advantage.**
+> **The missing layer connects business facts to business action.**
 
 <!--
-How a process runs, which policy governs a step, and who can approve an
-exception was never written down for an agent to read.
+Business data describes the current state. Decision context explains how the
+business applies its rules to that state.
 -->
 
 ---
 
-## A $250,000 Loan, and Four Things Nobody Wrote Down
+## What the Decision Layer Captures
 
-- **Business meaning**: A definition inside the company decides what "active customer" counts as. The agent guesses at it.
-- **Authoritative source**: One of five systems holds the number people trust. The agent cannot tell which one.
-- **Standing exception**: Someone approved a bend in the rule last quarter. That approval lives in a closed thread.
-- **Prior judgement**: A person already settled a case like this one. The reason went nowhere the agent can read.
+- **Evidence**: The facts and trusted sources used in the decision.
+- **Policy**: The rule and thresholds applied to the case.
+- **Exception**: The approved change to the standard rule.
+- **Decision**: The outcome, explanation, and authorizer.
+- **Precedent**: Earlier decisions that apply to future cases.
 
-<!--
-Documents tell an agent what the company published. Decisions tell it how the
-company operates. A construction company asks for a $250,000 loan, and these
-four things settle the case. That context is not missing from the company. It
-sits in the heads of the people who have been there long enough to know.
--->
-
----
-
-## What a Decision Layer Writes Down
-
-> **Every company has one person everyone taps on the shoulder. The agent cannot tap them.**
-
-- **Decisions are the capturable half**: Standing exceptions and prior judgements are decisions.
-- **Write each one down**: The record names what authorized it.
-- **Read it back on the next query**: The agent starts where the last one finished instead of deciding from zero.
+> **Each decision becomes useful context for the next case.**
 
 <!--
-Business meaning and authoritative source need an ontology and a source map.
-This talk builds the decision layer.
+Use the $250,000 construction loan as the example. Show which facts came from
+the trusted source, which policy applied, whether an exception changed the
+rule, who authorized the outcome, and which prior decision became precedent.
 -->
-
----
-
-<!-- _class: invert -->
-
-## Decisions Are the Half You Can Capture
 
 ---
 
@@ -156,12 +137,6 @@ the request, record what was decided, reuse it as precedent.
 | **Persistent context** | Context has a place to live beyond one prompt |
 
 > **Each one needs the same thing: a record of how the company decides.**
-
----
-
-<!-- _class: invert -->
-
-## Where the Decision Layer Plugs In
 
 ---
 
@@ -232,12 +207,6 @@ Slide: Each Decision Becomes Context for the Next
 The trace is written only after the model decides, and it outlives the
 conversation, so the next request starts from what prior work already proved.
 -->
-
----
-
-<!-- _class: invert -->
-
-## Connections Are the Evidence
 
 ---
 
@@ -351,20 +320,14 @@ ground the model with the decision path.
 
 ---
 
-<!-- _class: invert -->
-
-## The Asset the Agents Leave Behind
-
----
-
 ![bg contain](../images/lighter-agents-shared-layer.svg)
 
 <!--
-Slide: Lighter Agents Run on a Shared Decision Layer
+Slide: A Shared Decision Layer Keeps Each Agent Simple
 
-Agents in the same system share data. They do not share reasoning. One graph is
-the only channel they need, because what travels through it is the reasoning
-behind a decision rather than the data it was about.
+The advisor retrieves only the context needed for the current request, applies
+shared rules, and records the result. Each agent keeps a focused prompt and
+avoids copying policies, exceptions, and precedent into its own logic.
 -->
 
 ---

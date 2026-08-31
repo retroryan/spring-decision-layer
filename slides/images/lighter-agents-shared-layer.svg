@@ -1,6 +1,6 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1600 900" role="img" aria-labelledby="title description" font-family="Arial, Helvetica, sans-serif">
-  <title id="title">Lighter Agents Run on a Shared Decision Layer</title>
-  <desc id="description">Four small Spring AI agent boxes, Loan Agent, Portfolio Risk Agent, Service Agent, and a dashed-outline New Agent, sit above a Context-Aware Advisor Layer band showing its Resolve, Record, Reuse steps. The advisor layer connects downward into a large Decision Layer container holding the Neo4j Context Graph, divided into three columns: Long-Term memory for companies and policy, Short-Term memory for conversation, and Reasoning for decision traces. A subtler upward arrow shows agents reading back out of the graph through the advisor layer. A callout explains that this shared graph is the only channel the agents need, with no handoff, shared prompt, or message bus between them.</desc>
+  <title id="title">A Shared Decision Layer Keeps Each Agent Simple</title>
+  <desc id="description">Four focused Spring AI agents use one shared advisor and Neo4j decision layer. The advisor retrieves relevant context, applies shared rules, and records each decision. Policies, exceptions, and precedent stay in the shared layer, which gives each agent a smaller prompt and less embedded business logic.</desc>
 
   <defs>
     <filter id="soft-shadow" x="-20%" y="-20%" width="140%" height="150%">
@@ -38,33 +38,33 @@
   <path d="M1410 0 H1600 V94 C1536 62 1474 34 1410 0 Z" fill="#57A7B2" opacity="0.75"/>
   <path d="M0 900 V820 C115 790 205 800 298 850 C333 869 369 885 410 900 Z" fill="#0B668E"/>
 
-  <text class="heading" x="66" y="78">Lighter Agents Run on a Shared Decision Layer</text>
-  <text class="subtitle" x="68" y="122">Specialized agents resolve, record, and reuse one Neo4j context graph.</text>
+  <text class="heading" x="66" y="78">A Shared Decision Layer Keeps Each Agent Simple</text>
+  <text class="subtitle" x="68" y="122">The advisor supplies only the context and rules needed for the current request.</text>
 
   <g aria-label="Legend">
     <circle cx="88" cy="190" r="12" fill="#0B668E"/>
-    <text class="legend-title" x="118" y="199">Lighter agents</text>
-    <text class="legend-copy" x="118" y="227">Small and single-purpose.</text>
-    <text class="legend-copy" x="118" y="249">No embedded business logic.</text>
+    <text class="legend-title" x="118" y="199">Smaller prompts</text>
+    <text class="legend-copy" x="118" y="227">Only relevant context.</text>
+    <text class="legend-copy" x="118" y="249">No full context dump.</text>
 
     <circle cx="88" cy="300" r="12" fill="#0B668E"/>
-    <text class="legend-title" x="118" y="309">Advisor layer</text>
-    <text class="legend-copy" x="118" y="337">Resolves, records, reuses.</text>
-    <text class="legend-copy" x="118" y="359">Runs at request time.</text>
+    <text class="legend-title" x="118" y="309">Less agent logic</text>
+    <text class="legend-copy" x="118" y="337">Shared rules stay in one layer.</text>
+    <text class="legend-copy" x="118" y="359">Agents do not copy them.</text>
 
     <circle cx="88" cy="410" r="12" fill="#0B668E"/>
-    <text class="legend-title" x="118" y="419">Decision layer</text>
-    <text class="legend-copy" x="118" y="447">Shared, persistent graph.</text>
-    <text class="legend-copy" x="118" y="469">One source of truth.</text>
+    <text class="legend-title" x="118" y="419">Focused agents</text>
+    <text class="legend-copy" x="118" y="447">One task and its tools.</text>
+    <text class="legend-copy" x="118" y="469">Shared context arrives at runtime.</text>
   </g>
 
-  <!-- Callout: shared multi-agent memory -->
-  <g aria-label="Shared multi-agent memory callout">
+  <!-- Callout: easy agent reuse -->
+  <g aria-label="Easy agent reuse callout">
     <path class="leader" d="M300 590 C300 594 300 597 300 600"/>
     <rect x="60" y="490" width="400" height="100" rx="16" fill="#F4FAFB" stroke="#B9DCE1" stroke-width="2"/>
-    <text class="property-label" x="84" y="520">Shared multi-agent memory</text>
-    <text class="property-copy" x="84" y="548">No handoff, no shared prompt.</text>
-    <text class="property-copy" x="84" y="572">No message bus. Just the graph.</text>
+    <text class="property-label" x="84" y="520">Easy to add agents</text>
+    <text class="property-copy" x="84" y="548">Reuse the same advisor and graph.</text>
+    <text class="property-copy" x="84" y="572">No copied prompts or rules.</text>
   </g>
 
   <!-- Lines converging from agents into the advisor layer -->
@@ -107,20 +107,20 @@
   </g>
 
   <!-- Advisor layer band -->
-  <g aria-label="Context-Aware Advisor Layer" filter="url(#soft-shadow)">
+  <g aria-label="Shared Advisor Layer" filter="url(#soft-shadow)">
     <rect x="480" y="410" width="1080" height="140" rx="28" fill="#57A7B2"/>
-    <text class="band-heading" x="1020" y="452">CONTEXT-AWARE ADVISOR LAYER</text>
+    <text class="band-heading" x="1020" y="452">SHARED ADVISOR LAYER</text>
 
     <rect x="760" y="490" width="140" height="40" rx="14" fill="#FFFFFF" stroke="#586570" stroke-width="3"/>
-    <text class="relationship-label" x="830" y="516">RESOLVE</text>
+    <text class="relationship-label" x="830" y="516">RETRIEVE</text>
     <path class="relationship" d="M900 510 H950"/>
 
     <rect x="950" y="490" width="140" height="40" rx="14" fill="#FFFFFF" stroke="#586570" stroke-width="3"/>
-    <text class="relationship-label" x="1020" y="516">RECORD</text>
+    <text class="relationship-label" x="1020" y="516">APPLY</text>
     <path class="relationship" d="M1090 510 H1140"/>
 
     <rect x="1140" y="490" width="140" height="40" rx="14" fill="#FFFFFF" stroke="#586570" stroke-width="3"/>
-    <text class="relationship-label" x="1210" y="516">REUSE</text>
+    <text class="relationship-label" x="1210" y="516">RECORD</text>
   </g>
 
   <!-- Arrows between advisor layer and decision layer -->
@@ -132,7 +132,7 @@
     <rect x="80" y="600" width="1480" height="260" rx="24" fill="#F4FAFB" stroke="#0B668E" stroke-width="4"/>
   </g>
   <rect x="80" y="600" width="1480" height="72" fill="#0B668E" clip-path="url(#decision-clip)"/>
-  <text class="layer-heading" x="112" y="636">DECISION LAYER</text>
+  <text class="layer-heading" x="112" y="636">SHARED DECISION LAYER</text>
   <text class="layer-subheading" x="112" y="661">NEO4J CONTEXT GRAPH</text>
   <g aria-label="Graph icon" fill="none" stroke="#EAFBFD" stroke-width="3">
     <circle cx="1430" cy="622" r="8" fill="#EAFBFD" stroke="none"/>
@@ -141,28 +141,25 @@
     <path d="M1430 622 L1480 648 M1430 622 L1418 656 M1480 648 L1418 656"/>
   </g>
 
-  <line class="divider" x1="580" y1="700" x2="580" y2="840"/>
-  <line class="divider" x1="1060" y1="700" x2="1060" y2="840"/>
-
-  <g aria-label="Long-term memory column">
+  <g aria-label="Policies column">
     <rect x="220" y="700" width="240" height="46" rx="23" fill="#168AAD"/>
-    <text class="node-label" x="340" y="730">LONG-TERM</text>
-    <text class="property-copy" x="340" y="776" text-anchor="middle">Companies, policy</text>
-    <text class="property-copy" x="340" y="804" text-anchor="middle">Persists across sessions</text>
+    <text class="node-label" x="340" y="730">POLICIES</text>
+    <text class="property-copy" x="340" y="776" text-anchor="middle">Business rules</text>
+    <text class="property-copy" x="340" y="804" text-anchor="middle">Thresholds and authority</text>
   </g>
 
-  <g aria-label="Short-term memory column">
+  <g aria-label="Exceptions column">
     <rect x="700" y="700" width="240" height="46" rx="23" fill="#168AAD"/>
-    <text class="node-label" x="820" y="730">SHORT-TERM</text>
-    <text class="property-copy" x="820" y="776" text-anchor="middle">Conversation</text>
-    <text class="property-copy" x="820" y="804" text-anchor="middle">Scoped to this session</text>
+    <text class="node-label" x="820" y="730">EXCEPTIONS</text>
+    <text class="property-copy" x="820" y="776" text-anchor="middle">Approved changes</text>
+    <text class="property-copy" x="820" y="804" text-anchor="middle">Reason and authorizer</text>
   </g>
 
-  <g aria-label="Reasoning memory column">
+  <g aria-label="Precedent column">
     <rect x="1180" y="700" width="240" height="46" rx="23" fill="#168AAD"/>
-    <text class="node-label" x="1300" y="730">REASONING</text>
-    <text class="property-copy" x="1300" y="776" text-anchor="middle">Decision traces</text>
-    <text class="property-copy" x="1300" y="804" text-anchor="middle">Why past calls were made</text>
+    <text class="node-label" x="1300" y="730">PRECEDENT</text>
+    <text class="property-copy" x="1300" y="776" text-anchor="middle">Prior decisions</text>
+    <text class="property-copy" x="1300" y="804" text-anchor="middle">Outcomes and reasons</text>
   </g>
 
 </svg>
