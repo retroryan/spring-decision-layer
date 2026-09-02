@@ -340,9 +340,9 @@ lower cost because the demo shows those benefits directly.
 
 ---
 
-## The Advantage Was Never the Model
+## Agents That Learn the Why
 
-> **Swap the model next year and the advantage stays, because the advantage was never the model.**
+> **The decision layer is where your agents learn the why. That is what makes them trustworthy, and trust is what lets a supervised fleet of agents grow into an autonomous fleet.**
 
 ---
 

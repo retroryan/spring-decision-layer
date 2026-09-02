@@ -1,0 +1,134 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1600 900" role="img" aria-labelledby="title description" font-family="Arial, Helvetica, sans-serif">
+  <title id="title">Agents That Learn the Why</title>
+  <desc id="description">A four-quarter timeline reading left to right. Along the top, a fleet of agent cards multiplies: one card in Q1, two in Q2, four in Q3, and eight in Q4, stacked in overlapping pairs so each quarter's pile is visibly larger than the last. A single fixed line runs beneath the whole fleet, crossed by identical short downward arrows labelled reads and writes; the interface never changes shape from one quarter to the next. Below that line sits the decision layer, drawn as a stepped wedge that thickens with each quarter, from a thin sliver in Q1 to a deep band in Q4. Each quarter holds its own separate graph of decision nodes and links, set apart by clear gaps: four faint nodes and three links under Q1, a small sparse graph under Q2, a larger one under Q3, and a dense woven graph at full strength under Q4. Each quarter's graph is what the fleet knows about why cases were settled, and the fleet only multiplies as fast as that record grows.</desc>
+
+  <defs>
+    <filter id="soft-shadow" x="-20%" y="-20%" width="140%" height="150%">
+      <feDropShadow dx="0" dy="6" stdDeviation="10" flood-color="#183142" flood-opacity="0.14"/>
+    </filter>
+    <marker id="arrow" markerWidth="12" markerHeight="12" refX="10" refY="6" orient="auto" markerUnits="userSpaceOnUse">
+      <path d="M0,0 L12,6 L0,12 Z" fill="#586570"/>
+    </marker>
+    <clipPath id="layer-clip">
+      <path d="M240 430 H1560 V720 H1136 V628 H785 V558 H485 V488 H240 Z"/>
+    </clipPath>
+    <style>
+      .heading { fill: #17212B; font-size: 50px; font-weight: 700; }
+      .subtitle { fill: #53616D; font-size: 24px; }
+      .row-label { fill: #17212B; font-size: 24px; font-weight: 700; letter-spacing: 2px; }
+      .row-copy { fill: #394651; font-size: 20px; font-weight: 700; }
+      .agent-label { fill: #17212B; font-size: 20px; font-weight: 700; text-anchor: middle; }
+      .axis-label { fill: #17212B; font-size: 24px; font-weight: 700; text-anchor: middle; }
+      .interface { fill: none; stroke: #586570; stroke-width: 6; marker-end: url(#arrow); }
+      .timeline { fill: none; stroke: #8A98A4; stroke-width: 4; marker-end: url(#arrow); }
+      .leader { fill: none; stroke: #8A98A4; stroke-width: 2.5; stroke-dasharray: 5 6; }
+      .mesh-link { fill: none; stroke: #586570; stroke-width: 2; stroke-opacity: 0.55; }
+      .mesh-node { fill: #0B668E; }
+      .callout-label { fill: #0B668E; font-size: 26px; font-weight: 700; }
+    </style>
+  </defs>
+
+  <rect width="1600" height="900" fill="#FFFFFF"/>
+  <path d="M1230 0 H1600 V235 C1510 205 1455 140 1395 82 C1340 30 1280 20 1230 0 Z" fill="#0B668E"/>
+  <path d="M1410 0 H1600 V94 C1536 62 1474 34 1410 0 Z" fill="#57A7B2" opacity="0.75"/>
+
+  <text class="heading" x="66" y="78">Agents That Learn the Why</text>
+  <text class="subtitle" x="68" y="122">Each quarter the record holds more of the why; trust is what lets the fleet grow.</text>
+
+  <!-- One decision layer, thickening quarter by quarter -->
+  <g aria-label="Decision layer, one record thickening over four quarters">
+    <path d="M240 430 H1560 V720 H1136 V628 H785 V558 H485 V488 H240 Z" fill="#F2F6F8" stroke="#0B668E" stroke-width="3" filter="url(#soft-shadow)"/>
+  </g>
+  <g clip-path="url(#layer-clip)" aria-label="One separate decision graph per quarter, each larger than the last">
+    <g opacity="0.45" aria-label="Q1 decision graph, four nodes">
+      <path class="mesh-link" d="M296 462L348 446M296 462L348 478M348 446L404 462"/>
+      <g class="mesh-node"><circle cx="296" cy="462" r="6"/><circle cx="348" cy="446" r="6"/><circle cx="348" cy="478" r="6"/><circle cx="404" cy="462" r="6"/></g>
+    </g>
+    <g opacity="0.65" aria-label="Q2 decision graph, eight nodes">
+      <path class="mesh-link" d="M520 470L575 448M520 470L578 512M575 448L640 478M578 512L640 478M578 512L646 532M640 478L700 455M640 478L708 514M646 532L708 514M700 455L752 486M708 514L752 486"/>
+      <g class="mesh-node"><circle cx="520" cy="470" r="6"/><circle cx="575" cy="448" r="6"/><circle cx="578" cy="512" r="6"/><circle cx="640" cy="478" r="6"/><circle cx="646" cy="532" r="6"/><circle cx="700" cy="455" r="6"/><circle cx="708" cy="514" r="6"/><circle cx="752" cy="486" r="6"/></g>
+    </g>
+    <g opacity="0.85" aria-label="Q3 decision graph, seventeen nodes">
+      <path class="mesh-link" d="M820 470L878 448M878 448L936 466M936 466L994 446M994 446L1052 464M1052 464L1108 448M830 530L890 516M890 516L948 534M948 534L1006 514M1006 514L1064 532M1064 532L1114 516M860 592L922 580M922 580L984 596M984 596L1046 582M1046 582L1102 594M820 470L830 530M936 466L948 534M1052 464L1064 532M878 448L830 530M878 448L948 534M994 446L948 534M994 446L1064 532M1108 448L1064 532M830 530L860 592M890 516L860 592M890 516L922 580M948 534L922 580M948 534L984 596M1006 514L1046 582M1064 532L1046 582M1064 532L1102 594"/>
+      <g class="mesh-node"><circle cx="820" cy="470" r="6"/><circle cx="878" cy="448" r="6"/><circle cx="936" cy="466" r="6"/><circle cx="994" cy="446" r="6"/><circle cx="1052" cy="464" r="6"/><circle cx="1108" cy="448" r="6"/><circle cx="830" cy="530" r="6"/><circle cx="890" cy="516" r="6"/><circle cx="948" cy="534" r="6"/><circle cx="1006" cy="514" r="6"/><circle cx="1064" cy="532" r="6"/><circle cx="1114" cy="516" r="6"/><circle cx="860" cy="592" r="6"/><circle cx="922" cy="580" r="6"/><circle cx="984" cy="596" r="6"/><circle cx="1046" cy="582" r="6"/><circle cx="1102" cy="594" r="6"/></g>
+    </g>
+    <g opacity="1.0" aria-label="Q4 decision graph, twenty-eight nodes woven dense">
+      <path class="mesh-link" d="M1172 466L1236 450M1236 450L1298 470M1298 470L1360 452M1360 452L1422 468M1422 468L1484 450M1484 450L1542 466M1180 528L1240 540M1240 540L1300 522M1300 522L1364 538M1364 538L1424 520M1424 520L1488 536M1488 536L1538 524M1168 598L1232 586M1232 586L1296 604M1296 604L1358 590M1358 590L1420 600M1420 600L1482 588M1482 588L1540 602M1176 660L1238 672M1238 672L1300 656M1300 656L1362 670M1362 670L1426 658M1426 658L1486 672M1486 672L1536 660M1172 466L1180 528M1298 470L1300 522M1422 468L1424 520M1542 466L1538 524M1240 540L1232 586M1364 538L1358 590M1488 536L1482 588M1168 598L1176 660M1296 604L1300 656M1420 600L1426 658M1540 602L1536 660M1236 450L1180 528M1236 450L1300 522M1360 452L1300 522M1360 452L1424 520M1484 450L1424 520M1484 450L1538 524M1180 528L1232 586M1300 522L1232 586M1300 522L1358 590M1424 520L1358 590M1424 520L1482 588M1538 524L1482 588M1232 586L1176 660M1232 586L1300 656M1358 590L1300 656M1358 590L1426 658M1482 588L1426 658M1482 588L1536 660"/>
+      <g class="mesh-node"><circle cx="1172" cy="466" r="6"/><circle cx="1236" cy="450" r="6"/><circle cx="1298" cy="470" r="6"/><circle cx="1360" cy="452" r="6"/><circle cx="1422" cy="468" r="6"/><circle cx="1484" cy="450" r="6"/><circle cx="1542" cy="466" r="6"/><circle cx="1180" cy="528" r="6"/><circle cx="1240" cy="540" r="6"/><circle cx="1300" cy="522" r="6"/><circle cx="1364" cy="538" r="6"/><circle cx="1424" cy="520" r="6"/><circle cx="1488" cy="536" r="6"/><circle cx="1538" cy="524" r="6"/><circle cx="1168" cy="598" r="6"/><circle cx="1232" cy="586" r="6"/><circle cx="1296" cy="604" r="6"/><circle cx="1358" cy="590" r="6"/><circle cx="1420" cy="600" r="6"/><circle cx="1482" cy="588" r="6"/><circle cx="1540" cy="602" r="6"/><circle cx="1176" cy="660" r="6"/><circle cx="1238" cy="672" r="6"/><circle cx="1300" cy="656" r="6"/><circle cx="1362" cy="670" r="6"/><circle cx="1426" cy="658" r="6"/><circle cx="1486" cy="672" r="6"/><circle cx="1536" cy="660" r="6"/></g>
+    </g>
+  </g>
+  <path d="M240 430 H1560" fill="none" stroke="#0B668E" stroke-width="3"/>
+
+  <!-- The fleet: agent cards multiply on a fixed baseline -->
+  <g aria-label="Q1 agent stack" filter="url(#soft-shadow)">
+    <rect x="298" y="308" width="104" height="62" rx="14" fill="#FFFFFF" stroke="#57A7B2" stroke-width="2.5"/>
+    <text class="agent-label" x="350" y="348">A1</text>
+  </g>
+  <g aria-label="Q2 agent stack" filter="url(#soft-shadow)">
+    <rect x="511" y="308" width="104" height="62" rx="14" fill="#FFFFFF" stroke="#57A7B2" stroke-width="2.5"/>
+    <text class="agent-label" x="563" y="348">A1</text>
+    <rect x="625" y="308" width="104" height="62" rx="14" fill="#FFFFFF" stroke="#57A7B2" stroke-width="2.5"/>
+    <text class="agent-label" x="677" y="348">A2</text>
+  </g>
+  <g aria-label="Q3 agent stack" filter="url(#soft-shadow)">
+    <rect x="841" y="252" width="104" height="62" rx="14" fill="#FFFFFF" stroke="#57A7B2" stroke-width="2.5"/>
+    <text class="agent-label" x="893" y="292">A3</text>
+    <rect x="955" y="252" width="104" height="62" rx="14" fill="#FFFFFF" stroke="#57A7B2" stroke-width="2.5"/>
+    <text class="agent-label" x="1007" y="292">A4</text>
+    <rect x="841" y="308" width="104" height="62" rx="14" fill="#FFFFFF" stroke="#57A7B2" stroke-width="2.5"/>
+    <text class="agent-label" x="893" y="348">A1</text>
+    <rect x="955" y="308" width="104" height="62" rx="14" fill="#FFFFFF" stroke="#57A7B2" stroke-width="2.5"/>
+    <text class="agent-label" x="1007" y="348">A2</text>
+  </g>
+  <g aria-label="Q4 agent stack" filter="url(#soft-shadow)">
+    <rect x="1100" y="252" width="104" height="62" rx="14" fill="#FFFFFF" stroke="#57A7B2" stroke-width="2.5"/>
+    <text class="agent-label" x="1152" y="292">A5</text>
+    <rect x="1214" y="252" width="104" height="62" rx="14" fill="#FFFFFF" stroke="#57A7B2" stroke-width="2.5"/>
+    <text class="agent-label" x="1266" y="292">A6</text>
+    <rect x="1328" y="252" width="104" height="62" rx="14" fill="#FFFFFF" stroke="#57A7B2" stroke-width="2.5"/>
+    <text class="agent-label" x="1380" y="292">A7</text>
+    <rect x="1442" y="252" width="104" height="62" rx="14" fill="#FFFFFF" stroke="#57A7B2" stroke-width="2.5"/>
+    <text class="agent-label" x="1494" y="292">A8</text>
+    <rect x="1100" y="308" width="104" height="62" rx="14" fill="#FFFFFF" stroke="#57A7B2" stroke-width="2.5"/>
+    <text class="agent-label" x="1152" y="348">A1</text>
+    <rect x="1214" y="308" width="104" height="62" rx="14" fill="#FFFFFF" stroke="#57A7B2" stroke-width="2.5"/>
+    <text class="agent-label" x="1266" y="348">A2</text>
+    <rect x="1328" y="308" width="104" height="62" rx="14" fill="#FFFFFF" stroke="#57A7B2" stroke-width="2.5"/>
+    <text class="agent-label" x="1380" y="348">A3</text>
+    <rect x="1442" y="308" width="104" height="62" rx="14" fill="#FFFFFF" stroke="#57A7B2" stroke-width="2.5"/>
+    <text class="agent-label" x="1494" y="348">A4</text>
+  </g>
+
+  <!-- The interface never changes: identical reads and writes, every quarter -->
+  <path class="interface" d="M350 378 V424"/>
+  <path class="interface" d="M563 378 V424"/>
+  <path class="interface" d="M677 378 V424"/>
+  <path class="interface" d="M893 378 V424"/>
+  <path class="interface" d="M1007 378 V424"/>
+  <path class="interface" d="M1152 378 V424"/>
+  <path class="interface" d="M1266 378 V424"/>
+  <path class="interface" d="M1380 378 V424"/>
+  <path class="interface" d="M1494 378 V424"/>
+
+  <!-- Row labels -->
+  <text class="row-label" x="66" y="346">AGENTS</text>
+  <text class="row-copy" x="66" y="410">reads / writes</text>
+  <path class="leader" d="M206 403 H332"/>
+  <text class="row-label" x="66" y="472">DECISION</text>
+  <text class="row-label" x="66" y="502">LAYER</text>
+
+  <!-- Callout -->
+  <g aria-label="Callout: Agent 8 was the cheapest one to stand up">
+    <rect x="250" y="618" width="520" height="96" rx="16" fill="#F4FAFB" stroke="#B9DCE1" stroke-width="2"/>
+    <text class="callout-label" x="278" y="660">Agent 8 was the cheapest</text>
+    <text class="callout-label" x="278" y="694">one to stand up.</text>
+  </g>
+
+  <!-- Time axis -->
+  <path class="timeline" d="M250 812 H1548"/>
+  <text class="axis-label" x="350" y="856">Q1  ·  1 agent</text>
+  <text class="axis-label" x="620" y="856">Q2  ·  2 agents</text>
+  <text class="axis-label" x="950" y="856">Q3  ·  4 agents</text>
+  <text class="axis-label" x="1323" y="856">Q4  ·  8 agents</text>
+
+</svg>
