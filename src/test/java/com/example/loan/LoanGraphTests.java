@@ -279,7 +279,7 @@ class LoanGraphTests {
 
 	/**
 	 * The three hops the talk turns on, in one traversal: the policy that decided a denial, the
-	 * exception that set it aside, and the later decisions that denial has since driven.
+	 * exception that waived it, and the later decisions that denial has since driven.
 	 */
 	@Test
 	void theTrailWalksToThePolicyTheExceptionAndWhatTheDenialHasSinceDriven() {
@@ -400,8 +400,8 @@ class LoanGraphTests {
 	/**
 	 * Every name in the seeded history is somebody a later run can draw, so the read back is
 	 * populated on a graph nobody has run against yet and no fourth underwriter appears that the
-	 * roster cannot explain. The denials are the cautious one's; the exception setting one of them
-	 * aside is the permissive one's.
+	 * roster cannot explain. The denials are the cautious one's; the exception waiving one of them
+	 * is the permissive one's.
 	 */
 	@Test
 	void theSeededHistoryIsAttributedToPeopleTheRosterCanExplain() {
@@ -449,7 +449,7 @@ class LoanGraphTests {
 
 	/**
 	 * The write grantException owns: an Exception node CREATEd fresh and joined both to the
-	 * denial it sets aside and to the underwriter granting it, marked source 'underwriter' so
+	 * denial it waives and to the underwriter granting it, marked source 'underwriter' so
 	 * it reads differently from the one seed.json ships.
 	 */
 	@Test
@@ -479,9 +479,9 @@ class LoanGraphTests {
 			.withMessageContaining("D-DOES-NOT-EXIST");
 	}
 
-	/** The read back: every grant on file, who made it, and whose denial it set aside. */
+	/** The read back: every grant on file, who made it, and whose denial it waived. */
 	@Test
-	void theReadBackListsWhoHasSetAsideWhoseDenial() {
+	void theReadBackListsWhoHasWaivedWhoseDenial() {
 		Underwriter dana = rosterMember("Dana Whitfield");
 
 		this.graph.grantException("D-1123-SEED-1", "Second chance.", dana);

@@ -83,7 +83,7 @@ JSON schema rather than being asked for in the prompt.
 | `citedDecisionIds` | the denials the underwriter leaned on, which become the `ESCALATED_FROM` edges |
 | `explanation` | the letter to the applicant, signed by the person who decided it |
 | `confidence` | `CLEAR` or `BORDERLINE`, so the console can show that a close call was close |
-| `exception` | null on most runs; when present, a standing denial this underwriter is setting aside, with the reasoning for it |
+| `exception` | null on most runs; when present, a standing denial this underwriter is waiving, with the reasoning for it |
 
 Three of those fields carry more than the table can hold:
 
@@ -92,7 +92,7 @@ Three of those fields carry more than the table can hold:
   underwriter did not choose.
 - **`exception` is the only field that reaches back before today's application**: it names a denial
   from before that should stop counting, which is why it sits beside the outcome rather than inside
-  it. A run can deny and set an older denial aside in the same breath, and the two claims are written
+  it. A run can deny and waive an older denial in the same breath, and the two claims are written
   by two separate statements.
 - **`confidence` earns its place on a file that misses a line by a little**, where judgement settles
   the answer and not arithmetic. `C-1077`, a company with nothing on file, asking for enough to put

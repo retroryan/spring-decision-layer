@@ -40,8 +40,8 @@ investment. The report calls its own figures directional.
 Slide: Smarter Agents Need Smarter Context
 
 A frontier model is the commodity half of the picture: identical for every
-competitor. Business context is the half that is yours alone, and the agent is
-only as intelligent as the context it is given.
+competitor. Business context is the half that is built by the enterprise, and
+the agent is only as intelligent as the context it is given.
 -->
 
 ---
@@ -246,7 +246,7 @@ RETURN d
 ## Each Hop Adds a Piece of the Explanation
 
 - **`APPLIED_POLICY`**: Names the rule that authorized the decision and carries the numbers that were measured.
-- **`EXCEPTION_TO`**: Following it backward finds the exception that set the denial aside.
+- **`EXCEPTION_TO`**: Following it backward finds the exception that waived the denial.
 - **`ESCALATED_FROM`**: Following it backward finds every later decision the denial drove.
 
 > **One traversal returns the authority, the modification, and the lineage together.**

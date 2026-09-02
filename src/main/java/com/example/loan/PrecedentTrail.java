@@ -5,7 +5,7 @@ import java.util.List;
 
 /**
  * One denial with the three hops the graph adds to it: the policy that decided it, the exception
- * that set it aside, and the chain of later decisions it has since driven.
+ * that waived it, and the chain of later decisions it has since driven.
  *
  * grantedBy and justification are null unless an exception exists, and governed is empty until
  * some later decision cites this denial.

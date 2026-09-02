@@ -48,7 +48,7 @@ class LoanOfficer {
 			counting against this company should stop counting: circumstances since
 			resolved, a reason that no longer holds. That is a judgement about the
 			record, not a way to change today's answer, so it does not depend on what
-			you decide below. Denying today while setting aside an old denial is
+			you decide below. Denying today while waiving an old denial is
 			ordinary underwriting.
 
 			Fill in the verdict:
@@ -71,8 +71,8 @@ class LoanOfficer {
 			                   another underwriter could reasonably land the other way.
 			exception          Optional. Set only when you judge one of the denials listed
 			                   as still counting should stop counting: decisionId, one of
-			                   those ids, and justification, your reasoning for setting it
-			                   aside.
+			                   those ids, and justification, your reasoning for waiving
+			                   it.
 			""";
 
 	private final ChatClient chatClient;

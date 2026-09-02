@@ -113,7 +113,7 @@ criticizing. A node that is only ever written is decoration in exactly the way t
   get excepted, and by whom. That is a join across `Underwriter`, `Decision`, and `Exception`
   that can only exist because a person decided, and it is what makes the fourth node earn its place. Writing
   the edges and never traversing them would leave `Underwriter` write-only. Both ends are nodes:
-  `DECIDED_BY` names who made the denial and `GRANTED_BY` names who set it aside, so the query is a
+  `DECIDED_BY` names who made the denial and `GRANTED_BY` names who waived it, so the query is a
   traversal rather than a traversal joined to a string property. The seeded decisions and the
   seeded exception are attributed to roster members rather than to a name that appears nowhere
   else, so the read returns rows on a fresh graph instead of staying empty until two live runs have
@@ -156,8 +156,8 @@ Use Spring AI structured output so the answer is a Java record, not text to be s
   the `ESCALATED_FROM` edges, so the graph records what the model actually leaned on while the edge
   keeps meaning what it means today.
 - **explanation**: the two or three sentences for the applicant, unchanged in spirit from today.
-- **exception**: null most of the time. When present it carries the `decisionId` being set aside
-  and the justification for setting it aside. It is independent of `outcome`: an underwriter may
+- **exception**: null most of the time. When present it carries the `decisionId` being waived
+  and the justification for waiving it. It is independent of `outcome`: an underwriter may
   deny today and still judge that an older denial should stop counting.
 - **confidence**: `clear` or `borderline`. One field, and it is what lets the console show that a
   coin flip happened rather than hiding it.
@@ -378,7 +378,7 @@ structured field.
   `monthsAgo` inside the twelve-month window so it actually counts, which puts the company at the
   escalation threshold. The seeded decisions and `X-1123-SEED` are attributed to roster members
   rather than to `M. Alvarez`: the denials to the most cautious underwriter, the exception to the
-  most permissive one, so `grantedBy` changes and the read back returns one person setting aside
+  most permissive one, so `grantedBy` changes and the read back returns one person waiving
   another person's call on a graph nobody has run against yet. No fourth historical underwriter,
   which keeps the roster three and keeps every name in the read back drawable by a later run.
 - **`Application`**: print who decided, the facts given, the verdict, the confidence, the precedent
@@ -710,12 +710,12 @@ tail of each phase rather than a phase of its own.
   `PASS` and `FAIL` with above and below the line, which this phase had scheduled, so
   `integration-tests/ExampleInfo.json` and `README.md` describe a console and a flow that no
   longer exist.
-- **Goal**: an underwriter can set aside one standing denial, the next run reads the smaller count,
+- **Goal**: an underwriter can waive one standing denial, the next run reads the smaller count,
   the graph answers who excepted whose denials, and what is printed, asserted, and documented
   matches what the code does.
 - **Files**: verdict record, `LoanGraph`, `LoanPolicyAdvisor`, `Application`, `LoanGraphTests`,
   `README.md`, `integration-tests/ExampleInfo.json`.
-- **The record grows**: an `exception` field carrying the `decisionId` being set aside and the
+- **The record grows**: an `exception` field carrying the `decisionId` being waived and the
   justification. Null on most runs, and independent of `outcome`, so a denial can carry one.
 - **The new write**: one statement in `LoanGraph` that `MATCH`es the denial and creates the
   `Exception` node with its `EXCEPTION_TO` edge and a `GRANTED_BY` edge to the drawn underwriter.
@@ -727,8 +727,8 @@ tail of each phase rather than a phase of its own.
   is allowed.
 - **The read back**: one query walking
   `(grantor:Underwriter)<-[:GRANTED_BY]-(e:Exception)-[:EXCEPTION_TO]->(d:Decision)-[:DECIDED_BY]->(decider:Underwriter)`,
-  printed as console lines naming who set aside whose denial. Both edges are needed: `DECIDED_BY`
-  says who made the call being set aside and `GRANTED_BY` says who set it aside, and the sentence
+  printed as console lines naming who waived whose denial. Both edges are needed: `DECIDED_BY`
+  says who made the call being waived and `GRANTED_BY` says who waived it, and the sentence
   is only interesting when the two are different people. This is what stops `Underwriter` being a
   write-only node, and it is the traversal that only exists because a person decided.
 - **No constraint work**: `loan_exception_id` is already created by `GraphSeeder`, so a live
@@ -761,7 +761,7 @@ tail of each phase rather than a phase of its own.
 - **Verifiably true**: run `C-1123` at `500000` until somebody grants an exception, which is a
   property of the position rather than a scripted sequence. Once one is granted: the precedent
   trail names the underwriter under `exception`, the history listing marks that denial as excepted,
-  the read back names who set aside whose denial, and every run after it reads one fewer standing
+  the read back names who waived whose denial, and every run after it reads one fewer standing
   denial without a line of code changing. `./mvnw test` is green, and a run's console output reads
   as one story from who is on duty, through the facts, to the verdict, to the exception.
 - **What is left**: cross-company precedent, which is its own pass and its own demo.

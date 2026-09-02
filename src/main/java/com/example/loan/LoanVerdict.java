@@ -36,10 +36,10 @@ record LoanVerdict(Outcome outcome, String reason, @Nullable String decidingPoli
 	 * java.lang.Exception} at a glance; the domain word "exception" stays everywhere else, on the
 	 * JSON field, the prompt, and the graph's own {@code Exception} node label.
 	 *
-	 * @param decisionId the standing denial being set aside, which has to be one of the ids the
+	 * @param decisionId the standing denial being waived, which has to be one of the ids the
 	 * facts block listed as still counting; {@link DecisionTraceAdvisor} drops anything else
 	 * rather than writing a node with nothing real to point at
-	 * @param justification the underwriter's own reasoning for setting it aside
+	 * @param justification the underwriter's own reasoning for waiving it
 	 */
 	record Pardon(String decisionId, String justification) {
 	}

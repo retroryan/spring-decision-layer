@@ -185,7 +185,7 @@ format_sections() {
 		"Policies, as measured") hdr "$line" ;;
 		"Precedent trail, now that this decision is on file") hdr "$line" ;;
 		"Which underwriter approves past which line") hdr "$line" ;;
-		"Who has set aside whose denial") hdr "$line" ;;
+		"Who has waived whose denial") hdr "$line" ;;
 		"Transcript for this run, from Spring AI chat memory") hdr "$line" ;;
 		"Follow-up on the same conversation, nothing about the file repeated") hdr "$line" ;;
 		"APPROVED ("*) approved_line "$line" ;;

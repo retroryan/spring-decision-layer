@@ -5,7 +5,7 @@ import java.time.Instant;
 /**
  * One decision read back out of the graph for the history listing. The policy name is null when
  * the decision named no line, weighedPast tells the line an approval was granted past from the
- * line a denial was stopped by, and excepted marks a denial an underwriter has since set aside,
+ * line a denial was stopped by, and excepted marks a denial an underwriter has since waived,
  * which is still on file and no longer counts as precedent.
  */
 record PastDecision(Instant decidedAt, String outcome, long requestedAmount, String policyName,

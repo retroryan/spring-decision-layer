@@ -9,7 +9,7 @@ comes from the decision's position in the graph rather than from how its text re
 
 - **Ownership**: it belongs to this company.
 - **Recency**: it falls inside the window a policy defines.
-- **Standing**: no exception has set it aside.
+- **Standing**: no exception has waived it.
 
 The precedent this demo reads is selected by position in the record rather than by proximity to a
 document, so what reaches the underwriter is everything that governs this case, not merely the
@@ -45,7 +45,7 @@ today:
   keeping.
 - **A run can cite a denial and except it in the same answer**: both lists are checked against the
   denials the run was shown, but each is checked in isolation, so a verdict can lean on
-  `D-1123-SEED-1` as the reason it escalated and set the same denial aside in the same answer. The
+  `D-1123-SEED-1` as the reason it escalated and waive the same denial in the same answer. The
   graph then holds an `ESCALATED_FROM` edge to a denial that no longer counts. That is contradictory,
   not corrupt: the check that would catch it belongs beside the two filters this advisor already
   applies.

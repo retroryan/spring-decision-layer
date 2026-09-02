@@ -86,8 +86,8 @@ class LoanGraph {
 			""";
 
 	/**
-	 * The read back that stops Underwriter being a node this demo only ever writes to: who set
-	 * aside whose denial. Both hops are relationships and both ends are nodes, so the sentence is
+	 * The read back that stops Underwriter being a node this demo only ever writes to: who
+	 * waived whose denial. Both hops are relationships and both ends are nodes, so the sentence is
 	 * a traversal rather than a traversal joined to a string property, even though the same names
 	 * already sit on {@code grantedBy} and on the decision's own reason for the console that
 	 * cannot join anything.
@@ -282,7 +282,7 @@ class LoanGraph {
 			.toList();
 	}
 
-	/** Who set aside whose denial. Empty until an underwriter has granted one. */
+	/** Who waived whose denial. Empty until an underwriter has granted one. */
 	List<ExceptionGrant> findExceptionGrants() {
 		return read(FIND_EXCEPTION_GRANTS, Map.of()).stream()
 			.map(record -> new ExceptionGrant(record.get("grantedBy").asString(),
@@ -405,7 +405,7 @@ class LoanGraph {
 	 * checked that {@code decisionId} was one of the denials sent in the facts block. Whoever
 	 * drew this run is who granted it, whatever the outcome the run itself reached.
 	 *
-	 * @param decisionId the standing denial being set aside
+	 * @param decisionId the standing denial being waived
 	 * @param justification the underwriter's own reasoning, kept as a string beside the
 	 * {@code GRANTED_BY} edge for the same reason the seeded exception carries one: the console
 	 * has something to print without a second traversal

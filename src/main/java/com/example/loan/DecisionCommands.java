@@ -47,12 +47,14 @@ class DecisionCommands {
 			return;
 		}
 
+		this.console.printRunStart(companyId, requestedAmount);
 		if (this.graph.findCompany(companyId).isEmpty()) {
 			this.console.printUnknownCompany(this.graph, companyId);
 			return;
 		}
 
 		this.console.printHistory(this.graph, companyId);
+		this.console.printDecisionModelCall();
 		LoanAnswer answer = this.officer.answer(companyId, requestedAmount);
 		this.console.print(answer);
 		this.console.printPrecedentTrail(this.graph, companyId);

@@ -23,6 +23,12 @@ fi
 # `./mvnw spring-boot:test-run` leaves it interactive and opens a REPL instead.) These go through
 # the environment using Spring's relaxed binding, so they reach the app whether or not the
 # spring-boot plugin forks a JVM, and are not read as part of the decide command built below.
+# The openai-java SDK logs the actual outgoing request/response (headers, body, timing) to
+# stderr at this level, read directly from OPENAI_LOG by the client's own LoggingHttpClient.
+# This is the real wire-level view for the bedrock-mantle client, unlike the RestClient/
+# reactor-netty loggers in application.properties, which this client stack never touches.
+export OPENAI_LOG=debug
+
 export SPRING_SHELL_INTERACTIVE_ENABLED=false
 if [ "${1:-}" = "--no-seed" ]; then
 	shift

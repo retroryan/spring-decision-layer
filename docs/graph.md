@@ -61,7 +61,7 @@ Two things hold the model together:
 ## Walking Outward From One Decision
 
 A listing is what a system of record gives you. What the relationships add is that any one decision
-can be walked outward: to the policy that decided it, to the exception that set it aside, and to
+can be walked outward: to the policy that decided it, to the exception that waived it, and to
 every later decision it has since driven. One query, and every run prints it:
 
 ```cypher
@@ -111,7 +111,7 @@ ORDER BY approvals DESC
 Which underwriter approves past which line, and how often. `WEIGHED_PAST` only, because
 `APPLIED_POLICY` on the same policy means the opposite: that the line stopped the loan.
 
-The same shape answers who has set aside whose denial, across three nodes rather than two:
+The same shape answers who has waived whose denial, across three nodes rather than two:
 
 ```cypher
 MATCH (grantor:Underwriter)<-[:GRANTED_BY]-(e:Exception)-[:EXCEPTION_TO]->(d:Decision)
@@ -135,7 +135,7 @@ a property value cannot be joined the way a relationship can.
 - **Who grants it**: the underwriter reading today's file. A verdict can carry an `exception` naming
   one of the denials it was shown, and the run writes it as its own statement.
 - **Why it is a separate write**: deciding today's file and reweighing the record are different
-  judgements, so a run can deny today's application while setting a year-old denial aside in the
+  judgements, so a run can deny today's application while waiving a year-old denial in the
   same breath. The file was measured before anybody read it, so granting an exception leaves today's
   answer exactly as it was.
 - **Seeded or granted**: both land in the same listing, and a `source` property on the `Exception`

@@ -199,7 +199,7 @@ class DecisionTraceAdvisor implements CallAdvisor {
 	 * the denials that were actually sent in the facts block. Anything else is dropped rather than
 	 * written, the same treatment an unsent citation gets, because an exception hanging off a
 	 * decisionId the model invented is a broken graph rather than a judgement call. Independent
-	 * of {@link LoanVerdict#outcome}: a denial today can still set aside a denial from before it.
+	 * of {@link LoanVerdict#outcome}: a denial today can still waive a denial from before it.
 	 */
 	static LoanVerdict.Pardon grantedException(LoanVerdict verdict, List<String> priorDenials) {
 		LoanVerdict.Pardon exception = verdict.exception();

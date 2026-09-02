@@ -34,9 +34,15 @@ Or start the Spring Shell
 ./mvnw spring-boot:test-run
 ```
 And run with:
+
+Show denial:
+
 ```
 decide C-1042 250000
 ```
+
+Show approval:
+decide C-1096 50000
 
 Any of these ids works:
 
@@ -82,18 +88,18 @@ Mapped onto the code below, all four parts of that definition are nodes and rela
 | --- | --- |
 | what inputs were gathered | the company's numbers and every measurement, pushed into the prompt as the file |
 | which policies applied | `APPLIED_POLICY` on a denial and `WEIGHED_PAST` on an approval, both carrying the observed value and the threshold |
-| what exceptions were granted | an `Exception` node joined by `EXCEPTION_TO` to the denial it set aside and by `GRANTED_BY` to the underwriter who granted it |
+| what exceptions were granted | an `Exception` node joined by `EXCEPTION_TO` to the denial it waived and by `GRANTED_BY` to the underwriter who granted it |
 | who approved | an `Underwriter` node joined to the decision by `DECIDED_BY`, carrying the disposition as it read at the time |
 
 Precedent becomes searchable through the traversal that counts standing denials before any verdict
 exists, and through two read backs every run prints: which underwriter approves past which line, and
-who has set aside whose denial. Both are walks between nodes, rather than counts kept in Java.
+who has waived whose denial. Both are walks between nodes, rather than counts kept in Java.
 
 ## The Advisor Chain: Reading Precedent, Recording Decisions
 
 Precedent, in this demo, is the record of what was actually decided before: the denials still
 standing against this specific company, each one carrying the number it was measured against and
-whether it was later set aside. A rule describes what should happen in general. Precedent describes
+whether it was later waived. A rule describes what should happen in general. Precedent describes
 what the bank has actually done to this company already, and it is what the underwriter reads
 before deciding again.
 
@@ -114,7 +120,7 @@ both advisors only read or record it.
 5. `DecisionTraceAdvisor` joins the verdict to the engine's own measurements, filters the citations
    to the denials that were actually sent, and writes the `LoanApplication`, the `Decision`, its
    policy edge, its `DECIDED_BY` edge, and its `ESCALATED_FROM` edges in one statement.
-6. If the verdict set one of the denials it was shown aside, a second statement writes that
+6. If the verdict waived one of the denials it was shown, a second statement writes that
    `Exception` with its `EXCEPTION_TO` and `GRANTED_BY` edges. Most runs skip this step.
 7. The response is rebuilt down to the letter the applicant was sent, so chat memory stores prose
    rather than JSON.
@@ -181,7 +187,7 @@ hops out, and each hop is what the graph is here to buy:
   The traversal answers what this decision has driven, which is a question about the decisions that
   came after it.
 - **Cross-entity joins: facts that span several nodes.** Which underwriter approves past which line
-  joins a person to a policy through decisions that belong to neither of them, and who set aside
+  joins a person to a policy through decisions that belong to neither of them, and who waived
   whose denial spans three nodes at once. Each is a sentence the graph assembles from the record.
 - **Time: a comparison the database makes.** A policy's window is a `datetime` bound inside the
   same traversal, so precedent ages out on its own as the window slides.

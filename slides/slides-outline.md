@@ -195,7 +195,7 @@ difference between this and a decisions table.
 
 - Start at a denial
 - **Hop 1**: the policy that caused it
-- **Hop 2**: the exception that set it aside, if any
+- **Hop 2**: the exception that waived it, if any
 - **Hop 3**: every later decision this one has since driven
 
 <!--

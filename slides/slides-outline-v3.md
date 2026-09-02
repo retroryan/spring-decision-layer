@@ -29,8 +29,8 @@ The report calls its own figures directional.</small>
        COMMODITY                  UNIQUE ENTERPRISE VALUE
  +--------------------+          +----------------------+
  |   Frontier model   |    +     |   Business context   |
- |  identical for     |          |   yours alone, and   |
- |  every competitor  |          |   built by you       |
+ |  identical for     |          |     built by the     |
+ |  every competitor  |          |      enterprise      |
  +--------------------+          +----------------------+
             \                              /
              v                            v
@@ -228,7 +228,7 @@ Three tests then decide which of those denials still count.
 - **Ownership**: The traversal starts at the company node and reaches its
   decisions through `SUBMITTED` and `ABOUT`.
 - **Age**: The denial falls inside the window the policy sets.
-- **Standing**: No exception has set the denial aside.
+- **Standing**: No exception has waived the denial.
 
 ```cypher
 MATCH (:Company {companyId: $companyId})-[:SUBMITTED]->(:LoanApplication)
@@ -260,8 +260,8 @@ Current query
 
 - **`APPLIED_POLICY`**: The edge names the rule that authorized the decision and
   carries the numbers that were measured.
-- **`EXCEPTION_TO`**: Following it backward finds the exception that set the
-  denial aside.
+- **`EXCEPTION_TO`**: Following it backward finds the exception that waived the
+  denial.
 - **`ESCALATED_FROM`**: Following it backward finds every later decision the
   denial drove.
 

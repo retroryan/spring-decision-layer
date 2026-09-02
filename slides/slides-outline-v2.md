@@ -56,7 +56,7 @@ directional.
 
 - Smarter Agents with Smarter Context
 - Smarter Agents on the Same Model
-- The Model Is Rented. The Agent Is Yours.
+- The Model Is Rented. The Agent Is Built by the Enterprise.
 - Capable Models, Smarter Agents
 - Context Is What Makes an Agent Smart
 - Enterprise Context Is the Agent's Advantage
@@ -377,7 +377,7 @@ An old denial counts against this application only when all three are true:
 
 1. **Whose it is**: The denial belongs to this company.
 2. **How old it is**: It falls inside the policy's time window.
-3. **Whether it still stands**: No exception has set it aside.
+3. **Whether it still stands**: No exception has waived it.
 
 ```cypher
 MATCH (:Company {companyId: $companyId})-[:SUBMITTED]->(:LoanApplication)
@@ -476,7 +476,7 @@ business context lives in the decision layer instead of the prompt.**
 
 ---
 
-### Slide 22: Rented Intelligence Is Everywhere. Your Decision Layer Is Not.
+### Slide 22: Rented Intelligence Is Everywhere. The Enterprise's Decision Layer Is Not.
 
 | Old school | New school |
 |---|---|
