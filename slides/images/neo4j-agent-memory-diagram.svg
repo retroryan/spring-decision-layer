@@ -1,10 +1,13 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1600 900" role="img" aria-labelledby="title description" font-family="Arial, Helvetica, sans-serif">
   <title id="title">Three Kinds of Memory in One Graph</title>
-  <desc id="description">A single Neo4j graph split into three horizontal bands. The top band is long-term memory: Company, Policy, and Underwriter nodes holding enterprise knowledge the business already had. The middle band is reasoning memory: LoanApplication, Decision, and Exception nodes drawn in the deepest blue, where an Exception is EXCEPTION_TO a Decision and a Decision is ABOUT a LoanApplication. The bottom band is short-term memory: a Conversation node linked by FIRST_MESSAGE and NEXT_MESSAGE to two Message nodes, which is the Spring AI chat memory stored through Neo4jChatMemoryRepository. Dashed reference relationships run upward from the reasoning band into the long-term band: a Company SUBMITTED a LoanApplication, a Decision APPLIED_POLICY to a Policy, and an Exception was GRANTED_BY an Underwriter. A solid TRIGGERED relationship runs from a Message up into a Decision. Reasoning memory is drawn in the middle because it is the layer that connects the conversation to the knowledge, and it is the only memory that changes the next outcome.</desc>
+  <desc id="description">A single Neo4j graph split into three horizontal bands, with a key at the top that names the three memory colors and the two edge styles. The top band is long-term memory: Company, Policy, and Underwriter nodes holding enterprise knowledge the business already had. The middle band is reasoning memory: LoanApplication, Decision, and Exception nodes drawn in the deepest blue, where an Exception is EXCEPTION_TO a Decision and a Decision is ABOUT a LoanApplication. The bottom band is short-term memory: a Conversation node linked by FIRST_MESSAGE and NEXT_MESSAGE to two Message nodes, which is the Spring AI chat memory stored through Neo4jChatMemoryRepository. Dashed reference relationships run between the reasoning band and the long-term band: a Company SUBMITTED a LoanApplication, a Decision APPLIED_POLICY to a Policy, and an Exception was GRANTED_BY an Underwriter. A solid TRIGGERED relationship runs from a Message up into a Decision. Reasoning memory is drawn in the middle because it is the layer that connects the conversation to the knowledge, and it is the only memory that changes the next outcome.</desc>
 
   <defs>
     <filter id="soft-shadow" x="-20%" y="-20%" width="140%" height="150%">
       <feDropShadow dx="0" dy="6" stdDeviation="10" flood-color="#183142" flood-opacity="0.14"/>
+    </filter>
+    <filter id="card-shadow" x="-10%" y="-40%" width="120%" height="180%">
+      <feDropShadow dx="0" dy="3" stdDeviation="5" flood-color="#183142" flood-opacity="0.16"/>
     </filter>
     <marker id="arrow" markerWidth="12" markerHeight="12" refX="10" refY="6" orient="auto" markerUnits="userSpaceOnUse">
       <path d="M0,0 L12,6 L0,12 Z" fill="#586570"/>
@@ -15,8 +18,7 @@
     <style>
       .heading { fill: #17212B; font-size: 50px; font-weight: 700; }
       .subtitle { fill: #53616D; font-size: 24px; }
-      .band-title { fill: #0B668E; font-size: 28px; font-weight: 700; }
-      .band-copy { fill: #53616D; font-size: 17px; }
+      .band-title { font-size: 27px; font-weight: 700; }
       .legend-copy { fill: #53616D; font-size: 17px; }
       .relationship { fill: none; stroke: #586570; stroke-width: 6; marker-end: url(#arrow); }
       .reference { fill: none; stroke: #8A98A4; stroke-width: 4; stroke-dasharray: 9 8; }
@@ -35,92 +37,86 @@
   <text class="heading" x="66" y="78">Three Kinds of Memory in One Graph</text>
   <text class="subtitle" x="68" y="122">One Neo4j instance holds all three. Only reasoning memory changes the next outcome.</text>
 
-  <g aria-label="Edge style legend">
-    <path d="M70 188 H 128" fill="none" stroke="#586570" stroke-width="6"/>
-    <text class="legend-copy" x="140" y="194">written by the agent</text>
-    <path d="M400 188 H 458" fill="none" stroke="#8A98A4" stroke-width="4" stroke-dasharray="9 8"/>
-    <text class="legend-copy" x="470" y="194">reference into knowledge the business already had</text>
+  <!-- Key -->
+  <g aria-label="Key">
+    <rect x="460" y="152" width="680" height="88" rx="14" fill="#FFFFFF" stroke="#D6DEE4" stroke-width="1.5" filter="url(#card-shadow)"/>
+
+    <circle cx="563" cy="182" r="11" fill="#B9DCE1" stroke="#77C8D0" stroke-width="2.5"/>
+    <text class="legend-copy" x="585" y="188">Short-term</text>
+    <circle cx="744" cy="182" r="11" fill="#77C8D0" stroke="#57A7B2" stroke-width="2.5"/>
+    <text class="legend-copy" x="766" y="188">Long-term</text>
+    <circle cx="917" cy="182" r="11" fill="#0B668E"/>
+    <text class="legend-copy" x="939" y="188">Reasoning</text>
+
+    <path d="M587 216 H 633" fill="none" stroke="#586570" stroke-width="6"/>
+    <text class="legend-copy" x="645" y="222">Written by the agent</text>
+    <path d="M873 216 H 919" fill="none" stroke="#8A98A4" stroke-width="4" stroke-dasharray="9 8"/>
+    <text class="legend-copy" x="931" y="222">Reference</text>
   </g>
 
-  <!-- Band labels -->
-  <g aria-label="Band labels">
-    <circle cx="80" cy="282" r="12" fill="#77C8D0" stroke="#57A7B2" stroke-width="3"/>
-    <text class="band-title" x="110" y="291">Long-term memory</text>
-    <text class="band-copy" x="110" y="319">Enterprise knowledge the business</text>
-    <text class="band-copy" x="110" y="341">already holds: companies, policies,</text>
-    <text class="band-copy" x="110" y="363">thresholds, people.</text>
+  <!-- Section headers -->
+  <text class="band-title" x="46" y="361" fill="#2E8494">Long-Term Memory</text>
+  <text class="band-title" x="46" y="591" fill="#0B668E">Reasoning Memory</text>
+  <text class="band-title" x="46" y="779" fill="#57A7B2">Short-Term Memory</text>
 
-    <circle cx="80" cy="522" r="12" fill="#0B668E"/>
-    <text class="band-title" x="110" y="531">Reasoning memory</text>
-    <text class="band-copy" x="110" y="559">What was decided, and what</text>
-    <text class="band-copy" x="110" y="581">authorized it. This is the memory</text>
-    <text class="band-copy" x="110" y="603">that becomes precedent.</text>
+  <!-- Reasoning band references into long-term memory -->
+  <path class="reference" d="M470 404 V 452"/>
+  <path class="reference-head" d="M470 492 V 530"/>
+  <text class="relationship-label" x="470" y="478">SUBMITTED</text>
 
-    <circle cx="80" cy="711" r="12" fill="#B9DCE1" stroke="#77C8D0" stroke-width="3"/>
-    <text class="band-title" x="110" y="720">Short-term memory</text>
-    <text class="band-copy" x="110" y="748">The conversation itself, stored by</text>
-    <text class="band-copy" x="110" y="770">Spring AI through</text>
-    <text class="band-copy" x="110" y="792">Neo4jChatMemoryRepository.</text>
-  </g>
+  <path class="reference" d="M900 530 V 492"/>
+  <path class="reference-head" d="M900 452 V 404"/>
+  <text class="relationship-label" x="900" y="478">APPLIED_POLICY</text>
 
-  <!-- Reasoning band references up into long-term memory -->
-  <path class="reference-head" d="M650 342 V 380"/>
-  <path class="reference" d="M650 434 V 478"/>
-  <text class="relationship-label" x="650" y="418">SUBMITTED</text>
-
-  <path class="reference-head" d="M990 478 V 440"/>
-  <path class="reference" d="M990 396 V 342"/>
-  <text class="relationship-label" x="990" y="418">APPLIED_POLICY</text>
-
-  <path class="reference-head" d="M1330 478 V 440"/>
-  <path class="reference" d="M1330 396 V 342"/>
-  <text class="relationship-label" x="1330" y="418">GRANTED_BY</text>
+  <path class="reference" d="M1330 530 V 492"/>
+  <path class="reference-head" d="M1330 452 V 404"/>
+  <text class="relationship-label" x="1330" y="478">GRANTED_BY</text>
 
   <!-- Short-term band triggers a decision -->
-  <path class="relationship" d="M902 722 L 964 586"/>
-  <text class="relationship-label" x="1015" y="662">TRIGGERED</text>
+  <path class="relationship" d="M900 724 V 640"/>
+  <text class="relationship-label" x="990" y="688">TRIGGERED</text>
 
   <!-- Within-band relationships -->
-  <path class="relationship" d="M1205 530 H 1127"/>
-  <text class="relationship-label" x="1155" y="500">EXCEPTION_TO</text>
+  <path class="relationship" d="M1205 582 H 1031"/>
+  <text class="relationship-label" x="1118" y="552">EXCEPTION_TO</text>
 
-  <path class="relationship" d="M865 530 H 787"/>
-  <text class="relationship-label" x="825" y="500">ABOUT</text>
+  <path class="relationship" d="M775 582 H 601"/>
+  <text class="relationship-label" x="688" y="552">ABOUT</text>
 
-  <path class="relationship" d="M665 762 H 767"/>
-  <text class="relationship-label" x="715" y="732">FIRST_MESSAGE</text>
+  <path class="relationship" d="M575 770 H 789"/>
+  <text class="relationship-label" x="682" y="740">FIRST_MESSAGE</text>
 
-  <path class="relationship" d="M985 762 H 1087"/>
-  <text class="relationship-label" x="1036" y="732">NEXT_MESSAGE</text>
+  <path class="relationship" d="M1005 770 H 1219"/>
+  <text class="relationship-label" x="1112" y="740">NEXT_MESSAGE</text>
 
   <!-- Long-term memory nodes -->
   <g aria-label="Long-term memory nodes" filter="url(#soft-shadow)">
-    <ellipse cx="650" cy="290" rx="118" ry="52" fill="#77C8D0" stroke="#57A7B2" stroke-width="4"/>
-    <ellipse cx="990" cy="290" rx="118" ry="52" fill="#77C8D0" stroke="#57A7B2" stroke-width="4"/>
-    <ellipse cx="1330" cy="290" rx="118" ry="52" fill="#77C8D0" stroke="#57A7B2" stroke-width="4"/>
+    <ellipse cx="470" cy="352" rx="118" ry="52" fill="#77C8D0" stroke="#57A7B2" stroke-width="4"/>
+    <ellipse cx="900" cy="352" rx="118" ry="52" fill="#77C8D0" stroke="#57A7B2" stroke-width="4"/>
+    <ellipse cx="1330" cy="352" rx="118" ry="52" fill="#77C8D0" stroke="#57A7B2" stroke-width="4"/>
   </g>
-  <text class="node-label-dark" x="650" y="298">Company</text>
-  <text class="node-label-dark" x="990" y="298">Policy</text>
-  <text class="node-label-dark" x="1330" y="298">Underwriter</text>
+  <text class="node-label-dark" x="470" y="360">Company</text>
+  <text class="node-label-dark" x="900" y="360">Policy</text>
+  <text class="node-label-dark" x="1330" y="360">Underwriter</text>
 
   <!-- Reasoning memory nodes -->
   <g aria-label="Reasoning memory nodes" filter="url(#soft-shadow)">
-    <ellipse cx="650" cy="530" rx="125" ry="52" fill="#0B668E"/>
-    <ellipse cx="990" cy="530" rx="125" ry="52" fill="#0B668E"/>
-    <ellipse cx="1330" cy="530" rx="125" ry="52" fill="#0B668E"/>
+    <ellipse cx="470" cy="582" rx="125" ry="52" fill="#0B668E"/>
+    <ellipse cx="900" cy="582" rx="125" ry="52" fill="#0B668E"/>
+    <ellipse cx="1330" cy="582" rx="125" ry="52" fill="#0B668E"/>
   </g>
-  <text class="node-label-light" x="650" y="538">LoanApplication</text>
-  <text class="node-label-light" x="990" y="538">Decision</text>
-  <text class="node-label-light" x="1330" y="538">Exception</text>
+  <text class="node-label-light" x="470" y="590">LoanApplication</text>
+  <text class="node-label-light" x="900" y="590">Decision</text>
+  <text class="node-label-light" x="1330" y="590">Exception</text>
 
   <!-- Short-term memory nodes -->
   <g aria-label="Short-term memory nodes" filter="url(#soft-shadow)">
-    <ellipse cx="560" cy="762" rx="105" ry="46" fill="#B9DCE1" stroke="#77C8D0" stroke-width="4"/>
-    <ellipse cx="880" cy="762" rx="105" ry="46" fill="#B9DCE1" stroke="#77C8D0" stroke-width="4"/>
-    <ellipse cx="1200" cy="762" rx="105" ry="46" fill="#B9DCE1" stroke="#77C8D0" stroke-width="4"/>
+    <ellipse cx="470" cy="770" rx="105" ry="46" fill="#B9DCE1" stroke="#77C8D0" stroke-width="4"/>
+    <ellipse cx="900" cy="770" rx="105" ry="46" fill="#B9DCE1" stroke="#77C8D0" stroke-width="4"/>
+    <ellipse cx="1330" cy="770" rx="105" ry="46" fill="#B9DCE1" stroke="#77C8D0" stroke-width="4"/>
   </g>
-  <text class="node-label-dark" x="560" y="770">Conversation</text>
-  <text class="node-label-dark" x="880" y="770">Message</text>
-  <text class="node-label-dark" x="1200" y="770">Message</text>
+  <text class="node-label-dark" x="470" y="778">Conversation</text>
+  <text class="node-label-dark" x="900" y="778">Message</text>
+  <text class="node-label-dark" x="1330" y="778">Message</text>
 
 </svg>

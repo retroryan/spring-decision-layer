@@ -1,0 +1,214 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1600 900" role="img" aria-labelledby="title description" font-family="Arial, Helvetica, sans-serif">
+  <title id="title">Agents That Learn the Why</title>
+  <desc id="description">A four-quarter timeline reading left to right, in four horizontal bands. The top band is human review, drawn as four separate boxes, one per quarter, that fade from solid to almost white: every case in Q1, most cases in Q2, some cases in Q3, rare in Q4. Upward arrows run from the fleet into that band and thin out with it, from one thick solid arrow in Q1 to a single faint dashed stub in Q4, so the supervision drains away from left to right. The second band is the fleet. Each agent is a card of the same size in every quarter, and each card carries a small horizontal meter showing the share of cases that agent settles alone, filled a sliver in Q1 and nearly full in Q4. The fleet also multiplies, from one card in Q1 to two, four, and eight. Beneath the fleet a single fixed line runs the whole width, crossed by identical short downward arrows labelled reads and writes, one per agent on the bottom row; the interface never changes shape from one quarter to the next. Below that line sits the decision layer, drawn as a stepped wedge that thickens with each quarter, from a thin sliver in Q1 to a deep band in Q4. Each quarter holds its own separate graph of decision nodes and links, set apart by clear gaps: four faint nodes and three links under Q1, a small sparse graph under Q2, a larger one under Q3, and a dense woven graph at full strength under Q4. The card meter, the fading review band, and the thickening record all move together, so the frame reads as one mechanism: the record holds more of the why, so each agent is trusted with more, and fewer cases come back to a person.</desc>
+
+  <defs>
+    <filter id="soft-shadow" x="-20%" y="-20%" width="140%" height="150%">
+      <feDropShadow dx="0" dy="6" stdDeviation="10" flood-color="#183142" flood-opacity="0.14"/>
+    </filter>
+    <marker id="arrow" markerWidth="12" markerHeight="12" refX="10" refY="6" orient="auto" markerUnits="userSpaceOnUse">
+      <path d="M0,0 L12,6 L0,12 Z" fill="#586570"/>
+    </marker>
+    <marker id="arrow-rev-1" markerWidth="12" markerHeight="12" refX="10" refY="6" orient="auto" markerUnits="userSpaceOnUse">
+      <path d="M0,0 L12,6 L0,12 Z" fill="#6E7C89"/>
+    </marker>
+    <marker id="arrow-rev-2" markerWidth="12" markerHeight="12" refX="10" refY="6" orient="auto" markerUnits="userSpaceOnUse">
+      <path d="M0,0 L12,6 L0,12 Z" fill="#7C8B99"/>
+    </marker>
+    <marker id="arrow-rev-3" markerWidth="12" markerHeight="12" refX="10" refY="6" orient="auto" markerUnits="userSpaceOnUse">
+      <path d="M0,0 L12,6 L0,12 Z" fill="#96A3AD"/>
+    </marker>
+    <marker id="arrow-rev-4" markerWidth="12" markerHeight="12" refX="10" refY="6" orient="auto" markerUnits="userSpaceOnUse">
+      <path d="M0,0 L12,6 L0,12 Z" fill="#B4BFC8"/>
+    </marker>
+    <clipPath id="layer-clip">
+      <path d="M240 430 H1560 V720 H1136 V628 H785 V558 H485 V488 H240 Z"/>
+    </clipPath>
+    <style>
+      .heading { fill: #17212B; font-size: 50px; font-weight: 700; }
+      .subtitle { fill: #53616D; font-size: 24px; }
+      .row-label { fill: #17212B; font-size: 24px; font-weight: 700; letter-spacing: 2px; }
+      .row-copy { fill: #394651; font-size: 20px; font-weight: 700; }
+      .legend-copy { fill: #53616D; font-size: 18px; }
+      .agent-label { fill: #17212B; font-size: 20px; font-weight: 700; text-anchor: middle; }
+      .review-copy { font-size: 22px; font-weight: 700; text-anchor: middle; }
+      .axis-label { fill: #17212B; font-size: 24px; font-weight: 700; text-anchor: middle; }
+      .axis-note { fill: #53616D; font-size: 20px; text-anchor: middle; }
+      .interface { fill: none; stroke: #586570; stroke-width: 6; marker-end: url(#arrow); }
+      .timeline { fill: none; stroke: #8A98A4; stroke-width: 4; marker-end: url(#arrow); }
+      .leader { fill: none; stroke: #8A98A4; stroke-width: 2.5; stroke-dasharray: 5 6; }
+      .mesh-link { fill: none; stroke: #586570; stroke-width: 2; stroke-opacity: 0.55; }
+      .mesh-node { fill: #0B668E; }
+      .callout-label { fill: #0B668E; font-size: 26px; font-weight: 700; }
+    </style>
+  </defs>
+
+  <rect width="1600" height="900" fill="#FFFFFF"/>
+  <path d="M1340 0 H1600 V122 C1544 102 1504 62 1468 38 C1430 12 1380 12 1340 0 Z" fill="#0B668E"/>
+  <path d="M1478 0 H1600 V52 C1558 33 1518 19 1478 0 Z" fill="#57A7B2" opacity="0.75"/>
+
+  <text class="heading" x="66" y="78">Agents That Learn the Why</text>
+  <text class="subtitle" x="68" y="122">The record deepens, the mandate widens, and review drops away.</text>
+
+  <!-- Human review, draining away quarter by quarter -->
+  <g aria-label="Human review band, fading from every case in Q1 to rare in Q4">
+    <rect x="252" y="150" width="222" height="44" rx="10" fill="#E4EAEF" stroke="#98A6B2" stroke-width="2"/>
+    <text class="review-copy" x="363" y="178" fill="#2C3A46">every case</text>
+    <rect x="497" y="150" width="276" height="44" rx="10" fill="#EAEFF3" stroke="#AAB6C0" stroke-width="2"/>
+    <text class="review-copy" x="635" y="178" fill="#46545F">most cases</text>
+    <rect x="797" y="150" width="327" height="44" rx="10" fill="#F2F6F8" stroke="#C0CAD2" stroke-width="2" stroke-dasharray="9 7"/>
+    <text class="review-copy" x="960" y="178" fill="#6E7C89">some cases</text>
+    <rect x="1148" y="150" width="400" height="44" rx="10" fill="#FAFBFC" stroke="#D8DFE4" stroke-width="2" stroke-dasharray="5 9"/>
+    <text class="review-copy" x="1348" y="178" fill="#A0ACB6">rare</text>
+  </g>
+
+  <!-- Escalations to a person, thinning out -->
+  <g fill="none" aria-label="Escalation arrows from the fleet up to human review, thinning each quarter">
+    <path d="M350 318 V204" stroke="#6E7C89" stroke-width="7" marker-end="url(#arrow-rev-1)"/>
+    <path d="M563 318 V204" stroke="#7C8B99" stroke-width="5" marker-end="url(#arrow-rev-2)"/>
+    <path d="M677 318 V204" stroke="#7C8B99" stroke-width="5" marker-end="url(#arrow-rev-2)"/>
+    <path d="M893 238 V204" stroke="#96A3AD" stroke-width="3" stroke-dasharray="8 7" marker-end="url(#arrow-rev-3)"/>
+    <path d="M1007 238 V204" stroke="#96A3AD" stroke-width="3" stroke-dasharray="8 7" marker-end="url(#arrow-rev-3)"/>
+    <path d="M1266 238 V204" stroke="#B4BFC8" stroke-width="2" stroke-dasharray="4 9" marker-end="url(#arrow-rev-4)"/>
+  </g>
+
+  <!-- One decision layer, thickening quarter by quarter -->
+  <g transform="translate(0,28)">
+    <g aria-label="Decision layer, one record thickening over four quarters">
+      <path d="M240 430 H1560 V720 H1136 V628 H785 V558 H485 V488 H240 Z" fill="#F2F6F8" stroke="#0B668E" stroke-width="3" filter="url(#soft-shadow)"/>
+    </g>
+    <g clip-path="url(#layer-clip)" aria-label="One separate decision graph per quarter, each larger than the last">
+      <g opacity="0.45" aria-label="Q1 decision graph, four nodes">
+        <path class="mesh-link" d="M296 462L348 446M296 462L348 478M348 446L404 462"/>
+        <g class="mesh-node"><circle cx="296" cy="462" r="6"/><circle cx="348" cy="446" r="6"/><circle cx="348" cy="478" r="6"/><circle cx="404" cy="462" r="6"/></g>
+      </g>
+      <g opacity="0.65" aria-label="Q2 decision graph, eight nodes">
+        <path class="mesh-link" d="M520 470L575 448M520 470L578 512M575 448L640 478M578 512L640 478M578 512L646 532M640 478L700 455M640 478L708 514M646 532L708 514M700 455L752 486M708 514L752 486"/>
+        <g class="mesh-node"><circle cx="520" cy="470" r="6"/><circle cx="575" cy="448" r="6"/><circle cx="578" cy="512" r="6"/><circle cx="640" cy="478" r="6"/><circle cx="646" cy="532" r="6"/><circle cx="700" cy="455" r="6"/><circle cx="708" cy="514" r="6"/><circle cx="752" cy="486" r="6"/></g>
+      </g>
+      <g opacity="0.85" aria-label="Q3 decision graph, seventeen nodes">
+        <path class="mesh-link" d="M820 470L878 448M878 448L936 466M936 466L994 446M994 446L1052 464M1052 464L1108 448M830 530L890 516M890 516L948 534M948 534L1006 514M1006 514L1064 532M1064 532L1114 516M860 592L922 580M922 580L984 596M984 596L1046 582M1046 582L1102 594M820 470L830 530M936 466L948 534M1052 464L1064 532M878 448L830 530M878 448L948 534M994 446L948 534M994 446L1064 532M1108 448L1064 532M830 530L860 592M890 516L860 592M890 516L922 580M948 534L922 580M948 534L984 596M1006 514L1046 582M1064 532L1046 582M1064 532L1102 594"/>
+        <g class="mesh-node"><circle cx="820" cy="470" r="6"/><circle cx="878" cy="448" r="6"/><circle cx="936" cy="466" r="6"/><circle cx="994" cy="446" r="6"/><circle cx="1052" cy="464" r="6"/><circle cx="1108" cy="448" r="6"/><circle cx="830" cy="530" r="6"/><circle cx="890" cy="516" r="6"/><circle cx="948" cy="534" r="6"/><circle cx="1006" cy="514" r="6"/><circle cx="1064" cy="532" r="6"/><circle cx="1114" cy="516" r="6"/><circle cx="860" cy="592" r="6"/><circle cx="922" cy="580" r="6"/><circle cx="984" cy="596" r="6"/><circle cx="1046" cy="582" r="6"/><circle cx="1102" cy="594" r="6"/></g>
+      </g>
+      <g opacity="1.0" aria-label="Q4 decision graph, twenty-eight nodes woven dense">
+        <path class="mesh-link" d="M1172 466L1236 450M1236 450L1298 470M1298 470L1360 452M1360 452L1422 468M1422 468L1484 450M1484 450L1542 466M1180 528L1240 540M1240 540L1300 522M1300 522L1364 538M1364 538L1424 520M1424 520L1488 536M1488 536L1538 524M1168 598L1232 586M1232 586L1296 604M1296 604L1358 590M1358 590L1420 600M1420 600L1482 588M1482 588L1540 602M1176 660L1238 672M1238 672L1300 656M1300 656L1362 670M1362 670L1426 658M1426 658L1486 672M1486 672L1536 660M1172 466L1180 528M1298 470L1300 522M1422 468L1424 520M1542 466L1538 524M1240 540L1232 586M1364 538L1358 590M1488 536L1482 588M1168 598L1176 660M1296 604L1300 656M1420 600L1426 658M1540 602L1536 660M1236 450L1180 528M1236 450L1300 522M1360 452L1300 522M1360 452L1424 520M1484 450L1424 520M1484 450L1538 524M1180 528L1232 586M1300 522L1232 586M1300 522L1358 590M1424 520L1358 590M1424 520L1482 588M1538 524L1482 588M1232 586L1176 660M1232 586L1300 656M1358 590L1300 656M1358 590L1426 658M1482 588L1426 658M1482 588L1536 660"/>
+        <g class="mesh-node"><circle cx="1172" cy="466" r="6"/><circle cx="1236" cy="450" r="6"/><circle cx="1298" cy="470" r="6"/><circle cx="1360" cy="452" r="6"/><circle cx="1422" cy="468" r="6"/><circle cx="1484" cy="450" r="6"/><circle cx="1542" cy="466" r="6"/><circle cx="1180" cy="528" r="6"/><circle cx="1240" cy="540" r="6"/><circle cx="1300" cy="522" r="6"/><circle cx="1364" cy="538" r="6"/><circle cx="1424" cy="520" r="6"/><circle cx="1488" cy="536" r="6"/><circle cx="1538" cy="524" r="6"/><circle cx="1168" cy="598" r="6"/><circle cx="1232" cy="586" r="6"/><circle cx="1296" cy="604" r="6"/><circle cx="1358" cy="590" r="6"/><circle cx="1420" cy="600" r="6"/><circle cx="1482" cy="588" r="6"/><circle cx="1540" cy="602" r="6"/><circle cx="1176" cy="660" r="6"/><circle cx="1238" cy="672" r="6"/><circle cx="1300" cy="656" r="6"/><circle cx="1362" cy="670" r="6"/><circle cx="1426" cy="658" r="6"/><circle cx="1486" cy="672" r="6"/><circle cx="1536" cy="660" r="6"/></g>
+      </g>
+    </g>
+    <path d="M240 430 H1560" fill="none" stroke="#0B668E" stroke-width="3"/>
+  </g>
+
+  <!-- The fleet: same card every quarter, with a mandate meter that fills -->
+  <g aria-label="Q1 agent stack, one agent, meter filled a sliver" filter="url(#soft-shadow)">
+    <rect x="298" y="326" width="104" height="74" rx="14" fill="#FFFFFF" stroke="#57A7B2" stroke-width="2.5"/>
+    <text class="agent-label" x="350" y="360">A1</text>
+    <rect x="314" y="374" width="72" height="10" rx="5" fill="#E6EDF1"/>
+    <rect x="314" y="374" width="12" height="10" rx="5" fill="#0B668E"/>
+  </g>
+  <g aria-label="Q2 agent stack, two agents, meter about one third" filter="url(#soft-shadow)">
+    <rect x="511" y="326" width="104" height="74" rx="14" fill="#FFFFFF" stroke="#57A7B2" stroke-width="2.5"/>
+    <text class="agent-label" x="563" y="360">A1</text>
+    <rect x="527" y="374" width="72" height="10" rx="5" fill="#E6EDF1"/>
+    <rect x="527" y="374" width="24" height="10" rx="5" fill="#0B668E"/>
+    <rect x="625" y="326" width="104" height="74" rx="14" fill="#FFFFFF" stroke="#57A7B2" stroke-width="2.5"/>
+    <text class="agent-label" x="677" y="360">A2</text>
+    <rect x="641" y="374" width="72" height="10" rx="5" fill="#E6EDF1"/>
+    <rect x="641" y="374" width="24" height="10" rx="5" fill="#0B668E"/>
+  </g>
+  <g aria-label="Q3 agent stack, four agents, meter about three fifths" filter="url(#soft-shadow)">
+    <rect x="841" y="244" width="104" height="74" rx="14" fill="#FFFFFF" stroke="#57A7B2" stroke-width="2.5"/>
+    <text class="agent-label" x="893" y="278">A3</text>
+    <rect x="857" y="292" width="72" height="10" rx="5" fill="#E6EDF1"/>
+    <rect x="857" y="292" width="36" height="10" rx="5" fill="#0B668E"/>
+    <rect x="955" y="244" width="104" height="74" rx="14" fill="#FFFFFF" stroke="#57A7B2" stroke-width="2.5"/>
+    <text class="agent-label" x="1007" y="278">A4</text>
+    <rect x="971" y="292" width="72" height="10" rx="5" fill="#E6EDF1"/>
+    <rect x="971" y="292" width="36" height="10" rx="5" fill="#0B668E"/>
+    <rect x="841" y="326" width="104" height="74" rx="14" fill="#FFFFFF" stroke="#57A7B2" stroke-width="2.5"/>
+    <text class="agent-label" x="893" y="360">A1</text>
+    <rect x="857" y="374" width="72" height="10" rx="5" fill="#E6EDF1"/>
+    <rect x="857" y="374" width="36" height="10" rx="5" fill="#0B668E"/>
+    <rect x="955" y="326" width="104" height="74" rx="14" fill="#FFFFFF" stroke="#57A7B2" stroke-width="2.5"/>
+    <text class="agent-label" x="1007" y="360">A2</text>
+    <rect x="971" y="374" width="72" height="10" rx="5" fill="#E6EDF1"/>
+    <rect x="971" y="374" width="36" height="10" rx="5" fill="#0B668E"/>
+  </g>
+  <g aria-label="Q4 agent stack, eight agents, meter nearly full" filter="url(#soft-shadow)">
+    <rect x="1100" y="244" width="104" height="74" rx="14" fill="#FFFFFF" stroke="#57A7B2" stroke-width="2.5"/>
+    <text class="agent-label" x="1152" y="278">A5</text>
+    <rect x="1116" y="292" width="72" height="10" rx="5" fill="#E6EDF1"/>
+    <rect x="1116" y="292" width="65" height="10" rx="5" fill="#0B668E"/>
+    <rect x="1214" y="244" width="104" height="74" rx="14" fill="#FFFFFF" stroke="#57A7B2" stroke-width="2.5"/>
+    <text class="agent-label" x="1266" y="278">A6</text>
+    <rect x="1230" y="292" width="72" height="10" rx="5" fill="#E6EDF1"/>
+    <rect x="1230" y="292" width="65" height="10" rx="5" fill="#0B668E"/>
+    <rect x="1328" y="244" width="104" height="74" rx="14" fill="#FFFFFF" stroke="#57A7B2" stroke-width="2.5"/>
+    <text class="agent-label" x="1380" y="278">A7</text>
+    <rect x="1344" y="292" width="72" height="10" rx="5" fill="#E6EDF1"/>
+    <rect x="1344" y="292" width="65" height="10" rx="5" fill="#0B668E"/>
+    <rect x="1442" y="244" width="104" height="74" rx="14" fill="#FFFFFF" stroke="#57A7B2" stroke-width="2.5"/>
+    <text class="agent-label" x="1494" y="278">A8</text>
+    <rect x="1458" y="292" width="72" height="10" rx="5" fill="#E6EDF1"/>
+    <rect x="1458" y="292" width="65" height="10" rx="5" fill="#0B668E"/>
+    <rect x="1100" y="326" width="104" height="74" rx="14" fill="#FFFFFF" stroke="#57A7B2" stroke-width="2.5"/>
+    <text class="agent-label" x="1152" y="360">A1</text>
+    <rect x="1116" y="374" width="72" height="10" rx="5" fill="#E6EDF1"/>
+    <rect x="1116" y="374" width="65" height="10" rx="5" fill="#0B668E"/>
+    <rect x="1214" y="326" width="104" height="74" rx="14" fill="#FFFFFF" stroke="#57A7B2" stroke-width="2.5"/>
+    <text class="agent-label" x="1266" y="360">A2</text>
+    <rect x="1230" y="374" width="72" height="10" rx="5" fill="#E6EDF1"/>
+    <rect x="1230" y="374" width="65" height="10" rx="5" fill="#0B668E"/>
+    <rect x="1328" y="326" width="104" height="74" rx="14" fill="#FFFFFF" stroke="#57A7B2" stroke-width="2.5"/>
+    <text class="agent-label" x="1380" y="360">A3</text>
+    <rect x="1344" y="374" width="72" height="10" rx="5" fill="#E6EDF1"/>
+    <rect x="1344" y="374" width="65" height="10" rx="5" fill="#0B668E"/>
+    <rect x="1442" y="326" width="104" height="74" rx="14" fill="#FFFFFF" stroke="#57A7B2" stroke-width="2.5"/>
+    <text class="agent-label" x="1494" y="360">A4</text>
+    <rect x="1458" y="374" width="72" height="10" rx="5" fill="#E6EDF1"/>
+    <rect x="1458" y="374" width="65" height="10" rx="5" fill="#0B668E"/>
+  </g>
+
+  <!-- The interface never changes: identical reads and writes, every quarter -->
+  <path class="interface" d="M350 408 V452"/>
+  <path class="interface" d="M563 408 V452"/>
+  <path class="interface" d="M677 408 V452"/>
+  <path class="interface" d="M893 408 V452"/>
+  <path class="interface" d="M1007 408 V452"/>
+  <path class="interface" d="M1152 408 V452"/>
+  <path class="interface" d="M1266 408 V452"/>
+  <path class="interface" d="M1380 408 V452"/>
+  <path class="interface" d="M1494 408 V452"/>
+
+  <!-- Row labels -->
+  <text class="row-label" x="66" y="166">HUMAN</text>
+  <text class="row-label" x="66" y="196">REVIEW</text>
+  <text class="row-label" x="66" y="336">AGENTS</text>
+  <g aria-label="Meter legend: the share of cases an agent settles alone">
+    <rect x="66" y="360" width="72" height="10" rx="5" fill="#E6EDF1"/>
+    <rect x="66" y="360" width="40" height="10" rx="5" fill="#0B668E"/>
+    <text class="legend-copy" x="66" y="394">share settled alone</text>
+  </g>
+  <text class="row-copy" x="66" y="440">reads / writes</text>
+  <path class="leader" d="M206 433 H332"/>
+  <text class="row-label" x="66" y="500">DECISION</text>
+  <text class="row-label" x="66" y="530">LAYER</text>
+
+  <!-- Callout -->
+  <g aria-label="Callout: Agent 8 was the cheapest one to stand up">
+    <rect x="250" y="606" width="520" height="96" rx="16" fill="#F4FAFB" stroke="#B9DCE1" stroke-width="2"/>
+    <text class="callout-label" x="278" y="648">Agent 8 was the cheapest</text>
+    <text class="callout-label" x="278" y="682">one to stand up.</text>
+  </g>
+
+  <!-- Time axis -->
+  <path class="timeline" d="M250 800 H1548"/>
+  <text class="axis-label" x="350" y="842">Q1  ·  1 agent</text>
+  <text class="axis-note" x="350" y="872">settles 1 in 6 alone</text>
+  <text class="axis-label" x="620" y="842">Q2  ·  2 agents</text>
+  <text class="axis-note" x="620" y="872">settles 1 in 3 alone</text>
+  <text class="axis-label" x="950" y="842">Q3  ·  4 agents</text>
+  <text class="axis-note" x="950" y="872">settles 1 in 2 alone</text>
+  <text class="axis-label" x="1323" y="842">Q4  ·  8 agents</text>
+  <text class="axis-note" x="1323" y="872">settles 9 in 10 alone</text>
+
+</svg>

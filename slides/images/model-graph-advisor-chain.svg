@@ -1,5 +1,5 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1600 900" role="img" aria-labelledby="title description" font-family="Arial, Helvetica, sans-serif">
-  <title id="title">One Model, One Graph, Two Advisors</title>
+  <title id="title">Loan Decision Layer Architecture</title>
   <desc id="description">PrecedentAdvisor and DecisionTraceAdvisor both sit inside LoanOfficer, wrapped by chat memory. PrecedentAdvisor sends the assembled file to the Bedrock Mantle Endpoint on the left and reads precedent from the Neo4j graph on the right. The same Bedrock endpoint returns its verdict to DecisionTraceAdvisor, which writes the decision back to the same Neo4j graph.</desc>
 
   <defs>
@@ -31,49 +31,49 @@
   <path d="M1410 0 H1600 V94 C1536 62 1474 34 1410 0 Z" fill="#57A7B2" opacity="0.75"/>
   <path d="M0 900 V820 C115 790 205 800 298 850 C333 869 369 885 410 900 Z" fill="#0B668E"/>
 
-  <text class="heading" x="66" y="72">One Model, One Graph, Two Advisors</text>
+  <text class="heading" x="66" y="72">Loan Decision Layer Architecture</text>
   <text class="subtitle" x="68" y="112">PrecedentAdvisor and DecisionTraceAdvisor both call the one model and share the one graph.</text>
 
   <!-- Outer wrap: LoanOfficer / chat memory -->
   <g aria-label="LoanOfficer wrap" filter="url(#soft-shadow)">
-    <rect x="800" y="270" width="400" height="480" rx="34" fill="#77C8D0"/>
+    <rect x="610" y="270" width="400" height="480" rx="34" fill="#77C8D0"/>
   </g>
-  <text class="wrap-copy" x="1000" y="340">chat memory wraps every turn</text>
+  <text class="wrap-copy" x="810" y="340">chat memory wraps every turn</text>
 
   <g filter="url(#soft-shadow)">
-    <rect x="895" y="248" width="210" height="42" rx="21" fill="#0B668E"/>
-    <text class="node-label" x="1000" y="275">LOANOFFICER</text>
+    <rect x="705" y="248" width="210" height="42" rx="21" fill="#0B668E"/>
+    <text class="node-label" x="810" y="275">LOANOFFICER</text>
   </g>
 
   <!-- User in / answer out -->
   <g filter="url(#soft-shadow)" aria-label="User">
-    <rect x="895" y="150" width="210" height="50" rx="25" fill="#57A7B2"/>
-    <text class="node-label" x="1000" y="182">USER</text>
+    <rect x="705" y="150" width="210" height="50" rx="25" fill="#57A7B2"/>
+    <text class="node-label" x="810" y="182">USER</text>
   </g>
-  <path class="relationship" d="M1000 200 L1000 244"/>
+  <path class="relationship" d="M810 200 L810 244"/>
 
   <g filter="url(#soft-shadow)" aria-label="LoanAnswer">
-    <rect x="895" y="800" width="210" height="50" rx="25" fill="#57A7B2"/>
-    <text class="node-label" x="1000" y="832">LOAN ANSWER</text>
+    <rect x="705" y="800" width="210" height="50" rx="25" fill="#57A7B2"/>
+    <text class="node-label" x="810" y="832">LOAN ANSWER</text>
   </g>
-  <path class="relationship" d="M1000 750 L1000 796"/>
+  <path class="relationship" d="M810 750 L810 796"/>
 
   <!-- PrecedentAdvisor -->
   <g aria-label="PrecedentAdvisor" filter="url(#soft-shadow)">
-    <rect x="840" y="360" width="320" height="150" rx="22" fill="#0B668E"/>
-    <text class="node-label-hub" x="1000" y="398">PRECEDENT ADVISOR</text>
-    <text class="node-copy" x="1000" y="426">reads company, policies,</text>
-    <text class="node-copy" x="1000" y="446">standing denials</text>
-    <text class="node-copy" x="1000" y="466">assembles the file</text>
+    <rect x="650" y="360" width="320" height="150" rx="22" fill="#0B668E"/>
+    <text class="node-label-hub" x="810" y="398">PRECEDENT ADVISOR</text>
+    <text class="node-copy" x="810" y="426">reads company, policies,</text>
+    <text class="node-copy" x="810" y="446">standing denials</text>
+    <text class="node-copy" x="810" y="466">assembles the file</text>
   </g>
 
   <!-- DecisionTraceAdvisor -->
   <g aria-label="DecisionTraceAdvisor" filter="url(#soft-shadow)">
-    <rect x="840" y="560" width="320" height="150" rx="22" fill="#168AAD"/>
-    <text class="node-label-hub" x="1000" y="598">DECISION TRACE ADVISOR</text>
-    <text class="node-copy" x="1000" y="626">checks the verdict,</text>
-    <text class="node-copy" x="1000" y="646">writes Decision + edges</text>
-    <text class="node-copy" x="1000" y="666">grants exceptions</text>
+    <rect x="650" y="560" width="320" height="150" rx="22" fill="#168AAD"/>
+    <text class="node-label-hub" x="810" y="598">DECISION TRACE ADVISOR</text>
+    <text class="node-copy" x="810" y="626">checks the verdict,</text>
+    <text class="node-copy" x="810" y="646">writes Decision + edges</text>
+    <text class="node-copy" x="810" y="666">grants exceptions</text>
   </g>
 
   <!-- Bedrock model, left -->
@@ -89,49 +89,49 @@
   </g>
 
   <!-- Arrows: advisors <-> Bedrock, both touching the same box -->
-  <path class="relationship" d="M840 425 C 620 460 470 500 410 530"/>
+  <path class="relationship" d="M650 425 C 528 460 444 500 410 530"/>
   <g filter="url(#soft-shadow)">
-    <rect x="470" y="470" width="150" height="38" rx="14" fill="#FFFFFF" stroke="#586570" stroke-width="2.5"/>
-    <text class="relationship-label" x="545" y="495">sends file</text>
+    <rect x="455" y="470" width="150" height="38" rx="14" fill="#FFFFFF" stroke="#586570" stroke-width="2.5"/>
+    <text class="relationship-label" x="530" y="495">sends file</text>
   </g>
 
-  <path class="relationship" d="M410 615 C 470 640 620 655 840 630"/>
+  <path class="relationship" d="M410 615 C 444 640 528 655 650 630"/>
   <g filter="url(#soft-shadow)">
-    <rect x="465" y="600" width="180" height="38" rx="14" fill="#FFFFFF" stroke="#586570" stroke-width="2.5"/>
-    <text class="relationship-label" x="555" y="625">returns verdict</text>
+    <rect x="440" y="600" width="180" height="38" rx="14" fill="#FFFFFF" stroke="#586570" stroke-width="2.5"/>
+    <text class="relationship-label" x="530" y="625">returns verdict</text>
   </g>
 
   <!-- Neo4j graph, right -->
   <g aria-label="Neo4j graph" filter="url(#soft-shadow)">
-    <rect x="1250" y="360" width="290" height="420" rx="20" fill="#F4FAFB" stroke="#0B668E" stroke-width="3"/>
-    <rect x="1253" y="363" width="284" height="48" rx="15" fill="#0B668E"/>
-    <text class="node-label" x="1395" y="393">NEO4J GRAPH</text>
+    <rect x="1210" y="360" width="290" height="420" rx="20" fill="#F4FAFB" stroke="#0B668E" stroke-width="3"/>
+    <rect x="1213" y="363" width="284" height="48" rx="15" fill="#0B668E"/>
+    <text class="node-label" x="1355" y="393">NEO4J GRAPH</text>
 
-    <rect x="1268" y="425" width="254" height="140" rx="14" fill="#FFFFFF" stroke="#57A7B2" stroke-width="2"/>
-    <text class="panel-label" x="1284" y="450">NODES</text>
-    <text class="panel-copy" x="1284" y="473">Company, LoanApplication,</text>
-    <text class="panel-copy" x="1284" y="493">Decision, Policy,</text>
-    <text class="panel-copy" x="1284" y="513">Underwriter, Exception</text>
+    <rect x="1228" y="425" width="254" height="140" rx="14" fill="#FFFFFF" stroke="#57A7B2" stroke-width="2"/>
+    <text class="panel-label" x="1244" y="450">NODES</text>
+    <text class="panel-copy" x="1244" y="473">Company, LoanApplication,</text>
+    <text class="panel-copy" x="1244" y="493">Decision, Policy,</text>
+    <text class="panel-copy" x="1244" y="513">Underwriter, Exception</text>
 
-    <rect x="1268" y="580" width="254" height="180" rx="14" fill="#FFFFFF" stroke="#57A7B2" stroke-width="2"/>
-    <text class="panel-label" x="1284" y="605">KEY EDGES</text>
-    <text class="panel-copy" x="1284" y="628">APPLIED_POLICY, WEIGHED_PAST</text>
-    <text class="panel-copy" x="1284" y="648">DECIDED_BY</text>
-    <text class="panel-copy" x="1284" y="668">ESCALATED_FROM</text>
-    <text class="panel-copy" x="1284" y="688">EXCEPTION_TO, GRANTED_BY</text>
+    <rect x="1228" y="580" width="254" height="180" rx="14" fill="#FFFFFF" stroke="#57A7B2" stroke-width="2"/>
+    <text class="panel-label" x="1244" y="605">KEY EDGES</text>
+    <text class="panel-copy" x="1244" y="628">APPLIED_POLICY, WEIGHED_PAST</text>
+    <text class="panel-copy" x="1244" y="648">DECIDED_BY</text>
+    <text class="panel-copy" x="1244" y="668">ESCALATED_FROM</text>
+    <text class="panel-copy" x="1244" y="688">EXCEPTION_TO, GRANTED_BY</text>
   </g>
 
   <!-- Arrows: advisors <-> Neo4j -->
-  <path class="relationship" d="M1160 435 C 1200 445 1230 455 1250 465"/>
+  <path class="relationship" d="M970 435 C 1076 445 1157 455 1210 465"/>
   <g filter="url(#soft-shadow)">
-    <rect x="1160" y="470" width="120" height="36" rx="13" fill="#FFFFFF" stroke="#586570" stroke-width="2.5"/>
-    <text class="relationship-label" x="1220" y="494">reads</text>
+    <rect x="1030" y="470" width="120" height="36" rx="13" fill="#FFFFFF" stroke="#586570" stroke-width="2.5"/>
+    <text class="relationship-label" x="1090" y="494">reads</text>
   </g>
 
-  <path class="relationship" d="M1160 640 C 1200 650 1230 655 1250 660"/>
+  <path class="relationship" d="M970 640 C 1076 650 1157 655 1210 660"/>
   <g filter="url(#soft-shadow)">
-    <rect x="1155" y="644" width="120" height="36" rx="13" fill="#FFFFFF" stroke="#586570" stroke-width="2.5"/>
-    <text class="relationship-label" x="1215" y="668">writes</text>
+    <rect x="1030" y="644" width="120" height="36" rx="13" fill="#FFFFFF" stroke="#586570" stroke-width="2.5"/>
+    <text class="relationship-label" x="1090" y="668">writes</text>
   </g>
 
 </svg>
