@@ -8,12 +8,14 @@ title: "The Decision Layer"
 
 <!-- _class: lead -->
 
-![width:160px](../assets/logo-white.png)
-
 # The Decision Layer
 ### Shared reasoning for Spring AI agents
 
+![height:50px](../assets/logo-white.png)
 Ryan Knight · ryan.knight@neo4j.com
+
+![height:50px](../assets/aws-logo.svg)
+James Ward · jwdev@amazon.com
 
 ---
 
@@ -161,6 +163,12 @@ the decision is written once per turn.
 
 ---
 
+## Spring AI Advisor Demo
+
+Code: github.com/jamesward/hello-spring-ai-bedrock/tree/advisors
+
+---
+
 ## The Decision Layer Arrives by Injection
 
 - **Injected advisors**: Spring hands the agent `precedentAdvisor` and `decisionTraceAdvisor`.
@@ -189,6 +197,12 @@ agent registers them and stops there.
 <!--
 PrecedentAdvisor owns the read path. DecisionTraceAdvisor owns the write path.
 -->
+
+___
+
+## Loan Decision Agent Demo
+
+Code: github.com/retroryan/spring-decision-layer
 
 ---
 
@@ -289,16 +303,6 @@ talk builds the capture step. An autonomy gate reads from it.
 
 ---
 
-## Capture, Improve, Act
-
-- **Capture**: Every decision writes down its outcome and its authorization. Approvals, overrides, and exceptions land in the same record.
-- **Improve**: Each request starts from that record, so the next decision has stronger context than the last one.
-- **Autonomous**: The agent acts alone on cases the record already shows how to settle.
-
-> **Autonomy becomes possible when the agent learns to decide the way your business does.**
-
----
-
 ## The Asset Your Agents Build for You
 
 - **Governance stops being a project**: Every decision already names the policy that authorized it and the person who signed it. The audit is a traversal.
@@ -308,13 +312,6 @@ talk builds the capture step. An autonomy gate reads from it.
 The decision layer is not a feature the agents use. It is an asset they leave
 behind, and it is worth more every quarter it runs.
 -->
-
----
-
-## Worth More Every Quarter It Runs
-
-- **The company learns where its own rules are wrong**: The traces show which policies get overridden in practice, and how often.
-- **The record outlives the model**: Frontier models will keep changing. What the business decided, and why, does not change with them.
 
 ---
 
@@ -351,6 +348,8 @@ lower cost because the demo shows those benefits directly.
 
 <!-- _class: lead -->
 
-# What organizational context do your agents still have to guess?
+# Questions?
 
 Ryan Knight · ryan.knight@neo4j.com
+
+James Ward · jwdev@amazon.com
