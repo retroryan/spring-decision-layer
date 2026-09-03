@@ -1,5 +1,5 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1600 900" role="img" aria-labelledby="title description" font-family="Arial, Helvetica, sans-serif">
-  <title id="title">Memory Lets the System Compound</title>
+  <title id="title">Memory Lets Agents Learn Over Time</title>
   <desc id="description">Two stacked pipelines, Query N on top and Query N+1 below. Each pipeline reads graph context, produces a model decision, and writes a structured trace. The structured trace from Query N flows down into a persistent Neo4j context graph, which becomes the enriched graph context that Query N+1 reads, so the second pipeline starts from what the first one decided. An annotation notes that because this state lives in the graph, work can span many sessions and many agents, not just one open conversation.</desc>
 
   <defs>
@@ -31,7 +31,7 @@
   <path d="M1410 0 H1600 V94 C1536 62 1474 34 1410 0 Z" fill="#57A7B2" opacity="0.75"/>
   <path d="M0 900 V820 C115 790 205 800 298 850 C333 869 369 885 410 900 Z" fill="#0B668E"/>
 
-  <text class="heading" x="66" y="78">Memory Lets the System Compound</text>
+  <text class="heading" x="66" y="78">Memory Lets Agents Learn Over Time</text>
   <text class="subtitle" x="68" y="122">Each decision becomes graph context the next query starts from.</text>
 
   <g aria-label="Legend">

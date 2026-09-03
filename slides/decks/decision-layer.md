@@ -84,10 +84,12 @@ rule, who authorized the outcome, and which prior decision became precedent.
 ![bg contain](../images/decision-graph-anatomy.svg)
 
 <!--
-Slide: Anatomy of a Decision Graph
+Slide: Anatomy of a Neo4j Labeled Property Graph
 
-The picture makes four claims: what was decided, what authorized it, what
-modified it, and what it relied on.
+Three parts, and the loan domain supplies the examples. A node is a thing: a
+company, an underwriter, a decision. A relationship is a typed claim about two
+of them: this company SUBMITTED that application. Properties are the facts, and
+they sit on relationships as well as on nodes.
 -->
 
 ---
@@ -110,21 +112,10 @@ it applied. An Exception names the Underwriter who granted it.
 
 ---
 
-![bg contain](../images/decision-layer-memory-loop.svg)
-
-<!--
-Slide: The Decision Layer Is the Memory Loop
-
-Every agent shares one advisor and one graph: resolve the context that governs
-the request, record what was decided, reuse it as precedent.
--->
-
----
-
 ![bg contain](../images/memory-compounds.svg)
 
 <!--
-Slide: Each Decision Becomes Context for the Next
+Slide: Memory Lets Agents Learn Over Time
 
 The trace is written only after the model decides, and it outlives the
 conversation, so the next request starts from what prior work already proved.
@@ -169,18 +160,20 @@ Code: github.com/jamesward/hello-spring-ai-bedrock/tree/advisors
 
 ---
 
-## The Decision Layer Arrives by Injection
+## The Decision Layer Arrives as an Advisor
 
-- **Injected advisors**: Spring hands the agent `precedentAdvisor` and `decisionTraceAdvisor`.
-- **Implicit dependency**: The Neo4j starter configures the driver and the chat memory repository. The agent class names neither.
-- **No graph code**: The agent holds no Cypher and opens no session.
-- **Reusable**: Any agent that registers the same two advisors gets the same decision layer.
+- **Injected**: Spring hands the agent `precedentAdvisor` and `decisionTraceAdvisor`.
+- **Nothing to wire**: No Cypher, no session, no driver. The Neo4j starter supplies all three.
+- **Reusable**: Any agent registers one advisor or both, and gets the same decision layer. No shared prompt, no message bus.
 
 > **The agent asks one question. The advisor chain manages the decision context.**
 
 <!--
 An agent adopts the decision layer by registering two beans in its builder. The
 agent registers them and stops there.
+
+Worth saying out loud: the agent class names neither the driver nor the chat
+memory repository. The Neo4j starter configures both.
 -->
 
 ---
@@ -198,36 +191,36 @@ agent registers them and stops there.
 PrecedentAdvisor owns the read path. DecisionTraceAdvisor owns the write path.
 -->
 
-___
+---
 
 ## Loan Decision Agent Demo
 
 Code: github.com/retroryan/spring-decision-layer
 
+![height:480px](../images/model-graph-advisor-chain.svg)
+
 ---
 
-## A Log Records, a Graph Connects
+## From Audit Logs to Context Graphs
 
-| A log can answer | A context graph can answer |
+| A log can answer | A graph can also answer |
 |---|---|
 | What happened? | Which policy authorized it? |
 | Who decided it? | Which exception changed its standing? |
 | When was it recorded? | Which later decisions did it govern? |
 
+- **Only the graph holds the relationships**: policy, exception, actor, and lineage stay attached to the decision.
+
+> **Following the relationships explains why a decision applies here.**
+
 <!--
-A log stores fields about a decision. A graph stores the links between
-decisions, and those links are what prove a past decision applies here.
+A log stores fields about a decision. A graph stores the relationships
+between decisions, and those relationships are what prove a past decision
+applies here. Both stores hold the same decision record; only the graph
+keeps policy, exception, actor, and lineage attached to it. Following those
+relationships produces the explanation, so application code stops
+reassembling it.
 -->
-
----
-
-## Only the Graph Holds the Links
-
-- **Both hold the decision**: The fields are the same in either store.
-- **Only the graph holds the links**: Policy, exception, actor, and lineage stay attached to the decision.
-- **The path is the explanation**: Following the links produces the reason, so application code stops reassembling it.
-
-> **Connection decides whether a past decision applies to this case.**
 
 ---
 
@@ -280,41 +273,6 @@ sending irrelevant decisions to the model.
 
 ---
 
-![bg contain](../images/lighter-agents-shared-layer.svg)
-
-<!--
-Slide: A Shared Decision Layer Keeps Each Agent Simple
-
-The advisor retrieves only the context needed for the current request, applies
-shared rules, and records the result. Each agent keeps a focused prompt and
-avoids copying policies, exceptions, and precedent into its own logic.
--->
-
----
-
-![bg contain](../images/capture-improve-autonomous.svg)
-
-<!--
-Slide: Towards Autonomous Agents
-
-Capture business context, improve the context, then autonomous agents. This
-talk builds the capture step. An autonomy gate reads from it.
--->
-
----
-
-## The Asset Your Agents Build for You
-
-- **Governance stops being a project**: Every decision already names the policy that authorized it and the person who signed it. The audit is a traversal.
-- **Each new agent starts ahead of the last**: The fifth agent inherits what the first four settled, so it costs less to stand up than the one before it.
-
-<!--
-The decision layer is not a feature the agents use. It is an asset they leave
-behind, and it is worth more every quarter it runs.
--->
-
----
-
 ## What the Decision Layer Delivers
 
 <div class="columns" style="font-size: 24px; gap: 2.4em;">
@@ -334,8 +292,74 @@ behind, and it is worth more every quarter it runs.
 > **One shared record improves every agent that reads it.**
 
 <!--
-Use this as the closing synthesis. Emphasize governance, shared memory, and
-lower cost because the demo shows those benefits directly.
+Summarize what the decision layer gives every agent that reads it. Emphasize
+governance, shared memory, and lower cost because the demo shows those benefits
+directly. The next slides show who collects these benefits. Every agent on the
+fleet reads the same layer.
+-->
+
+---
+
+![bg contain](../images/lighter-agents-shared-layer.svg)
+
+<!--
+Slide: One Agent Builds It, Every Agent Uses It
+
+The first agent writes policies, exceptions, and precedent into the graph. Every
+agent added after that reads the same layer instead of rebuilding it. Each new
+agent keeps a focused prompt and stays cheap to stand up.
+-->
+
+---
+
+## Expanding to Other Agent Platforms
+
+The same graph works outside Spring AI. Any language or agent framework can read
+and write the decision layer.
+
+- **Official drivers**: Neo4j ships drivers for Java, Python, JavaScript, .NET, Go, and Rust. Your agent connects with the driver for its own language.
+- **One graph, many clients**: Every client reads and writes the same nodes and relationships. A Python agent sees the decisions a Java agent recorded.
+- **MCP server**: The Neo4j MCP server exposes the graph to any MCP client. The agent inspects the schema, runs read queries, and writes only when you enable writes.
+- **No rebuild required**: New platforms reuse the policies, exceptions, and precedent already in the graph. You add a connection, not a new decision layer.
+
+> **Build the decision layer once. Connect every agent to it.**
+
+<!--
+The decision layer is infrastructure, not a Spring AI feature. Drivers cover the
+common languages, and the MCP server covers agents that speak MCP. Mention that
+MCP write access is opt-in.
+-->
+
+---
+
+![bg contain](../images/capture-improve-autonomous.svg)
+
+<!--
+Slide: Towards Autonomous Agents
+
+Capture business context, improve the context, then autonomous agents. This
+talk builds the capture step. An autonomy gate reads from it.
+-->
+
+---
+
+![bg contain](../images/fleet-compounds-autonomy-v2.svg)
+
+<!--
+Slide: One Autonomous Agent Becomes a Fleet of Autonomous Agents
+
+Start with one agent. It settles about one case in six on its own, and a human
+reviews the rest. Every reviewed case writes a decision into the layer, so the
+record of settled cases grows.
+
+The second agent reads that record. It starts with the policies, exceptions, and
+precedent the first agent already established, so it needs less review from day
+one. Each agent you add costs less to stand up than the one before it.
+
+Autonomy widens as the record deepens. By the fourth quarter the fleet settles
+nine cases in ten alone, and human review moves to the rare case. The graph is
+what makes this possible. One agent's decisions become every other agent's
+starting point.
 -->
 
 ---

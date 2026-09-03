@@ -1,5 +1,5 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1600 900" role="img" aria-labelledby="title description" font-family="Arial, Helvetica, sans-serif">
-  <title id="title">A Shared Decision Layer Keeps Each Agent Simple</title>
+  <title id="title">One Agent Builds It, Every Agent Uses It</title>
   <desc id="description">Four focused Spring AI agents use one shared advisor and Neo4j decision layer. The advisor retrieves relevant context, applies shared rules, and records each decision. Policies, exceptions, and precedent stay in the shared layer, which gives each agent a smaller prompt and less embedded business logic.</desc>
 
   <defs>
@@ -38,8 +38,8 @@
   <path d="M1410 0 H1600 V94 C1536 62 1474 34 1410 0 Z" fill="#57A7B2" opacity="0.75"/>
   <path d="M0 900 V820 C115 790 205 800 298 850 C333 869 369 885 410 900 Z" fill="#0B668E"/>
 
-  <text class="heading" x="66" y="78">A Shared Decision Layer Keeps Each Agent Simple</text>
-  <text class="subtitle" x="68" y="122">The advisor supplies only the context and rules needed for the current request.</text>
+  <text class="heading" x="66" y="78">One Agent Builds It, Every Agent Uses It</text>
+  <text class="subtitle" x="68" y="122">The first agent builds the decision layer. Every agent after it reads the same graph.</text>
 
   <g aria-label="Legend">
     <circle cx="88" cy="190" r="12" fill="#0B668E"/>
